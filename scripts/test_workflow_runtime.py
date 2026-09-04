@@ -96,15 +96,15 @@ class PrivateCustomizationTests(unittest.TestCase):
     }
 
     def test_private_version_and_user_marker_are_synchronized(self) -> None:
-        self.assertEqual(PACKAGE_VERSION, "1.1.13-private.1")
+        self.assertEqual(PACKAGE_VERSION, "1.1.13-private.2")
         user_agents = (PACKAGE / "user_AGENTS.md").read_text(encoding="utf-8")
         marker = f"<!-- codex-workflow-version: {PACKAGE_VERSION} -->"
         self.assertEqual(user_agents.count(marker), 1)
         self.assertGreater(
+            parse_semver("1.1.13-private.3"),
             parse_semver("1.1.13-private.2"),
-            parse_semver("1.1.13-private.1"),
         )
-        self.assertEqual(NEXT_PACKAGE_VERSION, "1.1.13-private.2")
+        self.assertEqual(NEXT_PACKAGE_VERSION, "1.1.13-private.3")
 
     def test_worker_customization_changes_only_luna_reasoning(self) -> None:
         worker_paths = sorted((PACKAGE / "agents").glob("*.toml"))
@@ -1546,6 +1546,51 @@ class LifecycleIntegrationTests(unittest.TestCase):
         self.assertFalse(summary["applied"])
         self.assertEqual(summary["status"], "already current")
         self.assertEqual(summary["details"]["project_from_version"], NEXT_PACKAGE_VERSION)
+
+    def test_approved_public_downgrade_catches_up_a_second_project(self) -> None:
+        public_package = self.incoming_package("public-source", "1.1.13")
+        plan_bootstrap(public_package, self.runtime, self.project).apply()
+        second_root = self.root / "second-public-project"
+        second_root.mkdir()
+        second = ProjectPaths(second_root)
+        plan_project_install(public_package, second).apply()
+
+        def update(project_root: Path) -> dict[str, object]:
+            completed = subprocess.run(
+                [
+                    sys.executable,
+                    "-B",
+                    str(self.runtime.runtime / "workflow.py"),
+                    "update",
+                    "--source",
+                    str(self.package.root),
+                    "--allow-downgrade",
+                    "--codex-home",
+                    str(self.codex_home),
+                    "--project",
+                    str(project_root),
+                    "--json",
+                ],
+                check=False,
+                capture_output=True,
+                text=True,
+            )
+            self.assertEqual(completed.returncode, 0, completed.stderr)
+            return json.loads(completed.stdout)
+
+        first_summary = update(self.project_root)
+        self.assertTrue(first_summary["applied"])
+        self.assertEqual(
+            (self.runtime.runtime / "VERSION").read_text(encoding="utf-8"),
+            f"{PACKAGE_VERSION}\n",
+        )
+
+        second_summary = update(second_root)
+        self.assertTrue(second_summary["applied"])
+        self.assertEqual(second_summary["details"]["from_version"], PACKAGE_VERSION)
+        self.assertEqual(second_summary["details"]["project_from_version"], "1.1.13")
+        second_state = json.loads(second.state.read_text(encoding="utf-8"))
+        self.assertEqual(second_state["workflow_version"], PACKAGE_VERSION)
 
     def test_update_removes_retired_architecture_assets(self) -> None:
         self.bootstrap()

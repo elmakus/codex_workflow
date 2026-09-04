@@ -57,10 +57,9 @@ file, then rerun with:
 
 Treat this as a one-time migration into the dedicated local region. Never infer
 the content automatically. Add `--allow-downgrade` only for an explicitly
-approved downgrade. In particular, SemVer orders the first private version
-`1.1.13-private.1` below public `1.1.13`, so a direct transition from an
-installed public `1.1.13` requires that approved flag. A fresh private bootstrap
-does not.
+approved downgrade. In particular, SemVer orders each `1.1.13-private.N`
+prerelease below public `1.1.13`, so a direct transition from an installed
+public `1.1.13` requires that approved flag. A fresh private bootstrap does not.
 
 When the shared user-level runtime already matches the incoming private version,
 the command may update an older target-project wrapper/state to that version. A

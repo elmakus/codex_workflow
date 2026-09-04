@@ -336,9 +336,10 @@ def main() -> int:
                         compact=args.json,
                     )
                     return 0
-                if project_version > incoming_version:
+                if project_version > incoming_version and not args.allow_downgrade:
                     raise WorkflowError(
-                        "target project was installed from a newer workflow version"
+                        "target project was installed from a newer workflow version; "
+                        "pass --allow-downgrade after approval"
                     )
             return _finish(plan, args)
         if args.command == "personalize":

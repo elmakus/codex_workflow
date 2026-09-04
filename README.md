@@ -24,7 +24,7 @@ Change permision to `approve for me/full access`.
 ▶️ Send:
 
 ```text
-Use the approved private `codex_workflow-1.1.13-private.1.zip` and matching
+Use the approved private `codex_workflow-1.1.13-private.2.zip` and matching
 `SHA256SUMS` built from a clean checkout of the reviewed, pushed private commit.
 Verify the checksum, extract the ZIP, then read the bundled
 `codex_workflow/bootstrap.md` and follow it to complete the initial

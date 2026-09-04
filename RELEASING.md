@@ -50,8 +50,8 @@ system:
 
 Use SemVer 2.0.0. Keep the plain version in `codex_workflow/VERSION` and the
 `codex-workflow-version` marker in `codex_workflow/user_AGENTS.md` identical.
-The current private version is `1.1.13-private.1`. A later private build may
-increment the suffix to `1.1.13-private.2`, then `.3`, as needed. No release tag
+The current private version is `1.1.13-private.2`. A later private build may
+increment the suffix to `1.1.13-private.3`, then `.4`, as needed. No release tag
 or new versioning framework is required.
 
 ## Local build and validation
@@ -68,7 +68,7 @@ private_output_dir="/absolute/path/to/fresh-empty-output"
 python3 -B scripts/test_workflow_runtime.py -v
 python3 -B scripts/test_deployment_token_report.py -v
 python3 scripts/package_release.py --output-dir "$private_output_dir"
-python3 scripts/package_release.py --verify "$private_output_dir/codex_workflow-1.1.13-private.1.zip"
+python3 scripts/package_release.py --verify "$private_output_dir/codex_workflow-1.1.13-private.2.zip"
 ```
 
 Windows PowerShell:
@@ -78,7 +78,7 @@ $PrivateOutputDir = "C:\absolute\path\to\fresh-empty-output"
 py -3.11 -B scripts\test_workflow_runtime.py -v
 py -3.11 -B scripts\test_deployment_token_report.py -v
 py -3.11 scripts\package_release.py --output-dir $PrivateOutputDir
-py -3.11 scripts\package_release.py --verify "$PrivateOutputDir\codex_workflow-1.1.13-private.1.zip"
+py -3.11 scripts\package_release.py --verify "$PrivateOutputDir\codex_workflow-1.1.13-private.2.zip"
 ```
 
 The build validates the version, marker, lifecycle runtime, and required
