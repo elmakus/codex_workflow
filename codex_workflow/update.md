@@ -5,22 +5,32 @@ Supported command forms:
     codex_workflow --update
 
 Use Python 3.11 or newer. Apply the validated update directly with the lifecycle
-CLI.
+CLI. An approved, verified private/local package source is required.
 
 ## Source
 
-Use the script to query GitHub Releases, select the highest non-draft SemVer
-release containing both the universal ZIP and `SHA256SUMS`, verify the checksum,
-and extract it safely. Include prereleases and never clone the repository. Let
-the installed launcher delegate planning and application to the incoming CLI,
-which validates its package schema.
+Public release discovery is disabled for this private downstream. Obtain the
+approved private ZIP and matching `SHA256SUMS` built from a clean checkout of
+the reviewed, pushed private commit. Verify the checksum, extract the ZIP
+safely, and validate the incoming package before updating:
+
+```text
+python3 <verified-private-package-root>/workflow.py validate \
+  --package-root <verified-private-package-root> \
+  --json
+```
+
+Do not query or install from the public `viettran-edgeAI` release channel. An
+update without an explicit source must fail closed.
 
 ## Update
 
 Run:
 
 ```text
-python3 ~/.codex/codex_workflow/workflow.py update --project <project>
+python3 ~/.codex/codex_workflow/workflow.py update \
+  --source <verified-private-package-root> \
+  --project <project>
 ```
 
 For migration from a pre-script installation, run the incoming package's
@@ -46,7 +56,15 @@ file, then rerun with:
 ```
 
 Treat this as a one-time migration into the dedicated local region. Never infer
-the content automatically. Add `--allow-downgrade` for a downgrade.
+the content automatically. Add `--allow-downgrade` only for an explicitly
+approved downgrade. In particular, SemVer orders the first private version
+`1.1.13-private.1` below public `1.1.13`, so a direct transition from an
+installed public `1.1.13` requires that approved flag. A fresh private bootstrap
+does not.
+
+When the shared user-level runtime already matches the incoming private version,
+the command may update an older target-project wrapper/state to that version. A
+target project that is already current is a no-op.
 
 Report the installed version, backup location, and any failure.
 Do not describe a partial or rolled-back update as successful.

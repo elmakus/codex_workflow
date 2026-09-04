@@ -15,7 +15,7 @@ Spawn one fresh worker with:
 Pass only the active route, deployment ID, and closure state (`complete`,
 `paused`, or `blocked`). Do not summarize the session, build a task capsule, or
 maintain a separate usage summary. Rely on the automatic finite fork to pass
-recent main-agent turns while retaining the worker's Luna xhigh model. Use that
+recent main-agent turns while retaining the worker's Luna max model. Use that
 inherited deployment context and the full procedure in its TOML.
 
 Give that worker sole ownership of reconciling the complete `agent_docs/`

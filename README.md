@@ -10,7 +10,8 @@ routine read-only context work. Workers keep operational evidence in artifacts
 and return small knowledge deltas. Medium keeps implementation and verification
 in the main agent while retaining cross-session workflow support.
 
-> ⭐ For lightweight tasks, it won’t overdo things. Light route is default.
+> ⭐ Heavy is the default, but lightweight tasks still use its direct
+> worker-free fast path when delegation offers no value.
 
 ## 1. Quick installation ⚙️
 
@@ -23,7 +24,11 @@ Change permision to `approve for me/full access`.
 ▶️ Send:
 
 ```text
-Download and extract the latest `codex_workflow-<version>.zip` asset (not GitHub's Source code archive) from https://github.com/viettran-edgeAI/codex_workflow/releases. Verify it against `SHA256SUMS`, then read the bundled `codex_workflow/bootstrap.md` and follow it to complete the initial installation.
+Use the approved private `codex_workflow-1.1.13-private.1.zip` and matching
+`SHA256SUMS` built from a clean checkout of the reviewed, pushed private commit.
+Verify the checksum, extract the ZIP, then read the bundled
+`codex_workflow/bootstrap.md` and follow it to complete the initial
+installation.
 ```
 > ⭐ Recommended: use 5.6 Luna xhigh for installation. 
 
@@ -57,7 +62,9 @@ In Medium, the main agent owns implementation and verification. Choose it when
 you want workflow-mode context support without delegating production work.
 
 ### How to use
-- Normally, for simple work, general Q&A, you don't need to do anything. `light route` is the default route.
+- You don't need to select a route: `heavy route` is the default. Questions,
+  tiny edits, and other bounded tasks may still run directly with zero workers
+  when delegation offers no value.
 
 --------------------------------
 
@@ -122,8 +129,8 @@ Send these exact commands to Codex from the relevant project directory:
 | --- | --- |
 | `codex_workflow --install` | Install workflow in the current project and initialize its documentation framework. |
 | `codex_workflow --personal` | Add or update project-specific workflow preferences. |
-| `codex_workflow --check-update` | Check for a newer release without installing it. |
-| `codex_workflow --update` | Download, verify, and install the latest matching release. |
+| `codex_workflow --check-update` | Report the installed private version without consulting the public release channel. |
+| `codex_workflow --update` | Install an approved, verified private package from an explicit local source; source-less update fails closed. |
 | `codex_workflow --disable` / `codex_workflow --enable` | Disable or re-enable the workflow for the current project. |
 | `codex_workflow --remove` | Remove the installed workflow after a destructive dry-run and confirmation. |
 

@@ -4,7 +4,7 @@ name = "doc-writer"
 description = "Documentation worker for a bounded public-documentation surface and verified facts."
 
 model = "gpt-5.6-luna"
-model_reasoning_effort = "xhigh"
+model_reasoning_effort = "max"
 sandbox_mode = "workspace-write"
 
 developer_instructions = """

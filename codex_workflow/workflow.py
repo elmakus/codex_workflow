@@ -33,13 +33,7 @@ from runtime.lifecycle import (
     plan_remove,
     plan_update,
 )
-from runtime.release import (
-    acquire,
-    parse_semver,
-    select_latest,
-    select_releases,
-    summarize_release_notes,
-)
+from runtime.release import parse_semver
 
 
 def _default_codex_home() -> Path:
@@ -161,10 +155,10 @@ def _package_version(root: Path) -> object:
         raise WorkflowError(f"incoming package VERSION is invalid: {lines[0]!r}") from error
 
 
-def _require_newer_update(
+def _validate_update_order(
     incoming_root: Path, runtime: RuntimePaths, *, allow_downgrade: bool
-) -> None:
-    """Reject equal or unintended downgrade packages before handing them off."""
+) -> tuple[object, object]:
+    """Reject unintended downgrades and return incoming and installed versions."""
 
     incoming = _package_version(incoming_root)
     try:
@@ -174,10 +168,9 @@ def _require_newer_update(
         raise WorkflowError(f"cannot read installed workflow VERSION: {error}") from error
     except Exception as error:
         raise WorkflowError("installed workflow VERSION is invalid") from error
-    if incoming == installed:
-        raise WorkflowError("incoming version matches the installed version; select a newer release")
     if incoming < installed and not allow_downgrade:
         raise WorkflowError("incoming version is older; pass --allow-downgrade after approval")
+    return incoming, installed
 
 
 def _delegate_update(incoming_root: Path, args: argparse.Namespace) -> int:
@@ -212,7 +205,6 @@ def _delegate_update(incoming_root: Path, args: argparse.Namespace) -> int:
 
 def main() -> int:
     args = parse_args()
-    temporary = None
     try:
         runtime, project = _paths(args)
         if args.command == "validate":
@@ -229,39 +221,18 @@ def main() -> int:
             return 0
         if args.command == "check-update":
             installed_text = (runtime.runtime / "VERSION").read_text(encoding="utf-8").strip()
-            installed = parse_semver(installed_text)
-            releases = select_releases()
-            newer = [release for release in releases if release.version > installed]
-            latest = releases[0]
-            updates = [
-                {
-                    "version": release.version_text,
-                    "asset": release.zip_name,
-                    "release_url": release.release_url,
-                    "release_notes": release.release_notes,
-                    "summary": summarize_release_notes(release.release_notes),
-                }
-                for release in newer
-            ]
-            if newer:
-                status = "update available"
-                summary = "\n".join(
-                    f"{item['version']}: {item['summary']}" for item in updates
-                )
-            elif latest.version == installed:
-                status = "current"
-                summary = "The installed workflow is current."
-            else:
-                status = "installed newer"
-                summary = "The installed workflow is newer than the latest release."
+            parse_semver(installed_text)
             _emit(
                 {
-                    "status": status,
+                    "status": "private/local updates only",
                     "installed": installed_text,
-                    "available": latest.version_text,
-                    "asset": latest.zip_name,
-                    "summary": summary,
-                    "updates": updates,
+                    "available": None,
+                    "asset": None,
+                    "summary": (
+                        "Public release checks are disabled for this private build. "
+                        "Use an explicit verified private/local package source to update."
+                    ),
+                    "updates": [],
                 },
                 compact=args.json,
             )
@@ -326,13 +297,13 @@ def main() -> int:
             return _finish(plan_project_install(package, project), args)
         if args.command == "update":
             assert project is not None
-            if args.source:
-                incoming_root = _package_root(args.source)
-            else:
-                selected = select_latest()
-                temporary, package_path = acquire(selected)
-                incoming_root = _package_root(package_path)
-            _require_newer_update(
+            if args.source is None:
+                raise WorkflowError(
+                    "private updates require an explicit verified private/local "
+                    "package source via --source"
+                )
+            incoming_root = _package_root(args.source)
+            incoming_version, installed_version = _validate_update_order(
                 incoming_root, runtime, allow_downgrade=args.allow_downgrade
             )
             if incoming_root != Path(__file__).resolve().parent:
@@ -346,15 +317,30 @@ def main() -> int:
                 if args.legacy_local_instructions
                 else None
             )
-            return _finish(
-                plan_update(
-                    incoming,
-                    runtime,
-                    project,
-                    legacy_local_instructions=legacy_local,
-                ),
-                args,
+            plan = plan_update(
+                incoming,
+                runtime,
+                project,
+                legacy_local_instructions=legacy_local,
             )
+            if incoming_version == installed_version:
+                project_version = parse_semver(str(plan.details["project_from_version"]))
+                if project_version == incoming_version:
+                    _emit(
+                        {
+                            "applied": False,
+                            "status": "already current",
+                            "instruction": "No action is required.",
+                            "details": plan.details,
+                        },
+                        compact=args.json,
+                    )
+                    return 0
+                if project_version > incoming_version:
+                    raise WorkflowError(
+                        "target project was installed from a newer workflow version"
+                    )
+            return _finish(plan, args)
         if args.command == "personalize":
             assert project is not None
             resource = args.resource.read_text(encoding="utf-8")
@@ -366,9 +352,6 @@ def main() -> int:
     except (OSError, WorkflowError) as error:
         _emit({"error": str(error), "applied": False}, compact=getattr(args, "json", False))
         return 1
-    finally:
-        if temporary is not None:
-            temporary.cleanup()
 
 
 if __name__ == "__main__":

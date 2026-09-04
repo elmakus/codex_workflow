@@ -15,10 +15,13 @@ main agent designs the actual orchestration for each task.
 Open Codex from the project directory and send:
 
 ```text
-Download and extract the latest `codex_workflow-<version>.zip` asset (not GitHub's Source code archive) from https://github.com/viettran-edgeAI/codex_workflow/releases. Verify it against `SHA256SUMS`, then read the bundled `codex_workflow/bootstrap.md` and follow it exactly.
+Use the approved private `codex_workflow-1.1.13-private.1.zip` and matching
+`SHA256SUMS` built from a clean checkout of the reviewed, pushed private commit.
+Verify the checksum, extract the ZIP, then read the bundled
+`codex_workflow/bootstrap.md` and follow it exactly.
 ```
 
-The universal release ZIP supports Linux, macOS, and Windows and requires
+The universal private ZIP supports Linux, macOS, and Windows and requires
 Python 3.11 or newer. The bundled lifecycle CLI validates, installs, backs up,
 and rolls back its own files. Restart Codex after installation so the new
 user-level instructions and worker definitions are loaded.
@@ -50,17 +53,18 @@ project documents.
 
 #### `codex_workflow --update`
 
-Checks GitHub Releases, downloads the latest compatible release ZIP, verifies
-its checksum, and applies its release-owned definitions transactionally. It
-preserves personalization, project-local instructions, project documents,
-unrelated Codex settings, backups, and enabled/disabled state. Obsolete
-workflow-owned runtime files and worker roles are removed from the installed
-manifest.
+Requires an explicit approved, verified private/local package source and applies its
+release-owned definitions transactionally. A source-less update fails closed
+and never falls back to the public release channel. The update preserves
+personalization, project-local instructions, project documents, unrelated Codex
+settings, backups, and enabled/disabled state. Obsolete workflow-owned runtime
+files and worker roles are removed from the installed manifest.
 
 #### `codex_workflow --check-update`
 
-Performs an explicit read-only release check and lists newer installable
-versions with compact release-note summaries. It downloads and changes nothing.
+Reports the installed private version and that public release comparison is
+disabled. It does not query, recommend, download, or install a public release,
+and changes nothing.
 
 #### `codex_workflow --remove`
 
@@ -82,12 +86,13 @@ project documents, and the user-level runtime.
 
 ### Route selection
 
-- **Light** is the default. The main agent works alone with minimal workflow
-  overhead.
+- **Light** remains available explicitly. The main agent works alone with
+  minimal workflow overhead.
 - **Medium** keeps planning, diagnosis, implementation, and verification in the
   main agent. Companion and Investigator provide bounded read-only support.
-- **Heavy** also makes production Executors, Tester, and public Doc-writer
-  capabilities available to the main agent.
+- **Heavy** is the default and makes production Executors, Tester, and public
+  Doc-writer capabilities available to the main agent. Its direct fast path
+  still permits zero workers when delegation offers no value.
 
 Select a route in the prompt:
 

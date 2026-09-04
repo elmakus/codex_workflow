@@ -4,11 +4,13 @@ from __future__ import annotations
 
 import json
 import contextlib
+import hashlib
 import io
 import shutil
 import subprocess
 import sys
 import tempfile
+import tomllib
 import unittest
 import zipfile
 from pathlib import Path
@@ -20,12 +22,15 @@ PACKAGE = ROOT / "codex_workflow"
 PACKAGE_VERSION = (PACKAGE / "VERSION").read_text(encoding="utf-8").strip()
 
 
-def next_patch_version(version: str) -> str:
-    major, minor, patch = version.split(".")
+def next_package_version(version: str) -> str:
+    core, private_separator, private_revision = version.partition("-private.")
+    if private_separator:
+        return f"{core}-private.{int(private_revision) + 1}"
+    major, minor, patch = core.split(".")
     return f"{major}.{minor}.{int(patch) + 1}"
 
 
-NEXT_PACKAGE_VERSION = next_patch_version(PACKAGE_VERSION)
+NEXT_PACKAGE_VERSION = next_package_version(PACKAGE_VERSION)
 
 sys.path.insert(0, str(PACKAGE))
 sys.path.insert(0, str(ROOT / "scripts"))
@@ -65,12 +70,96 @@ from runtime.markers import (
 )
 from runtime.plan import OperationPlan, read_string_list, resolve_owned_runtime_path
 from runtime.release import (
-    ReleaseSelection,
     parse_semver,
     select_releases,
     summarize_release_notes,
 )
 from runtime.transaction import Mutation, apply
+
+
+class PrivateCustomizationTests(unittest.TestCase):
+    _BASELINE_WORKER_SHA256 = {
+        "default_executor": "18db1f368cbc8eaf2a41b56dc670e7cd8763ad27364066b6c919e55d233168d0",
+        "senior_executor": "9699832e16e48d3882d33f1190034980f436f3b105896d6ce0b0d44bd3dd86e0",
+        "tester": "7c6f5acdd7e27813b764660c4a80710fecc6e3e5430f71ef67fc89fa310a368f",
+        "doc-writer": "64090cf2f2f405e3b29279c2aba87dc9cda363e3dcd520e836cea71965a7b88f",
+        "companion": "957078b33ffd2c54ef71d9ed8e7d55a63373ceae6a986b197cf0d151d5ecea11",
+        "investigator": "ce4e0d9ddd7a84f4b574ecec85d70275db699cbfa3459074f2ad1b41f9e06f27",
+        "closure_steward": "9fe87986fcc9fd43be72466005e9eaeb5bd48ebc613199e1ceace0e80c30bb84",
+    }
+    _CHANGED_LUNA_WORKERS = {
+        "tester",
+        "doc-writer",
+        "companion",
+        "investigator",
+        "closure_steward",
+    }
+
+    def test_private_version_and_user_marker_are_synchronized(self) -> None:
+        self.assertEqual(PACKAGE_VERSION, "1.1.13-private.1")
+        user_agents = (PACKAGE / "user_AGENTS.md").read_text(encoding="utf-8")
+        marker = f"<!-- codex-workflow-version: {PACKAGE_VERSION} -->"
+        self.assertEqual(user_agents.count(marker), 1)
+        self.assertGreater(
+            parse_semver("1.1.13-private.2"),
+            parse_semver("1.1.13-private.1"),
+        )
+        self.assertEqual(NEXT_PACKAGE_VERSION, "1.1.13-private.2")
+
+    def test_worker_customization_changes_only_luna_reasoning(self) -> None:
+        worker_paths = sorted((PACKAGE / "agents").glob("*.toml"))
+        self.assertEqual(
+            {path.stem for path in worker_paths},
+            set(self._BASELINE_WORKER_SHA256),
+        )
+        for path in worker_paths:
+            with self.subTest(worker=path.stem):
+                text = path.read_text(encoding="utf-8")
+                config = tomllib.loads(text)
+                self.assertEqual(config["name"], path.stem)
+                if path.stem == "senior_executor":
+                    self.assertEqual(config["model"], "gpt-5.6-sol")
+                    self.assertEqual(config["model_reasoning_effort"], "medium")
+                else:
+                    self.assertEqual(config["model"], "gpt-5.6-luna")
+                    self.assertEqual(config["model_reasoning_effort"], "max")
+
+                baseline_text = text
+                if path.stem in self._CHANGED_LUNA_WORKERS:
+                    baseline_text = baseline_text.replace(
+                        'model_reasoning_effort = "max"',
+                        'model_reasoning_effort = "xhigh"',
+                        1,
+                    )
+                digest = hashlib.sha256(baseline_text.encode("utf-8")).hexdigest()
+                self.assertEqual(digest, self._BASELINE_WORKER_SHA256[path.stem])
+
+    def test_heavy_is_default_and_keeps_explicit_routes_and_fast_path(self) -> None:
+        agents = (PACKAGE / "AGENTS.md").read_text(encoding="utf-8")
+        self.assertIn("- **Light**:", agents)
+        self.assertIn("- **Medium**:", agents)
+        self.assertIn("- **Heavy**:", agents)
+        self.assertIn("Follow the user's route selection.", agents)
+        self.assertIn("Use Heavy when the user does not select a\nroute.", agents)
+        self.assertNotIn("Use Light when the user does not select", agents)
+
+        heavy = (PACKAGE / "heavy_route.md").read_text(encoding="utf-8")
+        self.assertIn("Use the direct fast path for questions and small", heavy)
+        self.assertIn("Do not\ncall workers merely because Heavy is selected", heavy)
+
+    def test_heavy_uses_instruction_only_long_wait_policy(self) -> None:
+        heavy = (PACKAGE / "heavy_route.md").read_text(encoding="utf-8")
+        self.assertIn("one\n  event-driven `wait_agent` call", heavy)
+        self.assertIn("short repeated polling", heavy)
+        self.assertIn("`1200000` ms", heavy)
+        self.assertIn("`300000`-`3600000` ms", heavy)
+        self.assertIn("continue\n  immediately when a child finishes early", heavy)
+
+    def test_platform_configuration_keeps_multi_agent_and_ceiling_twenty(self) -> None:
+        config = tomllib.loads(patch_codex_settings(""))
+        self.assertEqual(config["agents"]["max_concurrent_threads_per_session"], 20)
+        self.assertTrue(config["features"]["multi_agent"])
+        self.assertNotIn("multi_agent_v2", config["features"])
 
 
 class MarkerTests(unittest.TestCase):
@@ -784,74 +873,103 @@ class ReleaseTests(unittest.TestCase):
         with self.assertRaisesRegex(PackageReleaseError, "duplicate members"):
             verify_archive(archive)
 
-    def test_update_rejects_equal_or_older_package_before_delegation(self) -> None:
+    def test_source_less_update_fails_closed_without_network(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            project = root / "project"
+            project.mkdir()
+            output = io.StringIO()
+            argv = [
+                "workflow.py",
+                "update",
+                "--codex-home",
+                str(root / "codex-home"),
+                "--project",
+                str(project),
+                "--json",
+            ]
+            with (
+                mock.patch.object(sys, "argv", argv),
+                mock.patch(
+                    "runtime.release._read_json_url",
+                    side_effect=AssertionError("public release network must not be used"),
+                ) as network,
+                contextlib.redirect_stdout(output),
+            ):
+                self.assertEqual(workflow_cli.main(), 1)
+            network.assert_not_called()
+            self.assertIn(
+                "explicit verified private/local package source",
+                json.loads(output.getvalue())["error"],
+            )
+
+    def test_update_rejects_older_package_before_delegation(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
             runtime = root / "codex-home" / "codex_workflow"
             runtime.mkdir(parents=True)
-            (runtime / "VERSION").write_text("1.1.4\n", encoding="utf-8")
+            (runtime / "VERSION").write_text("1.1.13-private.2\n", encoding="utf-8")
             incoming = root / "incoming"
             incoming.mkdir()
+            (incoming / "VERSION").write_text(
+                "1.1.13-private.1\n", encoding="utf-8"
+            )
             project = root / "project"
             project.mkdir()
-            for version, expected_error in (
-                ("1.1.4", "matches the installed version"),
-                ("1.1.3", "incoming version is older"),
+            output = io.StringIO()
+            argv = [
+                "workflow.py",
+                "update",
+                "--source",
+                str(incoming),
+                "--codex-home",
+                str(root / "codex-home"),
+                "--project",
+                str(project),
+                "--json",
+            ]
+            with (
+                mock.patch.object(sys, "argv", argv),
+                mock.patch.object(
+                    workflow_cli,
+                    "_delegate_update",
+                    side_effect=AssertionError("delegation must not occur"),
+                ),
+                contextlib.redirect_stdout(output),
             ):
-                with self.subTest(version=version):
-                    (incoming / "VERSION").write_text(version + "\n", encoding="utf-8")
-                    output = io.StringIO()
-                    argv = [
-                        "workflow.py",
-                        "update",
-                        "--source",
-                        str(incoming),
-                        "--codex-home",
-                        str(root / "codex-home"),
-                        "--project",
-                        str(project),
-                        "--json",
-                    ]
-                    with (
-                        mock.patch.object(sys, "argv", argv),
-                        mock.patch.object(
-                            workflow_cli,
-                            "_delegate_update",
-                            side_effect=AssertionError("delegation must not occur"),
-                        ),
-                        contextlib.redirect_stdout(output),
-                    ):
-                        self.assertEqual(workflow_cli.main(), 1)
-                    self.assertIn(expected_error, json.loads(output.getvalue())["error"])
+                self.assertEqual(workflow_cli.main(), 1)
+            self.assertIn("incoming version is older", json.loads(output.getvalue())["error"])
 
-    def test_check_update_reports_new_release_notes_without_mutation(self) -> None:
+    def test_check_update_reports_private_local_status_without_network(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             home = Path(temporary) / "codex-home"
             runtime = home / "codex_workflow"
             runtime.mkdir(parents=True)
-            (runtime / "VERSION").write_text("1.1.1\n", encoding="utf-8")
-            release = ReleaseSelection(
-                "1.2.0",
-                parse_semver("1.2.0"),
-                "codex_workflow-1.2.0.zip",
-                "https://example/1.2.0.zip",
-                "https://example/SHA256SUMS",
-                "## Changes\n- Add release-note summaries.",
-                "https://example/releases/1.2.0",
+            (runtime / "VERSION").write_text(
+                f"{PACKAGE_VERSION}\n", encoding="utf-8"
             )
             output = io.StringIO()
             argv = ["workflow.py", "check-update", "--codex-home", str(home), "--json"]
             with (
-                mock.patch.object(workflow_cli, "select_releases", return_value=[release]),
+                mock.patch(
+                    "runtime.release._read_json_url",
+                    side_effect=AssertionError("public release network must not be used"),
+                ) as network,
                 mock.patch.object(sys, "argv", argv),
                 contextlib.redirect_stdout(output),
             ):
                 self.assertEqual(workflow_cli.main(), 0)
+            network.assert_not_called()
             summary = json.loads(output.getvalue())
-            self.assertEqual(summary["status"], "update available")
-            self.assertEqual(summary["updates"][0]["version"], "1.2.0")
-            self.assertIn("release-note summaries", summary["summary"])
-            self.assertEqual((runtime / "VERSION").read_text(), "1.1.1\n")
+            self.assertEqual(summary["status"], "private/local updates only")
+            self.assertEqual(summary["installed"], PACKAGE_VERSION)
+            self.assertIsNone(summary["available"])
+            self.assertIsNone(summary["asset"])
+            self.assertEqual(summary["updates"], [])
+            self.assertIn("Public release checks are disabled", summary["summary"])
+            self.assertEqual(
+                (runtime / "VERSION").read_text(), f"{PACKAGE_VERSION}\n"
+            )
 
     def test_select_releases_keeps_installable_versions_and_notes(self) -> None:
         records = [
@@ -1033,6 +1151,30 @@ class LifecycleIntegrationTests(unittest.TestCase):
         self.assertEqual(
             set(repeated.agent_actions[0]["recovery_files"]),
             set(repeated.agent_actions[0]["framework"]),
+        )
+
+    def test_bootstrap_and_update_leave_project_codex_config_untouched(self) -> None:
+        project_config = self.project_root / ".codex" / "config.toml"
+        project_config.parent.mkdir()
+        original_config = (
+            b'model = "gpt-5.6-sol"\n'
+            b'model_reasoning_effort = "high"\n'
+        )
+        project_config.write_bytes(original_config)
+
+        self.bootstrap(existing_agents="# Existing instructions\nKeep local policy.\n")
+        self.assertEqual(project_config.read_bytes(), original_config)
+        self.assertEqual(
+            extract(self.project.active.read_text(encoding="utf-8"), PROJECT_LOCAL),
+            "# Existing instructions\nKeep local policy.",
+        )
+
+        incoming = self.incoming_package("config-preserving-update", NEXT_PACKAGE_VERSION)
+        plan_update(incoming, self.runtime, self.project).apply()
+        self.assertEqual(project_config.read_bytes(), original_config)
+        self.assertEqual(
+            extract(self.project.active.read_text(encoding="utf-8"), PROJECT_LOCAL),
+            "# Existing instructions\nKeep local policy.",
         )
 
     def test_bootstrap_rejects_unowned_skill_collision(self) -> None:
@@ -1346,6 +1488,64 @@ class LifecycleIntegrationTests(unittest.TestCase):
         self.assertIn(
             "## Working State (1.2)", second.active.read_text(encoding="utf-8")
         )
+
+    def test_equal_runtime_version_catches_up_only_an_older_project(self) -> None:
+        self.bootstrap()
+        second_root = self.root / "second-project"
+        second_root.mkdir()
+        second = ProjectPaths(second_root)
+        plan_project_install(self.package, second).apply()
+
+        incoming = self.incoming_package("project-catch-up", NEXT_PACKAGE_VERSION)
+        incoming_template = incoming.project_template.read_text(encoding="utf-8")
+        incoming.project_template.write_text(
+            incoming_template.replace("## Working State", "## Working State (private.2)"),
+            encoding="utf-8",
+        )
+        incoming = PackageLayout.resolve(incoming.root)
+        plan_update(incoming, self.runtime, self.project).apply()
+
+        command = [
+            sys.executable,
+            "-B",
+            str(self.runtime.runtime / "workflow.py"),
+            "update",
+            "--source",
+            str(incoming.root),
+            "--codex-home",
+            str(self.codex_home),
+            "--project",
+            str(second_root),
+            "--json",
+        ]
+        completed = subprocess.run(
+            command,
+            check=False,
+            capture_output=True,
+            text=True,
+        )
+        self.assertEqual(completed.returncode, 0, completed.stderr)
+        summary = json.loads(completed.stdout)
+        self.assertTrue(summary["applied"])
+        self.assertEqual(summary["details"]["from_version"], NEXT_PACKAGE_VERSION)
+        self.assertEqual(summary["details"]["project_from_version"], PACKAGE_VERSION)
+        self.assertIn(
+            "## Working State (private.2)", second.active.read_text(encoding="utf-8")
+        )
+        state = json.loads(second.state.read_text(encoding="utf-8"))
+        self.assertEqual(state["workflow_version"], NEXT_PACKAGE_VERSION)
+
+        completed = subprocess.run(
+            command,
+            check=False,
+            capture_output=True,
+            text=True,
+        )
+        self.assertEqual(completed.returncode, 0, completed.stderr)
+        summary = json.loads(completed.stdout)
+        self.assertFalse(summary["applied"])
+        self.assertEqual(summary["status"], "already current")
+        self.assertEqual(summary["details"]["project_from_version"], NEXT_PACKAGE_VERSION)
 
     def test_update_removes_retired_architecture_assets(self) -> None:
         self.bootstrap()

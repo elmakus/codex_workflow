@@ -55,10 +55,9 @@ Select one of these routes:
   project-context, and Internet-research work under
   `~/.codex/codex_workflow/heavy_route.md`.
 
-Follow the user's route selection. Use Light when the user does not select a
-route; do not infer Medium or Heavy. Keep the selected route until the user
-changes it or the session ends. Enter `deployment state` for Medium or Heavy
-only when the work is substantive.
+Follow the user's route selection. Use Heavy when the user does not select a
+route. Keep the selected route until the user changes it or the session ends.
+Enter `deployment state` for Medium or Heavy only when the work is substantive.
 
 ## Platform Paths
 

@@ -123,6 +123,10 @@ credible worker check only for a concrete reason.
 - Keep each Executor's production ownership within its capsule. Keep production
   repair outside Tester and unverified behavior outside Doc-writer.
 - Never weaken validation or claim an unrun check passed.
+- When workers are running and no useful independent work remains, make one
+  event-driven `wait_agent` call instead of short repeated polling. Normally
+  use `1200000` ms, within a sensible `300000`-`3600000` ms range; continue
+  immediately when a child finishes early.
 
 Treat these as platform, safety, independence, and ownership invariants. Choose
 the topology and lifecycle that fit the task within them.

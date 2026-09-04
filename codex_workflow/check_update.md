@@ -7,9 +7,9 @@ python3 ~/.codex/codex_workflow/workflow.py check-update --json
 ```
 
 Treat this as an explicit, read-only check regardless of the automatic
-update-check setting. Expect it to compare the installed version with all
-available release assets, report every newer version, and include a compact
-summary of each version's GitHub release notes. Keep workflow files unchanged.
+update-check setting. Expect it to report the installed private version and that
+public release comparison is disabled. It must not query, recommend, download,
+or install a public release. Keep workflow files unchanged.
 
-If an update is available, review the reported summaries and then send
-`codex_workflow --update` when you are ready to install the latest release.
+To update, obtain an approved, reviewed private package and matching checksum,
+then follow `update.md` with an explicit verified private/local `--source`.

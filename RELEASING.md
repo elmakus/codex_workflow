@@ -1,18 +1,21 @@
 # Release Process
 
-This repository publishes the workflow as GitHub Release assets. The release
-payload is intentionally independent of the repository presentation and
-development files.
+This private downstream builds a local workflow artifact and matching checksum
+from a reviewed, pushed private commit. It does not publish GitHub Releases or
+use a public release channel. The package payload remains independent of
+repository presentation and development files.
 
 ## Repository and asset layout
 
-The repository-only release machinery is:
+The repository-only packaging machinery used by this downstream is:
 
 ```text
-.github/workflows/release.yml
 scripts/package_release.py
 RELEASING.md
 ```
+
+The inherited `.github/workflows/release.yml` remains untouched but is not used
+for private delivery.
 
 Every archive contains exactly this top-level directory and nothing beside it:
 
@@ -37,7 +40,7 @@ The package does not contain `README.md`, `illustration.png`,
 other repository-only file. All files below `codex_workflow/` are included so
 the installed workflow remains self-contained.
 
-Each GitHub Release publishes one universal asset for every supported operating
+Each private build produces one universal asset for every supported operating
 system:
 
 - `codex_workflow-<version>.zip`;
@@ -47,74 +50,53 @@ system:
 
 Use SemVer 2.0.0. Keep the plain version in `codex_workflow/VERSION` and the
 `codex-workflow-version` marker in `codex_workflow/user_AGENTS.md` identical.
-The release tag is the same value with an optional leading `v`, for example
-`VERSION=1.1.13` and tag `v1.1.13`. GitHub's prerelease flag is independent of
-the SemVer string; the initial releases are marked as prereleases by the
-workflow.
-The command examples below use the current package version, `1.1.13`; replace
-that value consistently when preparing a later release.
+The current private version is `1.1.13-private.1`. A later private build may
+increment the suffix to `1.1.13-private.2`, then `.3`, as needed. No release tag
+or new versioning framework is required.
 
 ## Local build and validation
 
-Run these commands from the repository root. The builder uses only Python's
-standard library, requires Python 3.11 or newer, and works on Linux, macOS, and
-Windows.
+First commit and push the reviewed private changes. Create a clean checkout of
+that pushed commit, confirm its commit ID, and run these commands there with a
+fresh, empty output directory. The builder uses only Python's standard library,
+requires Python 3.11 or newer, and works on Linux, macOS, and Windows.
 
 Linux/macOS:
 
 ```sh
+private_output_dir="/absolute/path/to/fresh-empty-output"
 python3 -B scripts/test_workflow_runtime.py -v
 python3 -B scripts/test_deployment_token_report.py -v
-python3 scripts/package_release.py --release-tag v1.1.13 --output-dir dist
-python3 scripts/package_release.py --verify dist/codex_workflow-*.zip
+python3 scripts/package_release.py --output-dir "$private_output_dir"
+python3 scripts/package_release.py --verify "$private_output_dir/codex_workflow-1.1.13-private.1.zip"
 ```
 
 Windows PowerShell:
 
 ```powershell
+$PrivateOutputDir = "C:\absolute\path\to\fresh-empty-output"
 py -3.11 -B scripts\test_workflow_runtime.py -v
 py -3.11 -B scripts\test_deployment_token_report.py -v
-py -3.11 scripts/package_release.py --release-tag v1.1.13 --output-dir dist
-py -3.11 scripts/package_release.py --verify dist\codex_workflow-1.1.13.zip
+py -3.11 scripts\package_release.py --output-dir $PrivateOutputDir
+py -3.11 scripts\package_release.py --verify "$PrivateOutputDir\codex_workflow-1.1.13-private.1.zip"
 ```
 
 The build validates the version, marker, lifecycle runtime, and required
 resources; rejects generated Python caches; creates a deterministic ZIP asset;
-and writes `dist/SHA256SUMS`. Run the runtime tests before packaging and inspect
-the archive listing when package contents change.
+and writes `SHA256SUMS` beside the ZIP. Run the runtime tests before packaging,
+inspect the archive listing when package contents change, and record the clean
+commit ID and ZIP checksum. Never use the upstream-tracked
+`dist/codex_workflow-1.1.11.zip` as the private installation artifact.
 
-## Publishing — approval required
+## Private artifact handoff
 
-Do not run the following commands until the release structure, contents, tag,
-and prerelease setting have been approved:
+The tested clean private commit, its freshly built ZIP, and `SHA256SUMS` are
+sufficient. Do not create or push a release tag or publish a GitHub Release for
+this artifact.
 
-```sh
-git status --short
-git tag -a v1.1.13 -m "codex_workflow v1.1.13"
-git push origin v1.1.13
-```
-
-Pushing a semantic `v*` tag starts `.github/workflows/release.yml`. It rebuilds
-and validates the archives from that tagged commit, then publishes the GitHub
-Release with `--prerelease` and generated notes. The workflow also supports a
-manual dispatch with a tag; manual runs check out that tag before packaging and
-publish against the checked-out commit. Manual dispatch defaults to prerelease
-publication. The prerelease flag should be removed or disabled only after a
-separate decision to promote the project to stable releases.
-
-If the workflow is unavailable, the equivalent manual publication command is:
-
-```sh
-gh release create v1.1.13 \
-  dist/codex_workflow-1.1.13.zip \
-  dist/SHA256SUMS \
-  --title "codex_workflow v1.1.13" \
-  --generate-notes \
-  --prerelease
-```
-
-The manual command is also approval-gated and must use assets built from the
-same tagged commit.
+Private installation and update use the local verified package root. They do
+not require a downloader, GitHub authentication, keyring integration, or a
+custom release service.
 
 ## Consumer commands
 
@@ -123,11 +105,10 @@ same tagged commit.
   applies the user-level bootstrap transaction directly.
 - `codex_workflow --install` reads the installed `install.md` and creates only
   project-level workflow assets from the existing bootstrap.
-- `codex_workflow --check-update` explicitly checks GitHub Releases without
-  downloading or installing an update.
-- `codex_workflow --update` selects the latest appropriate ZIP asset, downloads
-  it from its GitHub Release URL, verifies it, and follows the package's update
-  procedure. It never clones the repository.
+- `codex_workflow --check-update` reports the installed private version and that
+  public release comparison is disabled.
+- `codex_workflow --update` requires an explicit verified private/local
+  `--source`; without one it fails closed before any public release lookup.
 - `codex_workflow --remove` first displays a destructive dry-run summary and
   requires one explicit second confirmation before deleting workflow-owned
   files.
