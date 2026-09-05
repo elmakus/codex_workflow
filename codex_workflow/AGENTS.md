@@ -58,17 +58,13 @@ Follow the user's route selection. Use Heavy when the user does not select a
 route. Keep the selected route until the user changes it or the session ends.
 Enter `deployment state` for Medium or Heavy only when the work is substantive.
 
-## Required Documentation Read
+## Proportionate Documentation Read
 
-On the first `deployment state` entry under either route, before planning,
-modifying files, or dispatching a worker, directly read the complete current
-`agent_docs/` framework exactly once: overview, core technology, structure,
-progress, diary, latest session work, and every module-specific Markdown file.
-
-This is one shared session-level read across both routes; reuse it for later
-deployments and route changes. Assign Companion a bounded delta or conflict
-check when documentation changes or freshness matters. Missing or unreadable
-required documents leave deployment entry incomplete; report the intake blocker.
+Read documentation in proportion to the task. When continuing, start from the
+specified checkpoint. Search `agent_docs/` and read the documents or sections
+needed to understand the task, its constraints, and dependencies. Expand the
+read when context is missing. Read the complete set only when the scope of
+work requires it. A missing unrelated document does not block the task.
 
 ## Platform Paths
 

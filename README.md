@@ -1,6 +1,6 @@
 # Private codex_workflow
 
-Version **1.1.14-private.1**, based on upstream experimental 1.1.14 commit
+Version **1.1.14-private.2**, based on upstream experimental 1.1.14 commit
 `a224f32c423ef56be322de160d5440bba0a786b2`.
 
 This private package keeps upstream's task-specific orchestration, batched

@@ -81,7 +81,7 @@ from runtime.transaction import Mutation, apply
 
 class PrivateCustomizationTests(unittest.TestCase):
     def test_private_version_and_user_marker_are_synchronized(self) -> None:
-        self.assertEqual(PACKAGE_VERSION, "1.1.14-private.1")
+        self.assertEqual(PACKAGE_VERSION, "1.1.14-private.2")
         user_agents = (PACKAGE / "operate" / "user_AGENTS.md").read_text(
             encoding="utf-8"
         )
@@ -91,7 +91,7 @@ class PrivateCustomizationTests(unittest.TestCase):
             parse_semver("1.1.14-private.2"),
             parse_semver("1.1.14-private.1"),
         )
-        self.assertEqual(NEXT_PACKAGE_VERSION, "1.1.14-private.2")
+        self.assertEqual(NEXT_PACKAGE_VERSION, "1.1.14-private.3")
 
     def test_worker_customization_changes_only_luna_reasoning(self) -> None:
         worker_paths = sorted((PACKAGE / "agents").glob("*.toml"))
@@ -186,21 +186,39 @@ class MarkerTests(unittest.TestCase):
         for name, text in policies.items():
             self.assertLess(len(text.splitlines()), line_limits[name], name)
 
+        documentation_sections = []
+        for name, text in policies.items():
+            with self.subTest(documentation_policy=name):
+                section = text.split("## Proportionate Documentation Read\n", 1)[1]
+                section = section.split("\n## ", 1)[0].strip()
+                documentation_sections.append(section)
+                flat = " ".join(section.split())
+                for requirement in (
+                    "Read documentation in proportion to the task.",
+                    "When continuing, start from the specified checkpoint.",
+                    "Search `agent_docs/` and read the documents or sections",
+                    "needed to understand the task, its constraints, and dependencies.",
+                    "Expand the read when context is missing.",
+                    "Read the complete set only when the scope of work requires it.",
+                    "A missing unrelated document does not block the task.",
+                ):
+                    self.assertIn(requirement, flat)
+                for retired_requirement in (
+                    "Required Documentation Read",
+                    "framework exactly once",
+                    "one shared session-level read",
+                    "leave deployment entry incomplete",
+                    "intake blocker",
+                ):
+                    self.assertNotIn(retired_requirement, " ".join(text.split()))
+        self.assertEqual(len(set(documentation_sections)), 1)
+
         heavy = policies["heavy_route.md"]
         heavy_flat = " ".join(heavy.split())
         self.assertIn("## Your Role and Authority", heavy)
         self.assertIn("You are the main agent and central knowledge director", heavy)
         self.assertIn("For each task, decide which roles are useful", heavy_flat)
         self.assertIn("## Agents You Can Use", heavy)
-        self.assertIn("## Required Documentation Read", heavy)
-        self.assertIn("The first time the session enters `deployment state`", heavy)
-        self.assertIn("directly read the complete current `agent_docs/`", heavy_flat)
-        self.assertIn("framework exactly once", heavy_flat)
-        self.assertIn("every module-specific Markdown document", heavy)
-        self.assertIn("one shared session-level read across both routes", heavy_flat)
-        self.assertIn("Reuse the retained context for later deployments", heavy_flat)
-        self.assertIn("Companion a bounded delta or conflict check", heavy_flat)
-        self.assertIn("leave deployment entry incomplete", heavy_flat)
         self.assertIn("## Assign Companion", heavy)
         self.assertIn('agent_type="companion"', heavy)
         self.assertIn('task_name="companion"', heavy)
@@ -249,15 +267,6 @@ class MarkerTests(unittest.TestCase):
         self.assertIn("direct fast path", medium)
         self.assertIn("You are the main agent", medium)
         self.assertIn("Own planning, diagnosis, implementation", medium)
-        self.assertIn("## Required Documentation Read", medium)
-        self.assertIn("The first time the session enters `deployment state`", medium)
-        self.assertIn("directly read the complete current `agent_docs/`", medium_flat)
-        self.assertIn("framework exactly once", medium_flat)
-        self.assertIn("every module-specific Markdown document", medium)
-        self.assertIn("one shared session-level read across both routes", medium_flat)
-        self.assertIn("Reuse the retained context for later deployments", medium_flat)
-        self.assertIn("Companion a bounded delta or conflict check", medium_flat)
-        self.assertIn("leave deployment entry incomplete", medium_flat)
         self.assertIn("## Assign Support Work", medium)
         self.assertIn('agent_type="companion"', medium)
         self.assertIn('task_name="companion"', medium)

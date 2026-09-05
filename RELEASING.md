@@ -6,7 +6,7 @@ or project. There is no GitHub Release publication workflow.
 
 ## Source and artifact
 
-The current version is `1.1.14-private.1`. Keep
+The current version is `1.1.14-private.2`. Keep
 `codex_workflow/operate/VERSION` and the marker in
 `codex_workflow/operate/user_AGENTS.md` identical.
 
@@ -30,14 +30,14 @@ Use Python 3.11 or newer. From the clean checkout:
 python3 -B scripts/test_workflow_runtime.py -v
 python3 -B codex_workflow/runtime/workflow.py validate --package-root codex_workflow --json
 python3 -B scripts/package_release.py --output-dir /absolute/path/to/fresh-output
-python3 -B scripts/package_release.py --verify /absolute/path/to/fresh-output/codex_workflow-1.1.14-private.1.zip
+python3 -B scripts/package_release.py --verify /absolute/path/to/fresh-output/codex_workflow-1.1.14-private.2.zip
 ```
 
 On Windows use the equivalent `py -3.11` invocation and native paths. All
 lifecycle tests must use disposable homes and project roots; never test by
 installing into the owner's actual `~/.codex` or projects.
 
-The output is `codex_workflow-1.1.14-private.1.zip` and `SHA256SUMS`. Keep a
+The output is `codex_workflow-1.1.14-private.2.zip` and `SHA256SUMS`. Keep a
 separate provenance record with the source commit and completed verification.
 Do not publish a release, create a tag, or install as part of package creation.
 
