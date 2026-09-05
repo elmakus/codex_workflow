@@ -1,114 +1,57 @@
-# Release Process
+# Private package preparation
 
-This private downstream builds a local workflow artifact and matching checksum
-from a reviewed, pushed private commit. It does not publish GitHub Releases or
-use a public release channel. The package payload remains independent of
-repository presentation and development files.
+The private repository is the source of truth. This package is prepared for
+later explicit installation; building it never changes an installed runtime
+or project. There is no GitHub Release publication workflow.
 
-## Repository and asset layout
+## Source and artifact
 
-The repository-only packaging machinery used by this downstream is:
+The current version is `1.1.14-private.1`. Keep
+`codex_workflow/operate/VERSION` and the marker in
+`codex_workflow/operate/user_AGENTS.md` identical.
 
-```text
-scripts/package_release.py
-RELEASING.md
-```
+The ZIP includes only `codex_workflow/`. Repository documentation, tests,
+images, Git metadata, and old public ZIPs are not part of the package.
+Do not include the retired reporting skill or its script.
 
-The inherited `.github/workflows/release.yml` remains untouched but is not used
-for private delivery.
+## Preparation order
 
-Every archive contains exactly this top-level directory and nothing beside it:
+1. Review changes against the pinned upstream and run lifecycle tests.
+2. Commit and push the private candidate branch.
+3. Create a clean checkout of the pushed commit.
+4. Build a deterministic ZIP into a fresh directory and verify its contents.
+5. Record the exact source commit and SHA-256 beside the ZIP.
+6. Deliver the artifact without installing it. A later authorized rollout will
+   cover all existing projects together.
 
-```text
-codex_workflow/
-├── VERSION
-├── user_AGENTS.md
-├── AGENTS.md
-├── bootstrap.md
-├── install.md
-├── update.md
-├── remove.md
-├── workflow.py
-├── runtime/
-├── resources/                              # immutable package defaults
-├── agents/
-└── project_docs/
-```
-
-The package does not contain `README.md`, `illustration.png`,
-`workflow_break_down.md`, `RELEASING.md`, `.github/`, `scripts/`, `.git/`, or any
-other repository-only file. All files below `codex_workflow/` are included so
-the installed workflow remains self-contained.
-
-Each private build produces one universal asset for every supported operating
-system:
-
-- `codex_workflow-<version>.zip`;
-- `SHA256SUMS` for the ZIP asset.
-
-## Versioning
-
-Use SemVer 2.0.0. Keep the plain version in `codex_workflow/VERSION` and the
-`codex-workflow-version` marker in `codex_workflow/user_AGENTS.md` identical.
-The current private version is `1.1.13-private.2`. A later private build may
-increment the suffix to `1.1.13-private.3`, then `.4`, as needed. No release tag
-or new versioning framework is required.
-
-## Local build and validation
-
-First commit and push the reviewed private changes. Create a clean checkout of
-that pushed commit, confirm its commit ID, and run these commands there with a
-fresh, empty output directory. The builder uses only Python's standard library,
-requires Python 3.11 or newer, and works on Linux, macOS, and Windows.
-
-Linux/macOS:
+Use Python 3.11 or newer. From the clean checkout:
 
 ```sh
-private_output_dir="/absolute/path/to/fresh-empty-output"
 python3 -B scripts/test_workflow_runtime.py -v
-python3 -B scripts/test_deployment_token_report.py -v
-python3 scripts/package_release.py --output-dir "$private_output_dir"
-python3 scripts/package_release.py --verify "$private_output_dir/codex_workflow-1.1.13-private.2.zip"
+python3 -B codex_workflow/runtime/workflow.py validate --package-root codex_workflow --json
+python3 -B scripts/package_release.py --output-dir /absolute/path/to/fresh-output
+python3 -B scripts/package_release.py --verify /absolute/path/to/fresh-output/codex_workflow-1.1.14-private.1.zip
 ```
 
-Windows PowerShell:
+On Windows use the equivalent `py -3.11` invocation and native paths. All
+lifecycle tests must use disposable homes and project roots; never test by
+installing into the owner's actual `~/.codex` or projects.
 
-```powershell
-$PrivateOutputDir = "C:\absolute\path\to\fresh-empty-output"
-py -3.11 -B scripts\test_workflow_runtime.py -v
-py -3.11 -B scripts\test_deployment_token_report.py -v
-py -3.11 scripts\package_release.py --output-dir $PrivateOutputDir
-py -3.11 scripts\package_release.py --verify "$PrivateOutputDir\codex_workflow-1.1.13-private.2.zip"
-```
+The output is `codex_workflow-1.1.14-private.1.zip` and `SHA256SUMS`. Keep a
+separate provenance record with the source commit and completed verification.
+Do not publish a release, create a tag, or install as part of package creation.
 
-The build validates the version, marker, lifecycle runtime, and required
-resources; rejects generated Python caches; creates a deterministic ZIP asset;
-and writes `SHA256SUMS` beside the ZIP. Run the runtime tests before packaging,
-inspect the archive listing when package contents change, and record the clean
-commit ID and ZIP checksum. Never use the upstream-tracked
-`dist/codex_workflow-1.1.11.zip` as the private installation artifact.
+## Later installation boundary
 
-## Private artifact handoff
+Read the bundled `operate/bootstrap.md` or `operate/update.md` at the time of
+an owner-requested installation. The local migration entry point is
+`codex_workflow/runtime/workflow.py update --source <verified-package-root>
+--project <selected-project>`. The old 1.1.13 launcher does not understand the
+new package layout.
 
-The tested clean private commit, its freshly built ZIP, and `SHA256SUMS` are
-sufficient. Do not create or push a release tag or publish a GitHub Release for
-this artifact.
-
-Private installation and update use the local verified package root. They do
-not require a downloader, GitHub authentication, keyring integration, or a
-custom release service.
-
-## Consumer commands
-
-- Initial installation reads the extracted release package's
-  `codex_workflow/bootstrap.md`; the bundled lifecycle CLI validates and
-  applies the user-level bootstrap transaction directly.
-- `codex_workflow --install` reads the installed `install.md` and creates only
-  project-level workflow assets from the existing bootstrap.
-- `codex_workflow --check-update` reports the installed private version and that
-  public release comparison is disabled.
-- `codex_workflow --update` requires an explicit verified private/local
-  `--source`; without one it fails closed before any public release lookup.
-- `codex_workflow --remove` first displays a destructive dry-run summary and
-  requires one explicit second confirmation before deleting workflow-owned
-  files.
+The runtime under `~/.codex` and worker definitions are shared. The target
+project's `AGENTS.md`, protected state and `agent_docs/` are project-specific.
+A first migration changes shared runtime behavior and one project wrapper;
+continue with all remaining existing project wrappers in the same coordinated
+rollout. Same-runtime project catch-up handles these later targets. There is
+no permanent mixed-version or selective-project rollout planned.

@@ -284,7 +284,7 @@ def plan_project_install(package: PackageLayout, project: ProjectPaths) -> Opera
         warnings.append(f"{project.source_dir} will be deleted after installation")
     actions = [
         {
-            "role": "doc-writer",
+            "role": "archivist",
             "action": "initialize or verify the Project Documentation Framework",
             "required": True,
             "files": action_docs,

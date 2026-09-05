@@ -5,16 +5,16 @@ Use after Medium is selected under `AGENTS.md`.
 ## Your Ownership
 
 You are the main agent. Own planning, diagnosis, implementation, verification,
-integration, and user communication. Keep production implementation, production
-repair, root-cause decisions, and verification in your own role.
+integration, and user communication. Keep production repair and root-cause
+decisions in your role.
 
 Use only these support roles:
 
 | Role | Ownership |
 | --- | --- |
-| Companion | Keep one persistent read-only worker for context in the project ecosystem. Assign bounded project-context work and use its retained operational context. Keep Internet research outside this role. |
+| Companion | Create at most one persistent read-only worker for bounded context work in the project ecosystem and retained operational context. |
 | Investigator | Create a disposable read-only worker for bounded external-information research on the Internet. Use its synthesis as evidence; retain project discovery and decisions yourself. |
-| Closure Steward | Create one fresh worker at deployment closure to reconcile `agent_docs/` and produce the Deployment Token Report. Keep implementation and verification in your own role. |
+| Archivist | Assign verified public or project documentation and deployment handoff work under `~/.codex/codex_workflow/archivist.md`; it owns documentation, the read-only Git handoff, and closure evidence. |
 
 ## Required Documentation Read
 
@@ -26,64 +26,62 @@ read the complete current `agent_docs/` framework exactly once:
 - `project_progress.md`, `project_diary.md`, and `latest_session_work.md`;
 - every module-specific Markdown document under `agent_docs/`.
 
-Treat this as one shared session-level read across both routes. After it
-completes, do not directly reopen or reread any framework document during the
-rest of the session, including later deployments or route changes. Reuse the
-retained context. When freshness or a later document change matters, assign
-Companion a bounded delta or conflict check instead of reading the document
-again yourself. If a required document is missing or unreadable during the
-initial read, report the intake blocker and do not treat deployment entry as
-complete.
-
-## Initialize Companion
-
-For each substantive Medium deployment, initialize one persistent Companion
-with `agent_type="companion"`, `task_name="companion"`, and
-`fork_turns="none"`, or reuse the existing target. In its first brief, provide
-the goal, route, relevant constraints, a lowercase underscore-safe deployment
-ID, and this exact standalone marker:
-
-```text
-codex-workflow-deployment-start: <deployment_id>
-```
-
-Use this marker as Closure Steward's reporting boundary. Reuse the same
-Companion after a route change. If Companion is unavailable, continue when safe
-and report the limitation.
+Treat this as one shared session-level read across both routes. Reuse the
+retained context for later deployments and route changes. Assign Companion a
+bounded delta or conflict check when a document changes or freshness matters.
+Missing or unreadable required documents leave deployment entry incomplete;
+report the intake blocker.
 
 ## Assign Support Work
 
 Decide whether Investigator is useful, what Companion should handle, and how
 support work relates to your implementation. Assign a support capability only
-when it fits the task.
+when it fits the task. Create Companion with `agent_type="companion"`,
+`task_name="companion"`, and `fork_turns="none"` when one bounded assignment can
+replace multiple reads or tool turns, suppress bulky evidence, or reuse retained
+context later. Reuse the same Companion after a route change.
 
-Start each initial support package with **Task ID**, a logical identifier unique
-within the deployment. Then use the capsule for that role:
+Start each initial package for a role in this table with **Task ID**, a logical
+identifier unique within the deployment. Then use its capsule:
 
 | Role | Capsule parts |
 | --- | --- |
 | Companion | **Project Context Scope**; **Context Task + Goal**; **Main-Agent Context Guidance** |
 | Investigator | **Research Context**; **Research Question + Goal**; **Main-Agent Research Guidance** |
+| Archivist | **Documentation Context + Audience**; **Documentation Task + Goal**; **Main-Agent Documentation Guidance** |
 
 Treat these named parts as the complete structure. Use Task ID to correlate
 dispatch, reports, follow-ups, and artifacts. It may match `task_name`; keep it
 distinct in meaning from a platform thread ID. Require each worker to echo Task
-ID in every report. Repeat it in follow-ups and send only the delta. Treat the
-Companion deployment marker and Closure Steward brief as lifecycle exceptions.
-Use the package format to standardize communication while retaining the
-ownership defined above.
+ID in every report. Repeat it in follow-ups and send only the delta. Use the
+package format to standardize communication while retaining the ownership
+defined above.
+
+## Orchestration Guidance
+
+Reduce main-agent rollouts while retaining implementation and verification
+ownership. Batch independent reads, searches, metadata checks, and tool
+operations into bounded calls. When several support workers inform the same
+decision, dispatch them together, wait for the relevant set to finish, and
+synthesize once. Combine related Companion questions into one assignment. Use
+appropriately long lifecycle waits for the expected worker set. Start another
+batch only when existing evidence materially changes the questions.
+
+Use each batch as a temporary scheduling choice. Preserve sequential ordering
+for dependent work and choose the topology that fits the task.
 
 ## Fixed Boundaries
 
-- Never create a production executor, tester, or normal doc-writer package in
-  Medium. Retain that work yourself.
+- Limit Medium subagents to Companion, Investigator, and Archivist.
+  Archivist owns documentation only; keep production implementation
+  and verification with the main agent.
 - Keep at most 20 active subagents in the session, including Companion,
-  Investigators, and Closure Steward. Use one persistent Companion and at most
-  one Closure Steward at a time.
+  Investigators and Archivists. Use at most one persistent Companion and one
+  Archivist closure owner per deployment.
 - Give support workers bounded questions and sufficient context. Own all
   material interpretations and final claims.
-- Preserve unrelated work, verify in proportion to risk, and never claim an
-  unrun check passed.
+- Preserve unrelated work, verify in proportion to risk, and base every passing
+  claim on completed validation evidence.
 
 Within those boundaries, choose the task-specific topology, order, concurrency,
 tools, checkpoints, and response to failures. Work directly when a support role
@@ -91,13 +89,12 @@ adds no value.
 
 ## Fast Path and Closure
 
-Use the direct fast path for questions and small or odd bounded tasks. Do not
-initialize Companion or another worker, call Closure Steward, or produce a
-deployment token report for that path.
+Use the direct fast path for questions and small or odd bounded tasks. This path
+uses no workers or closure handoff.
 
 Before the final response that completes, pauses, or blocks a substantive
-deployment, follow `~/.codex/codex_workflow/closure_steward.md` exactly once.
-Pass only the route, a unique deployment ID, and closure state. Wait for the
-fresh Closure Steward and relay its handoff and exact six-column
-`$deployment-token-report` table. Create a new ID, handoff, and report for each
-later substantive deployment.
+deployment, follow `~/.codex/codex_workflow/archivist.md` exactly once.
+Update `agent_docs/project_diary.md` yourself when lasting decisions or lessons
+change. Combine remaining documentation and handoff work in one Archivist
+assignment when practical. Relay its evidence-backed handoff. Use a new
+deployment ID for each later deployment.

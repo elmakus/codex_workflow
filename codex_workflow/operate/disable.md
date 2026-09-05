@@ -3,7 +3,7 @@
 Run the installed lifecycle CLI from the project directory:
 
 ```text
-python3 ~/.codex/codex_workflow/workflow.py disable --project <project> --json
+python3 ~/.codex/codex_workflow/runtime/workflow.py disable --project <project> --json
 ```
 
 Expect the command to move the recognized `AGENTS.md` atomically to the hidden

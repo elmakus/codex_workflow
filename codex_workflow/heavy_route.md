@@ -18,13 +18,12 @@ sufficient.
 
 | Role | Ownership |
 | --- | --- |
-| Companion | Keep one persistent read-only worker for the project ecosystem. Assign bounded project-context work and use its retained operational context. Keep Internet research outside this role. |
+| Companion | Create at most one persistent read-only worker for bounded context work in the project ecosystem and retained operational context. |
 | Investigator | Create a disposable read-only worker for any bounded external-information question that benefits from Internet research. Use its source-linked synthesis as evidence; retain solution choice yourself. |
 | Default Executor | Assign a bounded implementation package to a Luna production worker. Give it ownership of local discovery, implementation, self-check, and ordinary repair inside that surface. |
 | Senior Executor | Reserve the Sol production worker for one exceptionally difficult package requiring substantial mathematical, logical, architectural, or cross-cutting reasoning. |
-| Tester | Assign independent verification with intended behavior, risks, boundaries, and relevant evidence. Let it design and execute suitable tests and own assigned test assets; keep production fixes with an Executor. |
-| Doc-writer | Assign a durable public-documentation surface and verified facts. Leave automatic `agent_docs/` closure to Closure Steward. |
-| Closure Steward | Create one fresh worker at deployment closure to reconcile `agent_docs/` and produce the Deployment Token Report. Keep implementation and verification outside this role. |
+| Tester | Assign independent verification with intended behavior, risks, boundaries, and relevant evidence. Let it design and execute suitable tests and own assigned test assets. |
+| Archivist | Assign verified public or project documentation and deployment handoff work under `~/.codex/codex_workflow/archivist.md`; it owns documentation, the read-only Git handoff, and closure evidence. |
 
 Use any role whose capability fits the task. Preserve its ownership boundary and
 omit it when it adds no value.
@@ -39,35 +38,25 @@ read the complete current `agent_docs/` framework exactly once:
 - `project_progress.md`, `project_diary.md`, and `latest_session_work.md`;
 - every module-specific Markdown document under `agent_docs/`.
 
-Treat this as one shared session-level read across both routes. After it
-completes, do not directly reopen or reread any framework document during the
-rest of the session, including later deployments or route changes. Reuse the
-retained context. When freshness or a later document change matters, assign
-Companion a bounded delta or conflict check instead of reading the document
-again yourself. If a required document is missing or unreadable during the
-initial read, report the intake blocker and do not treat deployment entry as
-complete.
+Treat this as one shared session-level read across both routes. Reuse the
+retained context for later deployments and route changes. Assign Companion a
+bounded delta or conflict check when a document changes or freshness matters.
+Missing or unreadable required documents leave deployment entry incomplete;
+report the intake blocker.
 
-## Initialize Companion
+## Assign Companion
 
-For each substantive Heavy deployment, initialize one persistent Companion with
-`agent_type="companion"`, `task_name="companion"`, and `fork_turns="none"`, or
-reuse the existing target. In its first brief, provide the goal, route, relevant
-constraints, a lowercase underscore-safe deployment ID, and this exact
-standalone marker:
-
-```text
-codex-workflow-deployment-start: <deployment_id>
-```
-
-Use this marker as Closure Steward's reporting boundary. Reuse the same
-Companion after a route change. If Companion is unavailable, continue when safe
-and report the limitation.
+Create Companion with `agent_type="companion"`, `task_name="companion"`, and
+`fork_turns="none"` when a bounded project-context assignment can replace
+multiple reads or tool turns, suppress bulky evidence, or reuse retained
+context across later decisions. Otherwise work from your existing context.
+Reuse the same Companion after a route change, and combine related context
+questions into one assignment when practical.
 
 ## Role-Specific Work Packages
 
-Start every initial task-worker package with **Task ID**, a logical identifier
-unique within the deployment. Then use the capsule for that role:
+Start every initial package for a role in this table with **Task ID**, a logical
+identifier unique within the deployment. Then use its capsule:
 
 | Role | Capsule parts |
 | --- | --- |
@@ -75,7 +64,7 @@ unique within the deployment. Then use the capsule for that role:
 | Investigator | **Research Context**; **Research Question + Goal**; **Main-Agent Research Guidance** |
 | Default or Senior Executor | **Implementation Context + Ownership**; **Implementation Task + Goal**; **Main-Agent Implementation Guidance** |
 | Tester | **Verification Context**; **Verification Goal**; **Main-Agent Verification Guidance** |
-| Doc-writer | **Documentation Context + Audience**; **Documentation Task + Goal**; **Main-Agent Documentation Guidance** |
+| Archivist | **Documentation Context + Audience**; **Documentation Task + Goal**; **Main-Agent Documentation Guidance** |
 
 Use this package structure to standardize communication with each worker. Keep
 role selection, topology, dependencies, execution order, verification,
@@ -87,8 +76,7 @@ knowledge, decisions, constraints, approach, or cautions that materially help
 that package.
 
 Require workers to echo Task ID in every report. Repeat it in follow-ups and send
-only changed role-capsule parts. Treat the Companion deployment marker and
-Closure Steward brief as lifecycle exceptions.
+only changed role-capsule parts.
 
 Use Task ID as a logical package identifier. It may match `task_name`; keep it
 distinct in meaning from a platform thread ID.
@@ -108,21 +96,45 @@ any decision you must make. Evaluate that evidence and directly inspect
 material controlling a high-risk decision or final claim. Rerun a fresh,
 credible worker check only for a concrete reason.
 
+## Orchestration Guidance
+
+Optimize your coordination for fewer main-agent decision turns while retaining
+task understanding and acceptance authority.
+
+- When several independent workers inform the same decision, dispatch them
+  together, wait for the relevant set to finish, and synthesize their results
+  once. Start another batch only when earlier evidence materially changes the
+  next questions.
+- Launch independent, non-overlapping implementation packages together when
+  their dependencies allow it. Integrate their terminal reports at a shared
+  decision point.
+- Prefer one bounded call containing independent reads, searches, metadata
+  checks, or other tool operations you must perform yourself. Use appropriately
+  long lifecycle waits for the expected worker set.
+- Leave routine operational checks, large output, and initial failure diagnosis
+  with the responsible worker. Evaluate its concise evidence; intervene
+  directly when the result changes architecture, scope, risk, or acceptance.
+- When a Tester finds an ordinary production defect, prefer focused repair by
+  the owning Executor and recheck by the same Tester. Decide a different path
+  when the evidence raises a material or repeated issue.
+
+Use each batch as a temporary scheduling choice. Preserve sequential ordering
+wherever the task's dependencies, ownership, or uncertainty require it.
+
 ## Fixed Boundaries
 
 - Keep at most 20 active subagents in the session. This count includes the
-  persistent Companion and the later Closure Steward.
-- Use one persistent Companion and at most one Senior Executor. Use at most one
-  Closure Steward at a time.
-- Initial task workers normally use `fork_turns="none"`; give them an explicit
-  brief instead of copying your entire conversation.
+  persistent Companion and all Archivists.
+- Use at most one persistent Companion and at most one Senior Executor. Assign
+  one Archivist closure owner per deployment.
+- Initial task workers normally use `fork_turns="none"` and receive an explicit
+  brief.
 - Create and coordinate every worker directly.
-- Run mutable assignments concurrently only when their ownership does not
-  overlap. Preserve unrelated user work and keep Git mutations within explicit
-  authority.
-- Keep each Executor's production ownership within its capsule. Keep production
-  repair outside Tester and unverified behavior outside Doc-writer.
-- Never weaken validation or claim an unrun check passed.
+- Concurrent mutable assignments require non-overlapping ownership. Preserve
+  unrelated user work and keep Git mutations within explicit authority.
+- Executors own production repair within their capsules. Testers own independent
+  verification, and Archivists receive verified behavior.
+- Base every passing claim on completed validation evidence.
 - When workers are running and no useful independent work remains, make one
   event-driven `wait_agent` call instead of short repeated polling. Normally
   use `1200000` ms, within a sensible `300000`-`3600000` ms range; continue
@@ -133,13 +145,12 @@ the topology and lifecycle that fit the task within them.
 
 ## Fast Path and Closure
 
-Use the direct fast path for questions and small or odd bounded tasks. Do not
-call workers merely because Heavy is selected, and do not produce a deployment
-token report for that path.
+Use the direct fast path for questions and small or odd bounded tasks. This path
+uses no workers or closure handoff.
 
 Before the final response that completes, pauses, or blocks a substantive
-deployment, follow `~/.codex/codex_workflow/closure_steward.md` exactly once.
-Pass only the route, unique deployment ID, and closure state. Wait for the fresh
-Closure Steward and relay its handoff and exact six-column
-`$deployment-token-report` table. Create a new closure worker and report for
-each later substantive deployment.
+deployment, follow `~/.codex/codex_workflow/archivist.md` exactly once.
+Update `agent_docs/project_diary.md` yourself when lasting decisions or lessons
+change. Combine remaining documentation and handoff work in one Archivist
+assignment when practical. Relay its evidence-backed handoff. Use a new
+deployment ID for each later deployment.

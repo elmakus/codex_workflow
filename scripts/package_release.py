@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Build and validate the codex_workflow GitHub Release assets.
+"""Build and validate the private codex_workflow package.
 
 The release payload is deliberately sourced from one directory only:
 ``codex_workflow/``.  The script uses only Python's standard library so it can
@@ -22,8 +22,8 @@ from typing import Iterable, Iterator
 
 
 PACKAGE_DIR_NAME = "codex_workflow"
-VERSION_FILE = "VERSION"
-USER_AGENTS_FILE = "user_AGENTS.md"
+VERSION_FILE = "operate/VERSION"
+USER_AGENTS_FILE = "operate/user_AGENTS.md"
 VERSION_MARKER = re.compile(r"codex-workflow-version:\s*([^\s<]+)")
 IDENTIFIER = re.compile(r"^[0-9A-Za-z-]+$")
 USER_ID_MARKER = "<!-- codex-workflow-user-id: viettran-edgeAI/codex_workflow -->"
@@ -34,13 +34,12 @@ BUILTIN_WORKERS = frozenset(
         "default_executor",
         "senior_executor",
         "tester",
-        "doc-writer",
+        "archivist",
         "companion",
         "investigator",
-        "closure_steward",
     }
 )
-BUILTIN_SKILLS = frozenset({"deployment-token-report"})
+BUILTIN_SKILLS: frozenset[str] = frozenset()
 
 
 class ReleaseError(ValueError):
@@ -206,7 +205,7 @@ def _validate_runtime(package_root: Path) -> None:
     command = [
         sys.executable,
         "-B",
-        str(package_root / "workflow.py"),
+        str(package_root / "runtime" / "workflow.py"),
         "validate",
         "--package-root",
         str(package_root),
@@ -287,13 +286,15 @@ def _verify_member_names(names: Iterable[str]) -> list[str]:
     required = {
         f"{PACKAGE_DIR_NAME}/{VERSION_FILE}",
         f"{PACKAGE_DIR_NAME}/{USER_AGENTS_FILE}",
-        f"{PACKAGE_DIR_NAME}/bootstrap.md",
-        f"{PACKAGE_DIR_NAME}/install.md",
-        f"{PACKAGE_DIR_NAME}/update.md",
-        f"{PACKAGE_DIR_NAME}/check_update.md",
-        f"{PACKAGE_DIR_NAME}/remove.md",
-        f"{PACKAGE_DIR_NAME}/closure_steward.md",
-        f"{PACKAGE_DIR_NAME}/workflow.py",
+        f"{PACKAGE_DIR_NAME}/operate/bootstrap.md",
+        f"{PACKAGE_DIR_NAME}/operate/install.md",
+        f"{PACKAGE_DIR_NAME}/operate/update.md",
+        f"{PACKAGE_DIR_NAME}/operate/remove.md",
+        f"{PACKAGE_DIR_NAME}/operate/personalization_guide.md",
+        f"{PACKAGE_DIR_NAME}/operate/enable.md",
+        f"{PACKAGE_DIR_NAME}/operate/disable.md",
+        f"{PACKAGE_DIR_NAME}/archivist.md",
+        f"{PACKAGE_DIR_NAME}/runtime/workflow.py",
         f"{PACKAGE_DIR_NAME}/runtime/__init__.py",
         f"{PACKAGE_DIR_NAME}/runtime/_toml.py",
         f"{PACKAGE_DIR_NAME}/runtime/backup.py",
@@ -313,14 +314,6 @@ def _verify_member_names(names: Iterable[str]) -> list[str]:
     required.update(
         f"{PACKAGE_DIR_NAME}/agents/{worker}.toml" for worker in BUILTIN_WORKERS
     )
-    for skill in BUILTIN_SKILLS:
-        required.update(
-            {
-                f"{PACKAGE_DIR_NAME}/skills/{skill}/SKILL.md",
-                f"{PACKAGE_DIR_NAME}/skills/{skill}/agents/openai.yaml",
-                f"{PACKAGE_DIR_NAME}/skills/{skill}/scripts/report_tokens.py",
-            }
-        )
     missing = sorted(required.difference(normalized))
     if missing:
         raise ReleaseError("archive is missing: " + ", ".join(missing))
@@ -441,7 +434,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--output-dir", type=Path, default=repository_root() / "dist", help="asset directory"
     )
-    parser.add_argument("--release-tag", help="validate a release tag such as v1.1.13")
+    parser.add_argument("--release-tag", help="validate a release tag such as v1.1.14")
     parser.add_argument("--version", help="validate an expected package version")
     parser.add_argument(
         "--verify",

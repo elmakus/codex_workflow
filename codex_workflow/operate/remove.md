@@ -11,7 +11,7 @@ user. Do not ask any other questions.
 First run the lifecycle CLI without `--confirm`:
 
 ```text
-python3 ~/.codex/codex_workflow/workflow.py \
+python3 ~/.codex/codex_workflow/runtime/workflow.py \
   remove --project <project> --json
 ```
 
@@ -45,7 +45,7 @@ If the reply is not an explicit affirmative, stop without running the second
 phase. After an affirmative reply, run:
 
 ```text
-python3 ~/.codex/codex_workflow/workflow.py \
+python3 ~/.codex/codex_workflow/runtime/workflow.py \
   remove --project <project> --confirm --json
 ```
 

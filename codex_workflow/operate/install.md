@@ -37,7 +37,7 @@ instruction. Do not misreport those states as an ordinary disabled installation.
 Use the installed CLI:
 
 ```text
-python3 ~/.codex/codex_workflow/workflow.py install \
+python3 ~/.codex/codex_workflow/runtime/workflow.py install \
   --project <project>
 ```
 
@@ -58,10 +58,12 @@ error if the initial user-level bootstrap is missing.
 ## Required documentation action
 
 For every new installation or documentation-recovery result, run the required
-`doc-writer` action. Skip it for a healthy `already enabled` or `already
+`archivist` action. Skip it for a healthy `already enabled` or `already
 disabled` no-op. Spawn the returned action with
-`agent_type="doc-writer"`, `task_name="install_docs"`, and
-`fork_turns="none"`. Pass the project root and returned `files`, `created_files`,
+`agent_type="archivist"`, `task_name="install_docs"`, and
+`fork_turns="none"`. Use Task ID `install_docs` and the Documentation Context +
+Audience, Documentation Task + Goal, and Main-Agent Documentation Guidance
+capsule. Pass the project root and returned `files`, `created_files`,
 `recovery_files`, `framework`, and `required_context_files` lists. Initialize
 only documents in `files`: these are newly created or still-template-marked
 recovery documents. Remove their bootstrap markers and preserve every other

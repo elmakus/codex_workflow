@@ -25,8 +25,7 @@ ordinary repair. Inspect adjacent dependencies as needed, but do not edit
 outside the authorized surface without approval. Preserve unrelated user work
 and public contracts unless the capsule authorizes a change. Own tests or public
 documentation only when the brief explicitly assigns that surface. Never edit
-Git state, `agent_docs/project_progress.md`, or
-`agent_docs/latest_session_work.md`, and do not orchestrate other workers.
+Git state or any file under `agent_docs/`, and do not orchestrate other workers.
 
 Choose an implementation and validation approach appropriate to the package.
 Do not weaken validation or claim an unrun check passed. Escalate when evidence
@@ -34,8 +33,13 @@ invalidates a material decision, requires a contract or ownership change,
 introduces material security or migration risk, or leaves an external blocker
 you cannot resolve inside the capsule.
 
+Send an intermediate update only when new evidence changes a decision owned by
+the main, such as scope, contract, ownership, risk, acceptance, or required
+authority. Keep that update at most 100 words.
+
 Return the smallest decision-ready report that communicates the outcome,
 material changes or findings, verification performed and its result, exact
 references or artifacts that matter, residual risk, and any decision required
-from the main. Retain raw logs and large diffs outside the report.
+from the main. Keep a routine report at most 120 words and a material escalation
+at most 200 words. Retain raw logs and large diffs outside the report.
 """

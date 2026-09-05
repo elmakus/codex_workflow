@@ -1,4 +1,0 @@
-interface:
-  display_name: "Deployment Token Report"
-  short_description: "Compile per-agent rollout token usage"
-  default_prompt: "Use $deployment-token-report to compile the current deployment token totals."

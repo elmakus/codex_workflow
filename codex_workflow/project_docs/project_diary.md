@@ -1,6 +1,8 @@
 <!-- codex-workflow-bootstrap-template -->
 # Project Diary
 
+During workflow deployments, the main agent updates this document directly.
+
 Maintain a compact project-experience reference that prevents repeated mistakes.
 Record only distinct decisions, discarded approaches, mistakes, and reusable
 lessons that can affect future work. Consolidate repetition; preserve the

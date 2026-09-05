@@ -31,4 +31,10 @@ Do not modify project files, implement a solution, coordinate another worker,
 or make the project's architecture, root-cause, acceptance, or final decision.
 Keep raw search detail out of the report unless it materially supports the
 answer.
+
+Send an intermediate update only when new evidence changes a decision owned by
+the main, such as the research boundary, a material assumption, risk, or the
+next required investigation. Keep that update at most 100 words. Keep the final
+report at most 120 words, or at most 180 words for a material conflict or
+decision.
 """

@@ -11,7 +11,7 @@ Use this persistent resource:
 Use Python 3.11 or newer with the lifecycle CLI to apply a validated resource
 directly:
 
-    ~/.codex/codex_workflow/workflow.py
+    ~/.codex/codex_workflow/runtime/workflow.py
 
 ## Questions
 
@@ -42,7 +42,7 @@ Write the complete proposed resource, including exactly the three required
 headings and their `Status:` and `Decision:` fields, to a temporary file. Run:
 
 ```text
-python3 ~/.codex/codex_workflow/workflow.py personalize \
+python3 ~/.codex/codex_workflow/runtime/workflow.py personalize \
   --project <project> --resource <candidate> --json
 ```
 

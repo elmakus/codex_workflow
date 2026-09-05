@@ -132,7 +132,7 @@ def plan_user_agents(
     package: PackageLayout, runtime: RuntimePaths
 ) -> list[Mutation]:
     return _plan_user_agents_from_source(
-        package.root / "user_AGENTS.md",
+        package.operate / "user_AGENTS.md",
         runtime,
     )
 
