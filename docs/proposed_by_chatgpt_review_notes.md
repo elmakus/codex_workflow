@@ -129,6 +129,30 @@ Do not restore the deployment token report, reporting skill, online release chec
 
 The private package intentionally uses explicit verified local update sources and a simpler closure path.
 
+### 12. Heavy Main is an orchestrator, not a production executor
+
+This is an explicit owner decision motivated by Heavy cost economics.
+
+For substantive Heavy work, Main should minimize direct task execution. Code implementation, broad repository analysis, security review, testing, repository migration, material Git/GitHub task operations, refactoring, repair, delegable research, and work already assigned to a worker should stay with specialized workers by default.
+
+If assigned work stops progressing, the intended order is:
+
+1. inspect the existing worker/thread status;
+2. resume that worker when possible;
+3. wait or message it when it is still running/waiting;
+4. if it completed partially, reuse its result and delegate only the remainder;
+5. reassign the remainder only when the original worker is irrecoverably unavailable.
+
+A slow, stalled, or temporarily allowance-blocked worker is not sufficient reason for Main to take over its work. After allowance recovers, resuming the same worker/thread is preferred.
+
+Direct Main task execution remains allowed only for genuinely trivial work that costs less than delegation, or operations needed solely for orchestration. That exception must not be stretched to cover implementation, security review, repository migrations, material Git/GitHub task operations, testing, or delegable research. "Take over to make progress" or "take over to go faster" is intentionally rejected as justification.
+
+Main may perform targeted lightweight final inspection for a high-risk decision or final claim, but this must not become a second execution of the worker's substantive task.
+
+For repetitive independent units such as many similar repository migrations, do not maximize concurrency mechanically. Prefer bounded batches or sequential execution when that reduces duplicated context and Main coordination cost. This is a preference, not a global one-repo-at-a-time rule and not a new aggregate subagent cap.
+
+Reason: the more expensive Main model should spend context and reasoning on planning, coordination, integration, acceptance, and user communication rather than duplicating work that a cheaper specialized worker can perform.
+
 ## Migration expectations
 
 A review should specifically verify that upgrading an existing installation to this branch behaves safely:
@@ -147,6 +171,10 @@ The reviewer should freely challenge implementation quality. In particular, chec
 - stale references to Light or Medium in active runtime/instruction surfaces;
 - contradictory state or workflow instructions;
 - accidental need to read Heavy for leaf tasks;
+- any Heavy wording that still encourages Main to perform executor/researcher/tester work directly;
+- any path where a stalled worker is treated as permission for Main takeover before resume/wait/message/reassignment is exhausted;
+- final-verification wording broad enough to make Main redo the substantive task;
+- concurrency wording that accidentally creates either a new hard global cap or a blanket one-item-at-a-time rule;
 - broken package validation after deleting `medium_route.md`;
 - broken update cleanup for old installed copies of `medium_route.md`;
 - incorrect Senior model assertions or worker validation;
