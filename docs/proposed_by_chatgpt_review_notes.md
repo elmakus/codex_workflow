@@ -119,9 +119,9 @@ The main agent should omit roles that add no value. Companion remains at most on
 
 When workers are already running and no useful independent work remains, the main agent should prefer one appropriately long event-driven `wait_agent` call over repeated short polling.
 
-The existing guidance around a normal `1200000` ms wait and sensible `300000`-`3600000` ms range is intentional.
+The existing guidance around a normal `1800000` ms (30 minute) wait and sensible `300000`-`3600000` ms range is intentional.
 
-Reason: avoid wasteful polling turns while still continuing immediately when a child finishes early.
+Reason: Luna max can be slow; avoid wasteful polling turns while still continuing immediately when a child finishes early.
 
 ### 11. Token-reporting and online-update machinery stay removed
 
@@ -155,6 +155,14 @@ For repetitive independent units such as many similar repository migrations, do 
 
 Reason: the more expensive Main model should spend context and reasoning on planning, coordination, integration, acceptance, and user communication rather than duplicating work that a cheaper specialized worker can perform.
 
+### 13. Heavy orchestration is silent by default
+
+Routine orchestration should happen through tool calls without a user-visible narration after every wait, resume, thread/status check, worker message, queue decision, result reuse, or routine transition. Silence is about output economy only; Main still performs all reasoning, monitoring, lifecycle operations, acceptance verification, and problem handling required for correctness.
+
+User-visible status is reserved for meaningful milestones: a substantive stage/repository completed and verified, a blocker requiring the user's decision, a security/publication risk, a material scope/plan change, or whole-task completion. While more work continues, at most one brief status line per completed meaningful stage/repository is preferred.
+
+Reason: repeated prose about internal orchestration consumes output/context tokens from the more expensive Main without improving execution or helping the user make a decision.
+
 ## Migration expectations
 
 A review should specifically verify that upgrading an existing installation to this branch behaves safely:
@@ -176,6 +184,7 @@ The reviewer should freely challenge implementation quality. In particular, chec
 - any Heavy wording that still encourages Main to perform executor/researcher/tester work directly;
 - any path where a stalled worker is treated as permission for Main takeover before resume/wait/message/reassignment is exhausted;
 - any path where an unavailable predecessor without a complete handoff causes Main to read/reconstruct detailed predecessor state instead of delegating recovery + continuation;
+- any wording that encourages narration after routine wait/resume/status/message/queue operations instead of silent tool-call orchestration;
 - final-verification wording broad enough to make Main redo the substantive task;
 - concurrency wording that accidentally creates either a new hard global cap or a blanket one-item-at-a-time rule;
 - broken package validation after deleting `medium_route.md`;
