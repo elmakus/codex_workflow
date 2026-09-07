@@ -9,10 +9,20 @@ work directly from `AGENTS.md` without workers and without loading the Heavy
 contract. Substantive work enters deployment state and loads `heavy_route.md`.
 
 The main agent controls scope, architecture, dependencies, scheduling,
-acceptance, and final claims. Independent operations can be batched; dependent
-work and overlapping writes remain sequential. Companion is optional and
-created when bounded context work is useful. Reports have role-specific word
-budgets, with supporting evidence retained outside routine reports.
+acceptance, and final claims. In Heavy it is an orchestrator rather than a
+production executor: implementation, broad repository/security analysis,
+testing, task-level Git/GitHub operations, repair, and delegable research stay
+with the appropriate workers by default. When assigned work stalls, Main should
+resume, wait, message, or reassign the remaining work rather than take it over.
+Direct task work is reserved for genuinely trivial operations or operations
+needed solely for orchestration.
+
+Independent operations can be batched when parallelism is worthwhile; dependent
+work and overlapping writes remain sequential. For repetitive independent units,
+bounded batches or sequential execution are preferred when they reduce duplicate
+context and main-agent coordination cost. Companion is optional and created when
+bounded context work is useful. Reports have role-specific word budgets, with
+supporting evidence retained outside routine reports.
 
 Heavy does not impose an aggregate active-subagent limit; the main chooses
 worker count and concurrency for each task. The Codex platform configuration
