@@ -145,6 +145,8 @@ If assigned work stops progressing, the intended order is:
 
 A slow, stalled, or temporarily allowance-blocked worker is not sufficient reason for Main to take over its work. After allowance recovers, resuming the same worker/thread is preferred.
 
+If the predecessor is irrecoverably unavailable and left no complete handoff, Main should not reconstruct its detailed work. Main should identify only available recovery sources such as predecessor thread ID, worktree, branch, handoff path, or existing commits and pass those references to the replacement worker. The replacement worker owns reading those sources, determining completed versus remaining work, and continuing from the first unfinished step. The intended flow is `resume predecessor -> if impossible, delegate recovery + continuation -> integrate`, not `resume impossible -> Main reconstructs -> delegate remainder`.
+
 Direct Main task execution remains allowed only for genuinely trivial work that costs less than delegation, or operations needed solely for orchestration. That exception must not be stretched to cover implementation, security review, repository migrations, material Git/GitHub task operations, testing, or delegable research. "Take over to make progress" or "take over to go faster" is intentionally rejected as justification.
 
 Main may perform targeted lightweight final inspection for a high-risk decision or final claim, but this must not become a second execution of the worker's substantive task.
@@ -173,6 +175,7 @@ The reviewer should freely challenge implementation quality. In particular, chec
 - accidental need to read Heavy for leaf tasks;
 - any Heavy wording that still encourages Main to perform executor/researcher/tester work directly;
 - any path where a stalled worker is treated as permission for Main takeover before resume/wait/message/reassignment is exhausted;
+- any path where an unavailable predecessor without a complete handoff causes Main to read/reconstruct detailed predecessor state instead of delegating recovery + continuation;
 - final-verification wording broad enough to make Main redo the substantive task;
 - concurrency wording that accidentally creates either a new hard global cap or a blanket one-item-at-a-time rule;
 - broken package validation after deleting `medium_route.md`;
