@@ -29,6 +29,15 @@ remainder only when the existing worker is irrecoverably unavailable. A slow,
 stalled, or temporarily allowance-blocked worker is not a reason for Main to
 take over; after allowance recovers, prefer resuming the same worker or thread.
 
+If an irrecoverably unavailable worker left no complete handoff, Main should
+identify only the available recovery sources, such as the predecessor thread,
+worktree, branch, handoff path, or existing commits, and pass them to the
+replacement worker. The replacement worker owns detailed state recovery: inspect
+the predecessor evidence, determine completed versus remaining work, and continue
+from the first unfinished step. Prefer `resume predecessor -> if impossible,
+delegate recovery + continuation -> integrate`; Main should not reconstruct the
+predecessor's detailed work before delegating the remainder.
+
 Main may perform task work directly only when it is genuinely trivial and
 shorter than delegation overhead, or required solely for orchestration. This
 exception does not cover implementation, security review, repository migration,
