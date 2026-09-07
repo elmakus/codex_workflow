@@ -112,6 +112,19 @@ def _test_operational_policies_are_compact_and_knowledge_aware(
     self.assertIn("irrecoverably unavailable", heavy)
     self.assertIn("not a reason for Main to take over", heavy_flat)
     self.assertIn("prefer resuming the same worker or thread", heavy_flat)
+    self.assertIn("identify only the available recovery sources", heavy_flat)
+    for recovery_source in (
+        "predecessor thread",
+        "worktree",
+        "branch",
+        "handoff path",
+        "existing commits",
+    ):
+        self.assertIn(recovery_source, heavy)
+    self.assertIn("replacement worker owns detailed state recovery", heavy_flat)
+    self.assertIn("determine completed versus remaining work", heavy_flat)
+    self.assertIn("delegate recovery + continuation", heavy_flat)
+    self.assertIn("Main should not reconstruct the predecessor's detailed work", heavy_flat)
     self.assertIn("genuinely trivial and shorter than delegation overhead", heavy_flat)
     self.assertIn("required solely for orchestration", heavy_flat)
     for non_takeover_task in (
