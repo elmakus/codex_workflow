@@ -71,7 +71,7 @@ def _test_operational_policies_are_compact_and_knowledge_aware(
         "heavy_route.md": (PACKAGE / "heavy_route.md").read_text(encoding="utf-8"),
     }
     self.assertLess(len(policies["AGENTS.md"].splitlines()), 90)
-    self.assertLess(len(policies["heavy_route.md"].splitlines()), 180)
+    self.assertLess(len(policies["heavy_route.md"].splitlines()), 210)
     self.assertFalse((PACKAGE / "medium_route.md").exists())
 
     required_documentation_policy = (
@@ -104,6 +104,27 @@ def _test_operational_policies_are_compact_and_knowledge_aware(
     self.assertIn("## Your Role and Authority", heavy)
     self.assertIn("You are the main agent and central knowledge director", heavy)
     self.assertIn("For each task, decide which roles are useful", heavy_flat)
+    self.assertIn("## Orchestrator-First Execution", heavy)
+    self.assertIn("Main is an orchestrator, not an executor", heavy)
+    self.assertIn("prefer `delegate -> resume -> wait -> integrate`", heavy_flat)
+    self.assertIn("first check the existing worker or thread", heavy_flat)
+    self.assertIn("Resume it when possible", heavy)
+    self.assertIn("irrecoverably unavailable", heavy)
+    self.assertIn("not a reason for Main to take over", heavy_flat)
+    self.assertIn("prefer resuming the same worker or thread", heavy_flat)
+    self.assertIn("genuinely trivial and shorter than delegation overhead", heavy_flat)
+    self.assertIn("required solely for orchestration", heavy_flat)
+    for non_takeover_task in (
+        "implementation",
+        "security review",
+        "repository migration",
+        "material Git/GitHub operations",
+        "testing",
+        "delegable research",
+    ):
+        self.assertIn(non_takeover_task, heavy)
+    self.assertIn('"Take over to make progress"', heavy)
+    self.assertIn('"take over to go faster"', heavy)
     self.assertIn("## Agents You Can Use", heavy)
     for role in (
         "Companion",
@@ -131,10 +152,17 @@ def _test_operational_policies_are_compact_and_knowledge_aware(
     ):
         self.assertIn(capsule, heavy)
     self.assertIn("Require workers to echo Task ID in every report", heavy)
+    self.assertIn("Do not repeat the worker's substantive task", heavy)
+    self.assertNotIn("intervene directly", heavy)
     self.assertIn("## Orchestration Guidance", heavy)
     self.assertIn("synthesize their results\n  once", heavy)
+    self.assertIn("bounded batches or sequential", heavy_flat)
+    self.assertIn("main-agent tracking cost", heavy_flat)
+    self.assertIn("orchestration-only tool operations", heavy_flat)
+    self.assertIn("rather than taking over its task", heavy_flat)
     self.assertIn("Preserve sequential ordering", heavy)
-    self.assertIn("Use appropriately\n  long lifecycle waits", heavy)
+    self.assertIn("Do not\nmaximize concurrency without a concrete benefit", heavy)
+    self.assertIn("Use\n  appropriately long lifecycle waits", heavy)
     self.assertIn("Heavy does not impose an aggregate active-subagent limit", heavy_flat)
     self.assertNotIn("at most 20 active subagents", heavy)
     self.assertIn("at most one Senior Executor", heavy)
