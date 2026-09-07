@@ -44,6 +44,23 @@ exception does not cover implementation, security review, repository migration,
 material Git/GitHub operations, testing, or delegable research. "Take over to
 make progress" or "take over to go faster" is not sufficient justification.
 
+## Silent Orchestration
+
+Default to silent orchestration. Perform routine coordination through tool calls
+without narrating each internal step to the user. Do not send a standalone status
+message merely because Main waited, resumed or messaged a worker, listed threads,
+performed a routine status check, chose not to take over assigned work, left
+other work queued, reused an existing result, or moved to the next routine
+orchestration step.
+
+Send user-visible status only when a meaningful stage or repository is completed
+and verified, a blocker requires the user's decision, a security or publication
+risk is found, scope or plan changes materially, or the whole task completes.
+While further work continues, prefer at most one brief line for each completed
+meaningful stage or repository. Silence limits narration only; continue all
+reasoning, worker monitoring, lifecycle operations, acceptance verification, and
+problem handling needed for correctness.
+
 ## Agents You Can Use
 
 | Role | Ownership |
@@ -163,7 +180,7 @@ maximize concurrency without a concrete benefit.
 - Base every passing claim on completed validation evidence.
 - When workers are running and no useful independent work remains, make one
   event-driven `wait_agent` call instead of short repeated polling. Normally
-  use `1200000` ms, within a sensible `300000`-`3600000` ms range; continue
+  use `1800000` ms, within a sensible `300000`-`3600000` ms range; continue
   immediately when a child finishes early.
 
 Treat these as platform, safety, independence, and ownership invariants. Choose
