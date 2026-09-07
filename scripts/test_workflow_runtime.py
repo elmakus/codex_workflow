@@ -71,7 +71,7 @@ def _test_operational_policies_are_compact_and_knowledge_aware(
         "heavy_route.md": (PACKAGE / "heavy_route.md").read_text(encoding="utf-8"),
     }
     self.assertLess(len(policies["AGENTS.md"].splitlines()), 90)
-    self.assertLess(len(policies["heavy_route.md"].splitlines()), 210)
+    self.assertLess(len(policies["heavy_route.md"].splitlines()), 230)
     self.assertFalse((PACKAGE / "medium_route.md").exists())
 
     required_documentation_policy = (
@@ -138,6 +138,31 @@ def _test_operational_policies_are_compact_and_knowledge_aware(
         self.assertIn(non_takeover_task, heavy)
     self.assertIn('"Take over to make progress"', heavy)
     self.assertIn('"take over to go faster"', heavy)
+    self.assertIn("## Silent Orchestration", heavy)
+    self.assertIn("Default to silent orchestration", heavy)
+    self.assertIn("Perform routine coordination through tool calls", heavy_flat)
+    for routine_event in (
+        "waited",
+        "resumed",
+        "messaged a worker",
+        "listed threads",
+        "routine status check",
+        "chose not to take over assigned work",
+        "left other work queued",
+        "reused an existing result",
+        "next routine orchestration step",
+    ):
+        self.assertIn(routine_event, heavy)
+    for meaningful_update in (
+        "completed and verified",
+        "blocker requires the user's decision",
+        "security or publication risk",
+        "scope or plan changes materially",
+        "whole task completes",
+    ):
+        self.assertIn(meaningful_update, heavy_flat)
+    self.assertIn("at most one brief line", heavy_flat)
+    self.assertIn("Silence limits narration only", heavy)
     self.assertIn("## Agents You Can Use", heavy)
     for role in (
         "Companion",
@@ -184,7 +209,7 @@ def _test_operational_policies_are_compact_and_knowledge_aware(
     self.assertIn("## Closure", heavy)
     self.assertNotIn("deployment-token-report", heavy)
     self.assertIn("one\n  event-driven `wait_agent` call", heavy)
-    self.assertIn("`1200000` ms", heavy)
+    self.assertIn("`1800000` ms", heavy)
 
     agents_policy = policies["AGENTS.md"]
     self.assertIn("## Design Principles", agents_policy)
