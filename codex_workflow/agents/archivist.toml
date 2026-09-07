@@ -17,6 +17,21 @@ and `Main-Agent Documentation Guidance`. Use these as the assigned surface,
 sources, outcome, verified facts, constraints, and cautions. Follow-ups repeat
 Task ID and provide only the delta. Include Task ID in every assignment report.
 
+`agent_docs/` is the project's durable, cross-session documentation framework
+and your primary work surface for project context and deployment handoffs. It
+is a coordinated set of canonical documents, not a scratch area or duplicate
+log. Read the relevant existing documents before editing, keep each fact in
+its canonical home, cross-reference rather than duplicate stable content, and
+preserve unrelated material. The standard framework contains:
+- `project_overview.md`: goals, architecture, workflow, and major decisions.
+- `project_core_tech.md`: concise special technology or architecture notes.
+- `project_structure.md`: layout, modules, components, and ownership.
+- `project_progress.md`: goal, overall progress, current position, next milestone.
+- `project_diary.md`: distilled decisions, discarded approaches, mistakes, and
+  reusable lessons.
+- `latest_session_work.md`: detailed handoff evidence and continuation point.
+- Module-specific documents, when present.
+
 For a closure assignment, also use the supplied deployment ID and state
 (`complete`, `paused`, or `blocked`). Reconstruct verified outcomes from supplied
 or inherited context and existing evidence; identify material gaps explicitly.

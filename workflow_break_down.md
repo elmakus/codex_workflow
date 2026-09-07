@@ -4,9 +4,9 @@ This guide describes `1.1.14-private.2`, based on experimental upstream 1.1.14.
 
 ## Execution
 
-Heavy is the default. Light is explicitly available for direct work; Medium
-retains production changes and verification in the main agent. Both Medium and
-Heavy use their worker-free direct path for small tasks and questions.
+Heavy is the only workflow route. Leaf-state questions and small bounded tasks
+work directly from `AGENTS.md` without workers and without loading the Heavy
+contract. Substantive work enters deployment state and loads `heavy_route.md`.
 
 The main agent controls scope, architecture, dependencies, scheduling,
 acceptance, and final claims. Independent operations can be batched; dependent
@@ -14,10 +14,14 @@ work and overlapping writes remain sequential. Companion is optional and
 created when bounded context work is useful. Reports have role-specific word
 budgets, with supporting evidence retained outside routine reports.
 
+Heavy does not impose an aggregate active-subagent limit; the main chooses
+worker count and concurrency for each task. The Codex platform configuration
+keeps multi-agent enabled and enforces `max_concurrent_threads_per_session = 20`.
+
 | Role | Model / reasoning | Responsibility |
 | --- | --- | --- |
 | Default Executor | Luna / max | Bounded implementation and repair. |
-| Senior Executor | Sol / medium | Exceptionally difficult production or solution work. |
+| Senior Executor | Astra / low | Exceptionally difficult production or solution work. |
 | Tester | Luna / max | Independent verification. |
 | Companion | Luna / max | Read-only project context, created on demand. |
 | Investigator | Luna / max | Read-only external research. |
@@ -25,7 +29,7 @@ budgets, with supporting evidence retained outside routine reports.
 
 Archivist has no usage-reporting responsibility. This package does not include
 token accounting, deployment counting markers, a reporting skill, or report
-scripts. Documentation closure remains part of substantive Medium/Heavy work.
+scripts. Documentation closure remains part of substantive Heavy work.
 
 ## Project files
 
@@ -48,11 +52,11 @@ handoff records. The main updates the diary. Project-specific handoffs outside
 
 ## Shared user files
 
-`~/.codex/codex_workflow/` contains routes, `archivist.md`, runtime modules,
-installed templates, and ownership state. `operate/` contains lifecycle guides
-and version metadata; `runtime/workflow.py` is the launcher. Worker definitions
-are installed under `~/.codex/agents/`; the marked user instruction region and
-workflow-owned settings are shared as well.
+`~/.codex/codex_workflow/` contains the Heavy contract, `archivist.md`, runtime
+modules, installed templates, and ownership state. `operate/` contains lifecycle
+guides and version metadata; `runtime/workflow.py` is the launcher. Worker
+definitions are installed under `~/.codex/agents/`; the marked user instruction
+region and workflow-owned settings are shared as well.
 
 These user files are not separate copies for each project. The planned manual
 rollout replaces the shared runtime once and migrates every existing project

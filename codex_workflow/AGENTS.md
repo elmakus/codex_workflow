@@ -14,9 +14,9 @@
 ## Rollout Efficiency
 
 Batch independent reads, searches, metadata checks, and other known-input
-operations. Keep dependencies and overlapping mutations sequential. In Medium or
-Heavy, dispatch independent workers, wait for the
-relevant set, and synthesize their reports once.
+operations. Keep dependencies and overlapping mutations sequential. When using
+workers, dispatch independent workers, wait for the relevant set, and synthesize
+their reports once.
 
 Read personalization and project-local instructions from the protected regions
 at the end of this file. Apply them over workflow defaults subject to higher
@@ -46,17 +46,12 @@ Keep raw logs, temporary reasoning, and short-lived checkpoints out of durable
 documents; give each fact one canonical home. Never delete a main project
 document without warning and a second explicit confirmation.
 
-## Route Selection
+## Workflow
 
-Select one of these routes: **Light** works directly in leaf state without subagents;
-**Medium** keeps planning, diagnosis, implementation, and verification with the
-main agent and uses bounded support from `~/.codex/codex_workflow/medium_route.md`;
-**Heavy** delegates bounded production, verification, documentation,
-project-context, and Internet research under `~/.codex/codex_workflow/heavy_route.md`.
-
-Follow the user's route selection. Use Heavy when the user does not select a
-route. Keep the selected route until the user changes it or the session ends.
-Enter `deployment state` for Medium or Heavy only when the work is substantive.
+In leaf state, work directly without reading
+`~/.codex/codex_workflow/heavy_route.md` or spawning subagents. When work is
+substantive, enter `deployment state`, read that Heavy contract, and use only the
+worker capabilities that add value to the task.
 
 ## Proportionate Documentation Read
 

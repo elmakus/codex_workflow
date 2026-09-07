@@ -119,7 +119,6 @@ class PackageLayout:
             required = [
                 "runtime/workflow.py",
                 "heavy_route.md",
-                "medium_route.md",
                 "archivist.md",
                 "operate/install.md",
                 "operate/bootstrap.md",

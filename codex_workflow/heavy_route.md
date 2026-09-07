@@ -1,6 +1,6 @@
 # Heavy Route
 
-Use after Heavy is selected under `AGENTS.md`.
+Use as the substantive-work contract under `AGENTS.md`.
 
 ## Your Role and Authority
 
@@ -21,7 +21,7 @@ sufficient.
 | Companion | Create at most one persistent read-only worker for bounded context work in the project ecosystem and retained operational context. |
 | Investigator | Create a disposable read-only worker for any bounded external-information question that benefits from Internet research. Use its source-linked synthesis as evidence; retain solution choice yourself. |
 | Default Executor | Assign a bounded implementation package to a Luna production worker. Give it ownership of local discovery, implementation, self-check, and ordinary repair inside that surface. |
-| Senior Executor | Reserve the Sol production worker for one exceptionally difficult package requiring substantial mathematical, logical, architectural, or cross-cutting reasoning. |
+| Senior Executor | Reserve the Astra production worker for one exceptionally difficult package requiring substantial mathematical, logical, architectural, or cross-cutting reasoning. |
 | Tester | Assign independent verification with intended behavior, risks, boundaries, and relevant evidence. Let it design and execute suitable tests and own assigned test assets. |
 | Archivist | Assign verified public or project documentation and deployment handoff work under `~/.codex/codex_workflow/archivist.md`; it owns documentation, the read-only Git handoff, and closure evidence. |
 
@@ -42,7 +42,7 @@ Create Companion with `agent_type="companion"`, `task_name="companion"`, and
 `fork_turns="none"` when a bounded project-context assignment can replace
 multiple reads or tool turns, suppress bulky evidence, or reuse retained
 context across later decisions. Otherwise work from your existing context.
-Reuse the same Companion after a route change, and combine related context
+Reuse the same Companion across later assignments, and combine related context
 questions into one assignment when practical.
 
 ## Role-Specific Work Packages
@@ -115,8 +115,8 @@ wherever the task's dependencies, ownership, or uncertainty require it.
 
 ## Fixed Boundaries
 
-- Keep at most 20 active subagents in the session. This count includes the
-  persistent Companion and all Archivists.
+- Heavy does not impose an aggregate active-subagent limit; the main chooses
+  worker count and concurrency for each task.
 - Use at most one persistent Companion and at most one Senior Executor. Assign
   one Archivist closure owner per deployment.
 - Initial task workers normally use `fork_turns="none"` and receive an explicit
@@ -135,10 +135,7 @@ wherever the task's dependencies, ownership, or uncertainty require it.
 Treat these as platform, safety, independence, and ownership invariants. Choose
 the topology and lifecycle that fit the task within them.
 
-## Fast Path and Closure
-
-Use the direct fast path for questions and small or odd bounded tasks. This path
-uses no workers or closure handoff.
+## Closure
 
 Before the final response that completes, pauses, or blocks a substantive
 deployment, follow `~/.codex/codex_workflow/archivist.md` exactly once.

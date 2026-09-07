@@ -5,8 +5,7 @@ generated outputs, and project-owned content.
 
 ## Data ownership
 
-- Route documents and worker TOMLs: authoritative behavior distributed by a
-  release.
+- Heavy route and worker TOMLs: authoritative behavior distributed by a release.
 - `~/.codex/codex_workflow/operate/`: user command guides, the user-level
   instruction source, and package version metadata.
 - `~/.codex/codex_workflow/install_state.json`: installed version and ownership
@@ -49,7 +48,7 @@ cleans the dedicated runtime directory. It deliberately preserves
 2. The incoming CLI validates and applies the update using the target
    version's runtime; the installed launcher does not apply its own
    version-specific package schema to that incoming release.
-3. The incoming release replaces installed routes and worker definitions.
+3. The incoming release replaces the installed Heavy route and worker definitions.
    Worker surfaces are copied from the incoming role files.
 4. Each project entry point is validated against the source backup for the
    workflow version recorded in its project state. Project-local regions,
@@ -58,5 +57,5 @@ cleans the dedicated runtime directory. It deliberately preserves
 5. Marker drift or ambiguous legacy content stops before live writes.
 6. Every write command validates and applies one mutation plan with rollback.
 
-Changing built-in behavior requires updating its owning route, worker, or
+Changing built-in behavior requires updating its owning Heavy route, worker, or
 platform module and the corresponding tests; installed retuning is unsupported.

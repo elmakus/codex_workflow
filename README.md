@@ -9,9 +9,13 @@ for documentation and closing handoffs.
 
 ## Private behavior
 
-- **Heavy is the default.** Questions and small bounded tasks still use its
-  direct path with no workers.
-- Every Luna role uses `max` reasoning. Senior Executor remains Sol `medium`.
+- **Heavy is the only workflow route.** Leaf-state questions and small bounded
+  tasks work directly without subagents and without reading `heavy_route.md`.
+  The Heavy contract is loaded only for substantive deployment-state work.
+- Luna roles use `max` reasoning. Senior Executor uses Astra `low`.
+- The Codex runtime keeps multi-agent enabled with a fixed ceiling of 20
+  concurrent subagents per session; Heavy itself does not impose a second
+  aggregate worker-count limit.
 - No token accounting, reporting skill, deployment counting marker, or report
   table is included.
 - No release checks, network downloads, automatic updates, or release publishing.
@@ -19,17 +23,25 @@ for documentation and closing handoffs.
 - Installation happens only when the owner asks. Opening a new project does
   not install anything or interrupt its task.
 
-## Routes and roles
+## Workflow and roles
 
-| Route | Work ownership |
-| --- | --- |
-| Light | Main agent works directly, without subagents. |
-| Medium | Main owns implementation and verification; Companion, Investigator, and Archivist provide bounded support. |
-| Heavy (default) | Main directs the task and delegates bounded execution, verification, research, context, and documentation where useful. |
+The project `AGENTS.md` handles leaf-state work directly. For substantive work
+the main agent enters deployment state and loads `codex_workflow/heavy_route.md`.
+It then chooses only the worker capabilities useful to the task and owns scope,
+architecture, scheduling, integration, acceptance, and final claims.
 
 The six roles are Default Executor, Senior Executor, Tester, Companion,
 Investigator, and Archivist. Companion is created on demand. Archivist replaces
 upstream 1.1.13's separate Doc-writer and Closure Steward.
+
+| Role | Model / reasoning | Responsibility |
+| --- | --- | --- |
+| Default Executor | Luna / max | Bounded implementation and repair. |
+| Senior Executor | Astra / low | Exceptionally difficult production or solution work. |
+| Tester | Luna / max | Independent verification. |
+| Companion | Luna / max | Read-only project context, created on demand. |
+| Investigator | Luna / max | Read-only external research. |
+| Archivist | Luna / max | Verified documentation and closing handoff. |
 
 ## Documentation locations
 
