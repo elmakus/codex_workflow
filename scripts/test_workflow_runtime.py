@@ -71,7 +71,7 @@ def _test_operational_policies_are_compact_and_knowledge_aware(
         "heavy_route.md": (PACKAGE / "heavy_route.md").read_text(encoding="utf-8"),
     }
     self.assertLess(len(policies["AGENTS.md"].splitlines()), 90)
-    self.assertLess(len(policies["heavy_route.md"].splitlines()), 230)
+    self.assertLess(len(policies["heavy_route.md"].splitlines()), 240)
     self.assertFalse((PACKAGE / "medium_route.md").exists())
 
     required_documentation_policy = (
@@ -107,11 +107,22 @@ def _test_operational_policies_are_compact_and_knowledge_aware(
     self.assertIn("## Orchestrator-First Execution", heavy)
     self.assertIn("Main is an orchestrator, not an executor", heavy)
     self.assertIn("prefer `delegate -> resume -> wait -> integrate`", heavy_flat)
-    self.assertIn("first check the existing worker or thread", heavy_flat)
+    self.assertIn("If assigned work needs intervention", heavy)
     self.assertIn("Resume it when possible", heavy)
     self.assertIn("irrecoverably unavailable", heavy)
     self.assertIn("not a reason for Main to take over", heavy_flat)
     self.assertIn("prefer resuming the same worker or thread", heavy_flat)
+    self.assertIn("`wait_agent` timeout that returns no new worker state", heavy_flat)
+    self.assertIn("not by itself a reason to poll status", heavy_flat)
+    for timeout_action in (
+        "list threads",
+        "message",
+        "interrupt",
+        "replace",
+        "inspect worker progress",
+    ):
+        self.assertIn(timeout_action, heavy)
+    self.assertIn("issue another appropriately long `wait_agent`", heavy_flat)
     self.assertIn("identify only the available recovery sources", heavy_flat)
     for recovery_source in (
         "predecessor thread",
@@ -215,7 +226,9 @@ def _test_operational_policies_are_compact_and_knowledge_aware(
     self.assertIn("## Closure", heavy)
     self.assertNotIn("deployment-token-report", heavy)
     self.assertIn("one\n  event-driven `wait_agent` call", heavy)
-    self.assertIn("`1800000` ms", heavy)
+    self.assertIn("`1500000` ms (25 minutes)", heavy)
+    self.assertNotIn("`1800000` ms", heavy)
+    self.assertIn("wait again rather\n  than polling", heavy)
 
     agents_policy = policies["AGENTS.md"]
     self.assertIn("## Design Principles", agents_policy)
