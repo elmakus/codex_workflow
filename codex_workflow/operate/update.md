@@ -19,7 +19,8 @@ It selects the highest non-draft SemVer release that contains both:
 - `SHA256SUMS`
 
 Prereleases are valid. The launcher downloads those two assets, verifies the
-ZIP's SHA-256 against `SHA256SUMS`, validates ZIP member paths/types and size,
+ZIP's SHA-256 against `SHA256SUMS`, enforces trusted GitHub URL/path and bounded
+metadata/download/archive limits, validates ZIP member paths/types, safely
 extracts the package into a temporary directory, and delegates the update to the
 incoming package's own `runtime/workflow.py`. Never clone a repository as part
 of the installed update path.
@@ -33,9 +34,9 @@ python3 ~/.codex/codex_workflow/runtime/workflow.py update --project <project>
 ## Explicit local source fallback
 
 A previously reviewed/extracted package may still be supplied through the
-internal `--source <package-root>` path for recovery, testing, or the first
-migration from a version that predates owner-release discovery. That path must
-not perform release discovery or network download.
+internal `--source <package-root>` path for recovery, testing, or an explicit
+manual migration. That path must not perform release discovery or network
+download.
 
 Validate a local package before using it:
 
@@ -56,18 +57,19 @@ python3 <verified-package-root>/runtime/workflow.py update \
 ## What the update changes
 
 The incoming package is the complete desired definition of workflow-owned
-runtime files. The lifecycle planner does not edit files line-by-line:
+runtime files:
 
-- workflow-owned files present in the incoming package are created or replaced
-  with the incoming contents;
+- workflow-owned files present in the incoming package are created or replaced;
 - workflow-owned files recorded by the previous install but absent from the
   incoming package are removed;
 - worker TOMLs and workflow-owned skills follow the same ownership-aware rule;
+- obsolete workflow-owned Codex settings, including the old fixed concurrency
+  key, are retired when no longer part of the incoming contract;
 - unrelated Codex settings, unrelated workers/skills, user content outside the
   managed user `AGENTS.md` region, project-local instructions, personalization,
   `agent_docs/`, and enabled/disabled project state are preserved.
 
-The update creates a verified timestamped backup first and applies the planned
+The update creates a verified timestamped backup first and applies planned
 mutations through one compensating transaction. A failure must not be reported
 as a successful partial update.
 
@@ -84,9 +86,7 @@ file, then rerun with:
 --legacy-local-instructions <reviewed-file>
 ```
 
-Add `--allow-downgrade` only for an explicitly approved downgrade. SemVer orders
-each `1.1.14-private.N` prerelease below public `1.1.14`, so a transition from an
-installed public `1.1.14` to this private line requires that explicit approval.
+Add `--allow-downgrade` only for an explicitly approved SemVer downgrade.
 
 When the shared runtime already matches the incoming version, the command may
 still bring an older target-project wrapper/state up to that version. A target

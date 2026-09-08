@@ -31,6 +31,7 @@ USER_MANAGED_START = "<!-- codex-workflow-user-managed-start -->"
 USER_MANAGED_END = "<!-- codex-workflow-user-managed-end -->"
 BUILTIN_WORKERS = frozenset(
     {
+        "micro_executor",
         "default_executor",
         "senior_executor",
         "tester",
@@ -293,6 +294,8 @@ def _verify_member_names(names: Iterable[str]) -> list[str]:
         f"{PACKAGE_DIR_NAME}/operate/personalization_guide.md",
         f"{PACKAGE_DIR_NAME}/operate/enable.md",
         f"{PACKAGE_DIR_NAME}/operate/disable.md",
+        f"{PACKAGE_DIR_NAME}/heavy_route.md",
+        f"{PACKAGE_DIR_NAME}/delegation.md",
         f"{PACKAGE_DIR_NAME}/archivist.md",
         f"{PACKAGE_DIR_NAME}/runtime/workflow.py",
         f"{PACKAGE_DIR_NAME}/runtime/__init__.py",

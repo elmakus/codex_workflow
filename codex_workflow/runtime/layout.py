@@ -26,6 +26,7 @@ PROJECT_STATE = "state.json"
 USER_STATE = "install_state.json"
 BUILTIN_WORKERS = frozenset(
     {
+        "micro_executor",
         "default_executor",
         "senior_executor",
         "tester",
@@ -119,6 +120,7 @@ class PackageLayout:
             required = [
                 "runtime/workflow.py",
                 "heavy_route.md",
+                "delegation.md",
                 "archivist.md",
                 "operate/install.md",
                 "operate/bootstrap.md",

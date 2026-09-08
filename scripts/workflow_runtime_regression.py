@@ -683,7 +683,7 @@ class PlatformSettingsTests(unittest.TestCase):
         self.assertIn('model = "custom"', rendered)
         self.assertIn("other = 7", rendered)
         self.assertIn("[agents]", rendered)
-        self.assertIn("max_concurrent_threads_per_session = 20", rendered)
+        self.assertNotIn("max_concurrent_threads_per_session", rendered)
         self.assertIn("[features]", rendered)
         self.assertIn("multi_agent = true", rendered)
         self.assertNotIn("[features.multi_agent_v2]", rendered)
@@ -702,9 +702,9 @@ class PlatformSettingsTests(unittest.TestCase):
         self.assertIn("[features.multi_agent_v2]", rendered)
         self.assertIn('keep_legacy = "keep"', rendered)
         self.assertNotIn("hide_spawn_agent_metadata", rendered)
-        self.assertEqual(rendered.count("max_concurrent_threads_per_session"), 1)
+        self.assertEqual(rendered.count("max_concurrent_threads_per_session"), 0)
         self.assertIn("[agents]", rendered)
-        self.assertIn("max_concurrent_threads_per_session = 20", rendered)
+        self.assertNotIn("max_concurrent_threads_per_session", rendered)
         self.assertIn("[features]", rendered)
         self.assertIn("multi_agent = true", rendered)
         v2_section = rendered.split("[features.multi_agent_v2]", 1)[1].split(
@@ -723,8 +723,8 @@ class PlatformSettingsTests(unittest.TestCase):
         self.assertNotIn("max_threads", rendered)
         self.assertIn("max_depth = 1", rendered)
         self.assertIn("job_max_runtime_seconds = 1800", rendered)
-        self.assertEqual(rendered.count("max_concurrent_threads_per_session"), 1)
-        self.assertIn("max_concurrent_threads_per_session = 20", rendered)
+        self.assertEqual(rendered.count("max_concurrent_threads_per_session"), 0)
+        self.assertNotIn("max_concurrent_threads_per_session", rendered)
 
     def test_toml_patch_removes_owned_v2_gate(self) -> None:
         rendered = patch_codex_settings(
@@ -1034,8 +1034,8 @@ class LifecycleIntegrationTests(unittest.TestCase):
         self.assertTrue((self.runtime.agents / "companion.toml").is_file())
         self.assertFalse(self.runtime.skills.exists())
         self.assertFalse((self.runtime.runtime / "templates" / "skills").exists())
-        self.assertIn(
-            "max_concurrent_threads_per_session = 20",
+        self.assertNotIn(
+            "max_concurrent_threads_per_session",
             self.runtime.config_toml.read_text(encoding="utf-8"),
         )
         self.assertNotIn(

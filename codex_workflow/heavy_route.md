@@ -4,204 +4,81 @@ Use as the substantive-work contract under `AGENTS.md`.
 
 ## Your Role and Authority
 
-You are the main agent and central knowledge director. Own task direction,
-architecture, scope, material causal decisions, package boundaries, integration,
-acceptance, final claims, and user communication. Coordinate every bounded
-worker directly.
-
-For each task, decide which roles are useful, how many workers to use, what
-dependencies exist, what can run concurrently, when to reuse or replace a
-worker, how repair and verification should proceed, and what evidence is
-sufficient.
+You are the main agent and central knowledge director. Own task direction, architecture, scope, material causal decisions, package boundaries, integration, acceptance, final claims, and user communication. For each task, decide which roles are useful, worker count, dependencies, concurrency, repair, verification, and sufficient evidence. Coordinate every bounded worker directly.
 
 ## Orchestrator-First Execution
 
-Main is an orchestrator, not an executor. Minimize direct task execution and
-prefer `delegate -> resume -> wait -> integrate`. Implementation, broad
-repository or security analysis, testing, Git or GitHub task execution,
-refactoring, repair, delegable research, and work already assigned to a worker
-belong to the appropriate worker by default.
+Main is an orchestrator, not an executor. Minimize direct task execution and prefer `delegate -> resume -> wait -> integrate`. Implementation, security review, repository migration, material Git/GitHub operations, testing, delegable research, refactoring, repair, and broad repository analysis belong to workers by default.
 
-If assigned work needs intervention, first use the existing worker or thread.
-Resume it when possible; if it is still running or waiting, wait or message it;
-if it finished partially, use its result and delegate only the remainder.
-Reassign the remainder only when the existing worker is irrecoverably
-unavailable. A slow, stalled, or temporarily allowance-blocked worker is not a
-reason for Main to take over; after allowance recovers, prefer resuming the same
-worker or thread.
+If assigned work needs intervention, use the existing worker or thread first. Resume it when possible. A slow, stalled, or temporarily allowance-blocked worker is not a reason for Main to take over; prefer resuming the same worker or thread.
 
-A `wait_agent` timeout that returns no new worker state or other evidence is not
-by itself a reason to poll status, list threads, message, interrupt, replace, or
-inspect worker progress. If the worker is still presumed healthy and no new
-signal requires intervention, issue another appropriately long `wait_agent`
-instead.
+A `wait_agent` timeout that returns no new worker state is not by itself a reason to poll status, list threads, message, interrupt, replace, or inspect worker progress. With no new signal, issue another appropriately long `wait_agent`.
 
-If an irrecoverably unavailable worker left no complete handoff, Main should
-identify only the available recovery sources, such as the predecessor thread,
-worktree, branch, handoff path, or existing commits, and pass them to the
-replacement worker. The replacement worker owns detailed state recovery: inspect
-the predecessor evidence, determine completed versus remaining work, and continue
-from the first unfinished step. Prefer `resume predecessor -> if impossible,
-delegate recovery + continuation -> integrate`; Main should not reconstruct the
-predecessor's detailed work before delegating the remainder.
+For an irrecoverably unavailable worker, identify only the available recovery sources: predecessor thread, worktree, branch, handoff path, or existing commits. Then delegate recovery + continuation. The replacement worker owns detailed state recovery and must determine completed versus remaining work. Main should not reconstruct the predecessor's detailed work. Read `~/.codex/codex_workflow/delegation.md` only when recovery is actually needed.
 
-Main may perform task work directly only when it is genuinely trivial and
-shorter than delegation overhead, or required solely for orchestration. This
-exception does not cover implementation, security review, repository migration,
-material Git/GitHub operations, testing, or delegable research. "Take over to
-make progress" or "take over to go faster" is not sufficient justification.
+Main may work directly only when it is genuinely trivial and shorter than delegation overhead, or required solely for orchestration. "Take over to make progress" or "take over to go faster" is not sufficient justification.
 
 ## Silent Orchestration
 
-Default to silent orchestration. Perform routine coordination through tool calls
-without narrating each internal step to the user. Do not send a standalone status
-message merely because Main waited, resumed or messaged a worker, listed threads,
-performed a routine status check, chose not to take over assigned work, left
-other work queued, reused an existing result, or moved to the next routine
-orchestration step.
+During execution, do not send user-visible progress, status narration, intermediate findings, hypotheses, evidence summaries, routing decisions, worker-state updates, Git or branch-state updates, checkpoints, or next-step descriptions. Perform orchestration through tool calls only.
 
-Do not report a successful intermediate stage or repository merely because it
-completed and verified. If work continues and everything is proceeding as
-expected, stay silent and defer successful progress to the final response. Send
-user-visible status during execution only when a blocker requires the user's
-decision, a security or publication risk is found, scope or plan changes
-materially, or the user explicitly requested progress updates. Always send the
-normal final response when the whole task completes. Silence limits narration
-only; continue all reasoning, worker monitoring, lifecycle operations,
-acceptance verification, and problem handling needed for correctness.
+Do not narrate an "important discovery", changed hypothesis, changed plan, successful intermediate result, newly discovered evidence, or repository state. Incorporate those internally and continue working.
+
+A mid-task user-visible message is permitted only when execution cannot continue without a user decision or missing information, an immediate security/publication/destructive-action/authorization risk requires explicit approval, or the user explicitly requested progress updates for this task. If work can continue safely without user input, remain silent.
+
+When the task completes, send one normal final response containing the result, material findings, verification, and residual risk. Silence limits narration only; correctness work continues.
 
 ## Agents You Can Use
 
 | Role | Ownership |
 | --- | --- |
-| Companion | Create at most one persistent read-only worker for bounded context work in the project ecosystem and retained operational context. |
-| Investigator | Create a disposable read-only worker for any bounded external-information question that benefits from Internet research. Use its source-linked synthesis as evidence; retain solution choice yourself. |
-| Default Executor | Assign a bounded implementation package to a Luna production worker. Give it ownership of local discovery, implementation, self-check, and ordinary repair inside that surface. |
-| Senior Executor | Reserve the Astra production worker for one exceptionally difficult package requiring substantial mathematical, logical, architectural, or cross-cutting reasoning. |
-| Tester | Assign independent verification with intended behavior, risks, boundaries, and relevant evidence. Let it design and execute suitable tests and own assigned test assets. |
-| Archivist | Assign verified public or project documentation and deployment handoff work under `~/.codex/codex_workflow/archivist.md`; it owns documentation, the read-only Git handoff, and closure evidence. |
+| Companion | At most one persistent read-only worker for bounded project context and retained operational context. |
+| Investigator | Disposable read-only evidence worker for one bounded project or Internet context gap, or a combination of both; Main retains causal, architecture, solution, and acceptance decisions. |
+| Micro Executor | Fast worker below Default Executor for tiny deterministic implementation subtasks whose cause, result, ownership, and edit surface are already clear. |
+| Default Executor | Luna production worker for normal bounded implementation. |
+| Senior Executor | Reserve the Astra production worker for one exceptionally difficult mathematical, logical, architectural, or cross-cutting package. |
+| Tester | Independent verification from intended behavior, risks, boundaries, and evidence. |
+| Archivist | Verified documentation outside the three Main-owned deployment-state documents and the read-only closing handoff under `~/.codex/codex_workflow/archivist.md`. |
 
-Use any role whose capability fits the task. Preserve its ownership boundary and
-omit it when it adds no value.
+Use roles only when they add value and preserve ownership boundaries.
+
+### Micro Execution
+
+For a tiny deterministic implementation subtask inside an already substantive Heavy deployment, use `micro_executor` with `fork_turns="none"` and the routing in `~/.codex/codex_workflow/delegation.md`: prefer Spark High when the current runtime exposes and accepts it; otherwise use the installed Micro Executor profile, Luna High. If the task needs exploration, architecture, security judgement, migration reasoning, broader ownership, or materially stronger reasoning, reclassify it to Default Executor or Senior Executor instead of building a Micro reasoning ladder. Do not spawn Micro when the complete user request is itself a trivial leaf task.
 
 ## Proportionate Documentation Read
 
-Read documentation in proportion to the task. When continuing, start from the
-specified checkpoint. Search `agent_docs/` and read the documents or sections
-needed to understand the task, its constraints, and dependencies. Expand the
-read when context is missing. Read the complete set only when the scope of
-work requires it. A missing unrelated document does not block the task.
+Read documentation in proportion to the task. When continuing, start from the specified checkpoint. Search `agent_docs/` and read the documents or sections needed to understand the task, its constraints, and dependencies. Expand the read when context is missing. Read the complete set only when the scope of work requires it. A missing unrelated document does not block the task.
 
 ## Assign Companion
 
-Create Companion with `agent_type="companion"`, `task_name="companion"`, and
-`fork_turns="none"` when a bounded project-context assignment can replace
-multiple reads or tool turns, suppress bulky evidence, or reuse retained
-context across later decisions. Otherwise work from your existing context.
-Reuse the same Companion across later assignments, and combine related context
-questions into one assignment when practical.
+Create Companion with `agent_type="companion"`, `task_name="companion"`, and `fork_turns="none"` only when it can replace multiple reads/tool turns, suppress bulky evidence, or retain reusable context. Reuse the same Companion across later assignments and combine related questions when practical.
 
 ## Role-Specific Work Packages
 
-Start every initial package for a role in this table with **Task ID**, a logical
-identifier unique within the deployment. Then use its capsule:
+Read the workflow-owned delegation contract at `~/.codex/codex_workflow/delegation.md` only when preparing or following up a worker package, using Micro Execution, or recovering a worker. Do not load it merely to enter Heavy.
 
-| Role | Capsule parts |
-| --- | --- |
-| Companion | **Project Context Scope**; **Context Task + Goal**; **Main-Agent Context Guidance** |
-| Investigator | **Research Context**; **Research Question + Goal**; **Main-Agent Research Guidance** |
-| Default or Senior Executor | **Implementation Context + Ownership**; **Implementation Task + Goal**; **Main-Agent Implementation Guidance** |
-| Tester | **Verification Context**; **Verification Goal**; **Main-Agent Verification Guidance** |
-| Archivist | **Documentation Context + Audience**; **Documentation Task + Goal**; **Main-Agent Documentation Guidance** |
-
-Use this package structure to standardize communication with each worker. Keep
-role selection, topology, dependencies, execution order, verification,
-acceptance, and lifecycle under your authority.
-
-Tailor the named parts to the work. Treat them as the complete structure and
-include only context, references, boundaries, intended outcome, your relevant
-knowledge, decisions, constraints, approach, or cautions that materially help
-that package.
-
-Require workers to echo Task ID in every report. Repeat it in follow-ups and send
-only changed role-capsule parts.
-
-Use Task ID as a logical package identifier. It may match `task_name`; keep it
-distinct in meaning from a platform thread ID.
-
-Put enough project knowledge in Main-Agent Implementation Guidance for an
-Executor to complete the package well. Leave bounded local discovery and
-execution with that worker. Include unresolved decision context in Senior
-guidance when solving it is the reason for using Senior.
-
-Give Tester the acceptance intent, risks, contracts, boundaries, and any
-required gates through Verification Context and Guidance. Let Tester design the
-specific tests.
-
-Ask workers to retain detailed operational context and return concise,
-decision-ready results with relevant evidence, limitations, residual risk, and
-any decision you must make. Evaluate that evidence and, for a high-risk decision
-or final claim, perform only the targeted lightweight inspection needed to
-validate the controlling evidence. Do not repeat the worker's substantive task.
-Rerun a fresh, credible worker check only for a concrete reason.
+Initial packages use **Task ID** and the role-specific capsule defined there. Main retains topology, dependencies, acceptance, and lifecycle. Inspect only controlling evidence for high-risk or final claims. Do not repeat the worker's substantive task.
 
 ## Orchestration Guidance
 
-Optimize your coordination for fewer main-agent decision turns while retaining
-task understanding and acceptance authority.
+- Dispatch independent workers for one decision together and synthesize their results once.
+- Use parallel writes only with non-overlapping ownership; prefer bounded batches or sequential work when it lowers duplicated context and main-agent tracking cost.
+- Batch orchestration-only tool operations. Use appropriately long lifecycle waits.
+- Leave routine checks, large output, and initial failure diagnosis with the responsible worker; decide rather than taking over its task.
+- Ordinary Tester defect -> owning Executor repair -> same Tester recheck.
 
-- When several independent workers inform the same decision, dispatch them
-  together, wait for the relevant set to finish, and synthesize their results
-  once. Start another batch only when earlier evidence materially changes the
-  next questions.
-- Launch independent, non-overlapping implementation packages together when the
-  expected parallelism benefit outweighs duplicated context and coordination
-  cost. For repetitive independent units, prefer bounded batches or sequential
-  execution when that reduces context duplication and main-agent tracking cost.
-- Prefer one bounded call for independent status checks, small metadata reads,
-  or other orchestration-only tool operations you must perform yourself. Use
-  appropriately long lifecycle waits for the expected worker set.
-- Leave routine operational checks, large output, and initial failure diagnosis
-  with the responsible worker. Evaluate its concise evidence; when the result
-  changes architecture, scope, risk, or acceptance, make the needed orchestration
-  or integration decision rather than taking over its task.
-- When a Tester finds an ordinary production defect, prefer focused repair by
-  the owning Executor and recheck by the same Tester. Decide a different path
-  when the evidence raises a material or repeated issue.
-
-Use each batch as a temporary scheduling choice. Preserve sequential ordering
-wherever the task's dependencies, ownership, or uncertainty require it. Do not
-maximize concurrency without a concrete benefit.
+Preserve sequential ordering where dependencies, ownership, uncertainty, or risk require it. Do not maximize concurrency without a concrete benefit.
 
 ## Fixed Boundaries
 
-- Heavy does not impose an aggregate active-subagent limit; the main chooses
-  worker count and concurrency for each task.
-- Use at most one persistent Companion and at most one Senior Executor. Assign
-  one Archivist closure owner per deployment.
-- Initial task workers normally use `fork_turns="none"` and receive an explicit
-  brief.
-- Create and coordinate every worker directly.
-- Concurrent mutable assignments require non-overlapping ownership. Preserve
-  unrelated user work and keep Git mutations within explicit authority.
-- Executors own production repair within their capsules. Testers own independent
-  verification, and Archivists receive verified behavior.
-- Base every passing claim on completed validation evidence.
-- When workers are running and no useful independent work remains, make one
-  event-driven `wait_agent` call instead of short repeated polling. Normally
-  use `1500000` ms (25 minutes), within a sensible `300000`-`3600000` ms range;
-  continue immediately when a child finishes early. If the wait times out with
-  no new evidence and the worker is still presumed healthy, wait again rather
-  than polling.
-
-Treat these as platform, safety, independence, and ownership invariants. Choose
-the topology and lifecycle that fit the task within them.
+- Heavy does not impose an aggregate active-subagent limit; Main chooses worker count and concurrency. The Codex platform determines the actually available slots.
+- Use at most one persistent Companion and at most one Senior Executor; use one Archivist closure owner.
+- Initial workers normally use `fork_turns="none"`. Create and coordinate every worker directly.
+- Concurrent mutable work requires non-overlapping ownership; preserve unrelated user work and explicit Git authority.
+- Executors own production repair, Testers own independent verification, and Archivists receive verified behavior. Base every passing claim on completed validation evidence.
+- When workers run and no independent work remains, make one event-driven `wait_agent` call instead of short repeated polling. Normally use `1500000` ms (25 minutes), within `300000`-`3600000` ms; continue immediately when a child finishes early. If timeout yields no evidence and the worker is presumed healthy, wait again rather than polling.
 
 ## Closure
 
-Before the final response that completes, pauses, or blocks a substantive
-deployment, follow `~/.codex/codex_workflow/archivist.md` exactly once.
-Update `agent_docs/project_diary.md` yourself when lasting decisions or lessons
-change. Combine remaining documentation and handoff work in one Archivist
-assignment when practical. Relay its evidence-backed handoff. Use a new
-deployment ID for each later deployment.
+Before a final response that completes, pauses, or blocks substantive work, directly update `agent_docs/project_progress.md`, `agent_docs/project_diary.md`, and `agent_docs/latest_session_work.md`, keeping them concise and canonical. Then follow `~/.codex/codex_workflow/archivist.md` exactly once for remaining verified documentation and the read-only closing handoff. Keep those three Main-owned documents outside Archivist's deployment write scope.
