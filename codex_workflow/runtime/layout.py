@@ -123,6 +123,7 @@ class PackageLayout:
                 "operate/install.md",
                 "operate/bootstrap.md",
                 "operate/update.md",
+                "operate/check_update.md",
                 "operate/remove.md",
                 "operate/personalization_guide.md",
                 "operate/enable.md",
