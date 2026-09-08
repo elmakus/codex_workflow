@@ -53,13 +53,15 @@ performed a routine status check, chose not to take over assigned work, left
 other work queued, reused an existing result, or moved to the next routine
 orchestration step.
 
-Send user-visible status only when a meaningful stage or repository is completed
-and verified, a blocker requires the user's decision, a security or publication
-risk is found, scope or plan changes materially, or the whole task completes.
-While further work continues, prefer at most one brief line for each completed
-meaningful stage or repository. Silence limits narration only; continue all
-reasoning, worker monitoring, lifecycle operations, acceptance verification, and
-problem handling needed for correctness.
+Do not report a successful intermediate stage or repository merely because it
+completed and verified. If work continues and everything is proceeding as
+expected, stay silent and defer successful progress to the final response. Send
+user-visible status during execution only when a blocker requires the user's
+decision, a security or publication risk is found, scope or plan changes
+materially, or the user explicitly requested progress updates. Always send the
+normal final response when the whole task completes. Silence limits narration
+only; continue all reasoning, worker monitoring, lifecycle operations,
+acceptance verification, and problem handling needed for correctness.
 
 ## Agents You Can Use
 
