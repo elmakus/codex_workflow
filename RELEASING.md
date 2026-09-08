@@ -1,57 +1,80 @@
-# Private package preparation
+# Owner release preparation
 
-The private repository is the source of truth. This package is prepared for
-later explicit installation; building it never changes an installed runtime
-or project. There is no GitHub Release publication workflow.
+`elmakus/codex_workflow` is the release source for this fork. Building a package
+never changes an installed runtime or project. Publication is a separate,
+explicit owner action after review and verification.
 
-## Source and artifact
+## Source and version
 
-The current version is `1.1.14-private.2`. Keep
+The current version is `1.1.14-private.3`. Keep
 `codex_workflow/operate/VERSION` and the marker in
 `codex_workflow/operate/user_AGENTS.md` identical.
 
+Only publish a release from a reviewed commit intended for this fork's `main`.
+Do not publish a candidate branch merely to make the updater see it.
+
+## Artifact
+
 The ZIP includes only `codex_workflow/`. Repository documentation, tests,
-images, Git metadata, and old public ZIPs are not part of the package.
-Do not include the retired reporting skill or its script.
+images, Git metadata, and old ZIPs are not part of the package.
 
-## Preparation order
-
-1. Review changes against the pinned upstream and run lifecycle tests.
-2. Commit and push the private candidate branch.
-3. Create a clean checkout of the pushed commit.
-4. Build a deterministic ZIP into a fresh directory and verify its contents.
-5. Record the exact source commit and SHA-256 beside the ZIP.
-6. Deliver the artifact without installing it. A later authorized rollout will
-   cover all existing projects together.
-
-Use Python 3.11 or newer. From the clean checkout:
+Use Python 3.11 or newer from a clean checkout of the exact reviewed commit:
 
 ```sh
 python3 -B scripts/test_workflow_runtime.py -v
 python3 -B codex_workflow/runtime/workflow.py validate --package-root codex_workflow --json
 python3 -B scripts/package_release.py --output-dir /absolute/path/to/fresh-output
-python3 -B scripts/package_release.py --verify /absolute/path/to/fresh-output/codex_workflow-1.1.14-private.2.zip
+python3 -B scripts/package_release.py --verify /absolute/path/to/fresh-output/codex_workflow-1.1.14-private.3.zip
 ```
 
-On Windows use the equivalent `py -3.11` invocation and native paths. All
-lifecycle tests must use disposable homes and project roots; never test by
-installing into the owner's actual `~/.codex` or projects.
+Expected release assets:
 
-The output is `codex_workflow-1.1.14-private.2.zip` and `SHA256SUMS`. Keep a
-separate provenance record with the source commit and completed verification.
-Do not publish a release, create a tag, or install as part of package creation.
+- `codex_workflow-1.1.14-private.3.zip`
+- `SHA256SUMS`
 
-## Later installation boundary
+Record the exact source commit and completed verification in the release notes or
+other durable provenance record.
 
-Read the bundled `operate/bootstrap.md` or `operate/update.md` at the time of
-an owner-requested installation. The local migration entry point is
-`codex_workflow/runtime/workflow.py update --source <verified-package-root>
---project <selected-project>`. The old 1.1.13 launcher does not understand the
-new package layout.
+## GitHub Release publication
+
+After the candidate is approved and merged to the intended release commit:
+
+1. create a GitHub Release in `elmakus/codex_workflow` for the matching SemVer
+   tag, for example `v1.1.14-private.3`;
+2. attach exactly the verified versioned ZIP and its `SHA256SUMS`;
+3. include concise release notes and the source commit SHA;
+4. publish only after both assets are present and verified.
+
+The installed updater ignores drafts and ignores any release that lacks either
+the expected versioned ZIP or `SHA256SUMS`. Prereleases are valid because this
+fork uses SemVer prerelease versions.
+
+There is deliberately no automatic release-publishing workflow here. Publishing
+a release remains an explicit owner action, while consuming an already published
+owner release is automated by `codex_workflow --check-update` and
+`codex_workflow --update`.
+
+## Installation boundary
+
+`1.1.14-private.2` predates owner-release discovery. Its first migration to
+`1.1.14-private.3` therefore still uses the incoming package's explicit local
+source path:
+
+```text
+python3 <verified-package-root>/runtime/workflow.py update \
+  --source <verified-package-root> \
+  --project <selected-project>
+```
+
+After private.3 is installed, future releases can normally use:
+
+```text
+codex_workflow --check-update
+codex_workflow --update
+```
 
 The runtime under `~/.codex` and worker definitions are shared. The target
 project's `AGENTS.md`, protected state and `agent_docs/` are project-specific.
 A first migration changes shared runtime behavior and one project wrapper;
-continue with all remaining existing project wrappers in the same coordinated
-rollout. Same-runtime project catch-up handles these later targets. There is
-no permanent mixed-version or selective-project rollout planned.
+continue with the remaining intended project wrappers explicitly. Same-runtime
+project catch-up handles those later targets.
