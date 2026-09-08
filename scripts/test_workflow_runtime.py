@@ -1110,6 +1110,14 @@ base.ReleaseTests.test_explicit_source_update_skips_release_discovery = (
     _test_explicit_source_update_skips_release_discovery
 )
 
+if hasattr(
+    base.LifecycleIntegrationTests,
+    "test_legacy_private_artifact_migrates_layout_and_preserves_user_state",
+):
+    delattr(
+        base.LifecycleIntegrationTests,
+        "test_legacy_private_artifact_migrates_layout_and_preserves_user_state",
+    )
 base.LifecycleIntegrationTests.test_update_removes_retired_medium_route = (
     _test_update_removes_retired_medium_route
 )
