@@ -22,6 +22,7 @@ RELEASES_URL = (
     f"https://api.github.com/repos/{RELEASES_REPOSITORY}/releases?per_page=100"
 )
 RELEASE_PAGE_SIZE = 100
+MAX_RELEASE_PAGES = 10
 MAX_METADATA_BYTES = 5 * 1024 * 1024
 MAX_CHECKSUM_BYTES = 1024 * 1024
 MAX_RELEASE_DOWNLOAD_BYTES = 25 * 1024 * 1024
@@ -105,15 +106,26 @@ def _release_page_url(page: int) -> str:
 
 def _read_release_records(timeout: int) -> list[object]:
     records: list[object] = []
-    page = 1
-    while True:
+    seen_full_pages: set[str] = set()
+    for page in range(1, MAX_RELEASE_PAGES + 1):
         batch = _read_json_url(_release_page_url(page), timeout)
         if not isinstance(batch, list):
             raise ValidationError("GitHub Releases response is not a list")
         records.extend(batch)
         if len(batch) < RELEASE_PAGE_SIZE:
             return records
-        page += 1
+        fingerprint = json.dumps(
+            batch,
+            sort_keys=True,
+            separators=(",", ":"),
+            ensure_ascii=True,
+        )
+        if fingerprint in seen_full_pages:
+            raise ValidationError("GitHub Releases pagination repeated a full page")
+        seen_full_pages.add(fingerprint)
+    raise ValidationError(
+        f"GitHub Releases pagination exceeded {MAX_RELEASE_PAGES} pages"
+    )
 
 
 def select_releases(timeout: int = 30) -> list[ReleaseSelection]:
@@ -294,7 +306,10 @@ def _split_network_url(url: str) -> tuple[str, str]:
         raise ValidationError(f"credentials are not allowed in network URL: {url}")
     if port not in {None, 443}:
         raise ValidationError(f"non-standard HTTPS port is not allowed: {url}")
-    return parsed.hostname.lower(), unquote(parsed.path)
+    path = unquote(parsed.path)
+    if any(segment in {".", ".."} for segment in path.split("/")):
+        raise ValidationError(f"dot-segments are not allowed in network URL: {url}")
+    return parsed.hostname.lower(), path
 
 
 def _validate_network_url(url: str) -> str:
