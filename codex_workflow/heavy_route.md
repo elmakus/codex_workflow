@@ -22,12 +22,19 @@ repository or security analysis, testing, Git or GitHub task execution,
 refactoring, repair, delegable research, and work already assigned to a worker
 belong to the appropriate worker by default.
 
-If assigned work is incomplete, first check the existing worker or thread. Resume
-it when possible; if it is still running or waiting, wait or message it; if it
-finished partially, use its result and delegate only the remainder. Reassign the
-remainder only when the existing worker is irrecoverably unavailable. A slow,
-stalled, or temporarily allowance-blocked worker is not a reason for Main to
-take over; after allowance recovers, prefer resuming the same worker or thread.
+If assigned work needs intervention, first use the existing worker or thread.
+Resume it when possible; if it is still running or waiting, wait or message it;
+if it finished partially, use its result and delegate only the remainder.
+Reassign the remainder only when the existing worker is irrecoverably
+unavailable. A slow, stalled, or temporarily allowance-blocked worker is not a
+reason for Main to take over; after allowance recovers, prefer resuming the same
+worker or thread.
+
+A `wait_agent` timeout that returns no new worker state or other evidence is not
+by itself a reason to poll status, list threads, message, interrupt, replace, or
+inspect worker progress. If the worker is still presumed healthy and no new
+signal requires intervention, issue another appropriately long `wait_agent`
+instead.
 
 If an irrecoverably unavailable worker left no complete handoff, Main should
 identify only the available recovery sources, such as the predecessor thread,
@@ -182,8 +189,10 @@ maximize concurrency without a concrete benefit.
 - Base every passing claim on completed validation evidence.
 - When workers are running and no useful independent work remains, make one
   event-driven `wait_agent` call instead of short repeated polling. Normally
-  use `1800000` ms, within a sensible `300000`-`3600000` ms range; continue
-  immediately when a child finishes early.
+  use `1500000` ms (25 minutes), within a sensible `300000`-`3600000` ms range;
+  continue immediately when a child finishes early. If the wait times out with
+  no new evidence and the worker is still presumed healthy, wait again rather
+  than polling.
 
 Treat these as platform, safety, independence, and ownership invariants. Choose
 the topology and lifecycle that fit the task within them.
