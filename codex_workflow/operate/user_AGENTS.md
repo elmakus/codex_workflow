@@ -1,5 +1,5 @@
 <!-- codex-workflow-user-id: viettran-edgeAI/codex_workflow -->
-<!-- codex-workflow-version: 1.1.14-private.2 -->
+<!-- codex-workflow-version: 1.1.14-private.3 -->
 <!-- codex-workflow-user-managed-start -->
 # AGENTS.md
 
@@ -12,6 +12,9 @@ exactly.
 
 - codex_workflow --update
   Guide:  ~/.codex/codex_workflow/operate/update.md.
+
+- codex_workflow --check-update
+  Guide:  ~/.codex/codex_workflow/operate/check_update.md.
 
 - codex_workflow --remove
   Guide: ~/.codex/codex_workflow/operate/remove.md.
