@@ -4,7 +4,7 @@ name = "tester"
 description = "Independent Luna verifier for a bounded parent-provided acceptance scope."
 
 model = "gpt-5.6-luna"
-model_reasoning_effort = "xhigh"
+model_reasoning_effort = "max"
 sandbox_mode = "workspace-write"
 
 developer_instructions = """

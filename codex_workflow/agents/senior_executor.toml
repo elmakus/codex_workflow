@@ -1,10 +1,10 @@
 # codex-workflow-worker: senior_executor
 name = "senior_executor"
 
-description = "Senior Sol executor for one exceptionally difficult production or solution package."
+description = "Senior Astra executor for one exceptionally difficult production or solution package."
 
-model = "gpt-5.6-sol"
-model_reasoning_effort = "medium"
+model = "gpt-6-astra"
+model_reasoning_effort = "low"
 sandbox_mode = "workspace-write"
 
 developer_instructions = """

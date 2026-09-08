@@ -26,6 +26,7 @@ PROJECT_STATE = "state.json"
 USER_STATE = "install_state.json"
 BUILTIN_WORKERS = frozenset(
     {
+        "micro_executor",
         "default_executor",
         "senior_executor",
         "tester",
@@ -34,7 +35,10 @@ BUILTIN_WORKERS = frozenset(
         "investigator",
     }
 )
-BUILTIN_SKILLS = frozenset({"deployment-token-report"})
+# The private package has no bundled skills.  The runtime still understands
+# ownership markers so it can safely retire skills installed by older private
+# releases during an explicit local migration.
+BUILTIN_SKILLS = frozenset()
 
 
 @dataclass(frozen=True)
@@ -116,7 +120,7 @@ class PackageLayout:
             required = [
                 "runtime/workflow.py",
                 "heavy_route.md",
-                "medium_route.md",
+                "delegation.md",
                 "archivist.md",
                 "operate/install.md",
                 "operate/bootstrap.md",
@@ -189,21 +193,6 @@ class PackageLayout:
                     f"missing={sorted(BUILTIN_SKILLS - skills)}, "
                     f"unexpected={sorted(skills - BUILTIN_SKILLS)}"
                 )
-            for skill in skills:
-                skill_root = self.skill_templates / skill
-                required_skill_files = (
-                    skill_root / "SKILL.md",
-                    skill_root / "agents" / "openai.yaml",
-                    skill_root / "scripts" / "report_tokens.py",
-                )
-                if not all(path.is_file() for path in required_skill_files):
-                    raise ValidationError(f"package skill files are incomplete: {skill}")
-                entry = skill_root / "SKILL.md"
-                match = SKILL_MARKER.search(entry.read_text(encoding="utf-8"))
-                if match is None or match.group(1) != skill:
-                    raise ValidationError(
-                        f"skill ownership marker missing or wrong: {skill}"
-                    )
 
     @property
     def version(self) -> str:

@@ -5,4 +5,3 @@ tests/
 AGENTS.md
 workflow_diary.md
 heavy_route_*
-scripts/test_deployment_token_report.py

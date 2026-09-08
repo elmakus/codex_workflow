@@ -1,21 +1,29 @@
 # Workflow Update
 
-Supported command forms:
+Supported command form:
 
     codex_workflow --update
 
-Use Python 3.11 or newer. Apply the validated update directly with the lifecycle
-CLI.
+Use Python 3.11 or newer. Updates are always owner-invoked; there is no
+background or startup auto-update.
 
-## Source
+## Default source: owner GitHub Releases
 
-Use the script to query GitHub Releases, select the highest non-draft SemVer
-release containing both the universal ZIP and `SHA256SUMS`, verify the checksum,
-and extract it safely. Include prereleases and never clone the repository. Let
-the installed launcher delegate planning and application to the incoming CLI,
-which validates its package schema.
+The installed launcher queries GitHub Releases only for:
 
-## Update
+`elmakus/codex_workflow`
+
+It selects the highest non-draft SemVer release that contains both:
+
+- `codex_workflow-<version>.zip`
+- `SHA256SUMS`
+
+Prereleases are valid. The launcher downloads those two assets, verifies the
+ZIP's SHA-256 against `SHA256SUMS`, enforces trusted GitHub URL/path and bounded
+metadata/download/archive limits, validates ZIP member paths/types, safely
+extracts the package into a temporary directory, and delegates the update to the
+incoming package's own `runtime/workflow.py`. Never clone a repository as part
+of the installed update path.
 
 Run:
 
@@ -23,20 +31,52 @@ Run:
 python3 ~/.codex/codex_workflow/runtime/workflow.py update --project <project>
 ```
 
-When the installed package still stores `VERSION` at its root, run the incoming
-package's `runtime/workflow.py` instead of the installed launcher. The incoming
-runtime recognizes that historical layout and migrates it transactionally.
+## Explicit local source fallback
 
-Let the script replace installed routes, worker TOMLs, and workflow-owned skills
-with the incoming release's fixed definitions. Expect it to preserve unrelated
-Codex settings and skills, project documents, personalization, project-local
-instructions, source backups, and the project's enabled/disabled state. For a
-project still using an older workflow version, expect the script to validate its
-managed region against that version's source backup. Expect it to remove
-obsolete workflow-owned files and the retired workflow-owned `agent_docs/`
-`.gitignore` rule, create a verified timestamped backup, and apply user/project
-state through one compensating transaction. Preserve an `agent_docs/` ignore
-rule that the user owns outside the workflow-managed block.
+A previously reviewed/extracted package may still be supplied through the
+internal `--source <package-root>` path for recovery, testing, or an explicit
+manual migration. That path must not perform release discovery or network
+download.
+
+Validate a local package before using it:
+
+```text
+python3 <verified-package-root>/runtime/workflow.py validate \
+  --package-root <verified-package-root> \
+  --json
+```
+
+Then run:
+
+```text
+python3 <verified-package-root>/runtime/workflow.py update \
+  --source <verified-package-root> \
+  --project <project>
+```
+
+## What the update changes
+
+The incoming package is the complete desired definition of workflow-owned
+runtime files:
+
+- workflow-owned files present in the incoming package are created or replaced;
+- workflow-owned files recorded by the previous install but absent from the
+  incoming package are removed;
+- worker TOMLs and workflow-owned skills follow the same ownership-aware rule;
+- obsolete workflow-owned Codex settings, including the old fixed concurrency
+  key, are retired when no longer part of the incoming contract;
+- unrelated Codex settings, unrelated workers/skills, user content outside the
+  managed user `AGENTS.md` region, project-local instructions, personalization,
+  `agent_docs/`, and enabled/disabled project state are preserved.
+
+The update creates a verified timestamped backup first and applies planned
+mutations through one compensating transaction. A failure must not be reported
+as a successful partial update.
+
+The `~/.codex` runtime and worker definitions are shared across projects and are
+replaced once. One `--project` invocation updates only that project's wrapper
+and state, so migrate every intended existing project explicitly after changing
+the shared runtime. No automatic project scanner or auto-install is implied.
 
 If a legacy project entry point contains merged local edits, expect the update
 to stop. Review and extract only the project-local instructions into a temporary
@@ -46,8 +86,10 @@ file, then rerun with:
 --legacy-local-instructions <reviewed-file>
 ```
 
-Treat this as a one-time migration into the dedicated local region. Never infer
-the content automatically. Add `--allow-downgrade` for a downgrade.
+Add `--allow-downgrade` only for an explicitly approved SemVer downgrade.
+
+When the shared runtime already matches the incoming version, the command may
+still bring an older target-project wrapper/state up to that version. A target
+project already current is a no-op.
 
 Report the installed version, backup location, and any failure.
-Do not describe a partial or rolled-back update as successful.

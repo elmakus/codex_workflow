@@ -1,132 +1,70 @@
-# Release Process
+# Owner release preparation
 
-This repository publishes the workflow as GitHub Release assets. The release
-payload is intentionally independent of the repository presentation and
-development files.
+`elmakus/codex_workflow` is the release source for this fork. Building a package
+never changes an installed runtime or project. Publication is a separate,
+explicit owner action after review and verification.
 
-## Repository and asset layout
+## Source and version
 
-The repository-only release machinery is:
-
-```text
-.github/workflows/release.yml
-scripts/package_release.py
-RELEASING.md
-```
-
-Every archive contains exactly this top-level directory and nothing beside it:
-
-```text
-codex_workflow/
-├── AGENTS.md
-├── operate/
-│   ├── VERSION
-│   ├── user_AGENTS.md
-│   └── lifecycle guides
-├── runtime/
-│   ├── workflow.py
-├── resources/                              # immutable package defaults
-├── agents/
-└── project_docs/
-```
-
-The package does not contain `README.md`, `illustration.png`,
-`workflow_break_down.md`, `RELEASING.md`, `.github/`, `scripts/`, `.git/`, or any
-other repository-only file. All files below `codex_workflow/` are included so
-the installed workflow remains self-contained.
-
-Each GitHub Release publishes one universal asset for every supported operating
-system:
-
-- `codex_workflow-<version>.zip`;
-- `SHA256SUMS` for the ZIP asset.
-
-## Versioning
-
-Use SemVer 2.0.0. Keep the plain version in
-`codex_workflow/operate/VERSION` and the `codex-workflow-version` marker in
+The current version is `1.1.17-private.1`, based directly on upstream `v1.1.17`
+commit `414a5d301ff17ca6e655330474c8346863d0d5d0`. Keep
+`codex_workflow/operate/VERSION` and the marker in
 `codex_workflow/operate/user_AGENTS.md` identical.
-The release tag is the same value with an optional leading `v`, for example
-`VERSION=1.1.15` and tag `v1.1.15`. GitHub's prerelease flag is independent of
-the SemVer string; the initial releases are marked as prereleases by the
-workflow.
-The command examples below use the current package version, `1.1.15`; replace
-that value consistently when preparing a later release.
 
-## Local build and validation
+Only publish a release from a reviewed commit intended for this fork's `main`.
+Do not publish a candidate branch merely to make the updater see it.
 
-Run these commands from the repository root. The builder uses only Python's
-standard library, requires Python 3.11 or newer, and works on Linux, macOS, and
-Windows.
+## Artifact
 
-Linux/macOS:
+The ZIP includes only `codex_workflow/`. Repository documentation, tests,
+images, Git metadata, and old ZIPs are not part of the package.
+
+Use Python 3.11 or newer from a clean checkout of the exact reviewed commit:
 
 ```sh
 python3 -B scripts/test_workflow_runtime.py -v
-python3 -B scripts/test_deployment_token_report.py -v
-python3 scripts/package_release.py --release-tag v1.1.15 --output-dir dist
-python3 scripts/package_release.py --verify dist/codex_workflow-1.1.15.zip --version 1.1.15
+python3 -B codex_workflow/runtime/workflow.py validate --package-root codex_workflow --json
+python3 -B scripts/package_release.py --output-dir /absolute/path/to/fresh-output
+python3 -B scripts/package_release.py --verify /absolute/path/to/fresh-output/codex_workflow-1.1.17-private.1.zip
 ```
 
-Windows PowerShell:
+Expected release assets:
 
-```powershell
-py -3.11 -B scripts\test_workflow_runtime.py -v
-py -3.11 -B scripts\test_deployment_token_report.py -v
-py -3.11 scripts/package_release.py --release-tag v1.1.15 --output-dir dist
-py -3.11 scripts/package_release.py --verify dist\codex_workflow-1.1.15.zip --version 1.1.15
+- `codex_workflow-1.1.17-private.1.zip`
+- `SHA256SUMS`
+
+Record the exact source commit and completed verification in the release notes or
+other durable provenance record.
+
+## GitHub Release publication
+
+After the candidate is approved and merged to the intended release commit:
+
+1. create a GitHub Release in `elmakus/codex_workflow` for tag
+   `v1.1.17-private.1`;
+2. attach exactly the verified versioned ZIP and its `SHA256SUMS`;
+3. include concise release notes and the source commit SHA;
+4. publish only after both assets are present and verified.
+
+The installed updater ignores drafts and releases lacking either expected asset.
+Prereleases are valid. There is deliberately no automatic release-publishing
+workflow; publication remains an explicit owner action.
+
+## Installation boundary
+
+This repository preparation does not install or update the workflow. After a
+reviewed owner release is published, an already compatible private runtime may
+normally use:
+
+```text
+codex_workflow --check-update
+codex_workflow --update
 ```
 
-The build validates the version, marker, lifecycle runtime, and required
-resources; rejects generated Python caches; creates a deterministic ZIP asset;
-and writes `dist/SHA256SUMS`. Run the runtime tests before packaging and inspect
-the archive listing when package contents change.
+The explicit verified local `--source` path remains available for recovery and
+manual migration when needed.
 
-## Publishing — approval required
-
-Do not run the following commands until the release structure, contents, tag,
-and prerelease setting have been approved:
-
-```sh
-git status --short
-git tag -a v1.1.15 -m "codex_workflow v1.1.15"
-git push origin v1.1.15
-```
-
-Pushing a semantic `v*` tag starts `.github/workflows/release.yml`. It rebuilds
-and validates the archives from that tagged commit, then publishes the GitHub
-Release with `--prerelease` and generated notes. The workflow also supports a
-manual dispatch with a tag; manual runs check out that tag before packaging and
-publish against the checked-out commit. Manual dispatch defaults to prerelease
-publication. The prerelease flag should be removed or disabled only after a
-separate decision to promote the project to stable releases.
-
-If the workflow is unavailable, the equivalent manual publication command is:
-
-```sh
-gh release create v1.1.15 \
-  dist/codex_workflow-1.1.15.zip \
-  dist/SHA256SUMS \
-  --title "codex_workflow v1.1.15" \
-  --generate-notes \
-  --prerelease
-```
-
-The manual command is also approval-gated and must use assets built from the
-same tagged commit.
-
-## Consumer commands
-
-- Initial installation reads the extracted release package's
-  `codex_workflow/operate/bootstrap.md`; the bundled lifecycle CLI validates and
-  applies the user-level bootstrap transaction directly.
-- `codex_workflow --install` reads the installed `operate/install.md` and creates only
-  project-level workflow assets from the existing bootstrap.
-- `codex_workflow --check-update` explicitly checks GitHub Releases without
-  downloading or installing an update.
-- `codex_workflow --update` selects the latest appropriate ZIP asset, downloads
-  it from its GitHub Release URL, verifies it, and follows the package's update
-  procedure. It never clones the repository.
-- `codex_workflow --remove` first displays a destructive dry-run summary and
-  requires one explicit second confirmation before deleting workflow-owned
-  files.
+The runtime under `~/.codex` and worker definitions are shared. The target
+project's `AGENTS.md`, protected state, and `agent_docs/` are project-specific.
+An update changes the shared runtime once and migrates only explicitly selected
+project wrappers. Same-runtime project catch-up handles later targets.

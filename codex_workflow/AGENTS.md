@@ -4,102 +4,39 @@
 
 ## Design Principles
 
-- Keep modules cohesive, interfaces explicit, coupling minimal, and behavior
-  testable, replaceable, and reusable.
-- Define proportionate acceptance and verification before implementation. Never
-  weaken coverage, assertions, or failure visibility to save time or tokens.
-- Avoid unnecessary process or safeguards; preserve unrelated user work and use
-  verified facts in durable documentation.
-
-## Working State
-
-- `deployment state`: planning or executing a broad, possibly multi-session
-  deployment plan.
-- `leaf state`: otherwise, including general questions and small bounded
-  operations.
-
-## Project Documentation
-
-Use the durable project documents under `agent_docs/`:
-
-- `project_overview.md`: goals, architecture, workflow, and major decisions.
-- `project_core_tech.md`: concise special technology or architecture notes.
-- `project_structure.md`: layout, modules, components, and ownership.
-- `project_progress.md`: goal, overall progress, current position, next milestone.
-- `project_diary.md`: distilled decisions, discarded approaches, mistakes, and
-  reusable lessons.
-- `latest_session_work.md`: detailed handoff evidence and continuation point.
-- Module-specific documents, when present.
-
-In deployment state, you own `project_progress.md`, `project_diary.md`, and
-`latest_session_work.md`. Before closure, directly record the current goal and
-continuation state, concise lasting lessons, and the verified deployment
-handoff in their canonical documents. Archivist owns other assigned project and
-public documentation from verified facts, including overview, structure, core
-technologies, and module documents, and performs the closing documentation and
-reporting handoff. Require concise edits that remove stale or redundant detail,
-assign module documents explicitly, and perform a direct user-requested
-document edit yourself outside deployment.
-
-Keep raw logs, temporary reasoning, and short-lived checkpoints out of durable
-documents; give each fact one canonical home. Never delete a main project
-document without warning and a second explicit confirmation.
-
-## Route Selection
-
-Select one of these routes: **Light** works directly in leaf state without subagents;
-**Medium** keeps planning, diagnosis, implementation, and verification with the
-main agent and uses bounded support from `~/.codex/codex_workflow/medium_route.md`;
-**Heavy** delegates bounded production, verification, documentation,
-project-context, and Internet research under `~/.codex/codex_workflow/heavy_route.md`.
-
-Follow the user's route selection. Use Light when none is selected; do not infer
-Medium or Heavy. Keep the route until the user changes it or the session ends.
-Enter deployment state for Medium or Heavy only when the work is substantive.
+- Keep modules cohesive, interfaces explicit, coupling minimal, and behavior testable, replaceable, and reusable.
+- Define proportionate acceptance and verification before implementation. Never weaken coverage, assertions, or failure visibility to save time.
+- Avoid unnecessary process or safeguards; preserve unrelated user work and use verified facts in durable documentation.
 
 ## Rollout Efficiency
 
-Batch independent reads, searches, metadata checks, and other known-input
-operations. Keep dependencies and overlapping mutations sequential. In Medium or
-Heavy, dispatch independent workers, wait for the
-relevant set, and synthesize their reports once.
+Batch independent reads, searches, metadata checks, and other known-input operations. Keep dependencies and overlapping mutations sequential. When using workers, dispatch independent workers, wait for the relevant set, and synthesize their reports once.
 
-Read personalization and project-local instructions from the protected regions
-at the end of this file. Apply them over workflow defaults subject to higher
-instruction priority.
+Read personalization and project-local instructions from the protected regions at the end of this file. Apply them over workflow defaults subject to higher instruction priority.
 
-## Required Documentation Read
+## Working State
 
-On the first `deployment state` entry under either Medium or Heavy, immediately
-create one persistent Companion with `agent_type="companion"`,
-`task_name="companion"`, and `fork_turns="none"`, or reuse the existing target.
-Do this before planning, modifying files, or dispatching any other worker. Reuse
-that Companion after route changes; do not create a second one.
+Use `deployment state` for broad, possibly multi-session deployment plans. Use `leaf state` otherwise, including general questions and small bounded operations.
 
-Give its first assignment the current route, goal, relevant constraints, and a
-bounded diary/module intake or other substantial context consolidation. It
-retains supporting detail and returns only a task-relevant director brief.
+## Project Documentation
 
-If you have not already completed the session-level intake, directly read the
-complete current `agent_docs/` framework exactly once: overview, core
-technology, structure, progress, diary, latest session work, and every
-module-specific Markdown document. This one direct read is shared across Medium
-and Heavy. Never repeat it later in the session. Use retained context or assign
-Companion a bounded diary/module intake, large synthesis, delta, or conflict
-check when freshness or detailed supporting context matters. Missing or
-unreadable required documents leave deployment entry incomplete; report the
-intake blocker.
+Use the durable documents under `agent_docs/`: `project_overview.md` (goals, architecture, workflow, decisions), `project_core_tech.md` (technology notes), `project_structure.md` (layout and ownership), `project_progress.md` (progress and milestone), `project_diary.md` (lasting decisions and lessons), `latest_session_work.md` (handoff evidence), and any module-specific Markdown.
 
-Do not overuse Companion. Each rollout reloads its persistent context. Combine
-related questions, reuse earlier findings, and avoid status-only requests, tiny
-lookups already answerable from main context, or repeated broad summaries. Use
-it when one consolidated result replaces multiple main reads or tool turns,
-suppresses bulky evidence, or will be reused later.
+In deployment state, you own `project_progress.md`, `project_diary.md`, and `latest_session_work.md`. Before closure, directly record the current goal and continuation state, concise lasting lessons, and the verified deployment handoff in their canonical documents. Archivist owns other assigned project and public documentation from verified facts, including overview, structure, core technologies, and module documents. Assign module documents explicitly. Perform a direct user-requested document edit yourself outside deployment.
+
+Keep raw logs, temporary reasoning, and short-lived checkpoints out of durable documents; give each fact one canonical home. Never delete a main project document without warning and a second explicit confirmation.
+
+## Workflow
+
+In leaf state, work directly without reading `~/.codex/codex_workflow/heavy_route.md` or spawning subagents. When work is substantive, enter `deployment state`, read that Heavy contract, and use only the worker capabilities that add value to the task.
+
+## Proportionate Documentation Read
+
+Read documentation in proportion to the task. When continuing, start from the specified checkpoint. Search `agent_docs/` and read the documents or sections needed to understand the task, its constraints, and dependencies. Expand the read when context is missing. Read the complete set only when the scope of work requires it. A missing unrelated document does not block the task.
 
 ## Platform Paths
 
-Interpret `/` as a platform-neutral separator and translate paths for the
-current operating system and shell.
+Interpret `/` as a platform-neutral separator and translate paths for the current operating system and shell.
 <!-- codex-workflow-managed-end -->
 
 <!-- codex-workflow-project-personalization-start -->

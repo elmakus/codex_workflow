@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Build and validate the codex_workflow GitHub Release assets.
+"""Build and validate the private codex_workflow package.
 
 The release payload is deliberately sourced from one directory only:
 ``codex_workflow/``.  The script uses only Python's standard library so it can
@@ -31,6 +31,7 @@ USER_MANAGED_START = "<!-- codex-workflow-user-managed-start -->"
 USER_MANAGED_END = "<!-- codex-workflow-user-managed-end -->"
 BUILTIN_WORKERS = frozenset(
     {
+        "micro_executor",
         "default_executor",
         "senior_executor",
         "tester",
@@ -39,7 +40,7 @@ BUILTIN_WORKERS = frozenset(
         "investigator",
     }
 )
-BUILTIN_SKILLS = frozenset({"deployment-token-report"})
+BUILTIN_SKILLS: frozenset[str] = frozenset()
 
 
 class ReleaseError(ValueError):
@@ -289,11 +290,12 @@ def _verify_member_names(names: Iterable[str]) -> list[str]:
         f"{PACKAGE_DIR_NAME}/operate/bootstrap.md",
         f"{PACKAGE_DIR_NAME}/operate/install.md",
         f"{PACKAGE_DIR_NAME}/operate/update.md",
-        f"{PACKAGE_DIR_NAME}/operate/check_update.md",
         f"{PACKAGE_DIR_NAME}/operate/remove.md",
         f"{PACKAGE_DIR_NAME}/operate/personalization_guide.md",
         f"{PACKAGE_DIR_NAME}/operate/enable.md",
         f"{PACKAGE_DIR_NAME}/operate/disable.md",
+        f"{PACKAGE_DIR_NAME}/heavy_route.md",
+        f"{PACKAGE_DIR_NAME}/delegation.md",
         f"{PACKAGE_DIR_NAME}/archivist.md",
         f"{PACKAGE_DIR_NAME}/runtime/workflow.py",
         f"{PACKAGE_DIR_NAME}/runtime/__init__.py",
@@ -315,14 +317,6 @@ def _verify_member_names(names: Iterable[str]) -> list[str]:
     required.update(
         f"{PACKAGE_DIR_NAME}/agents/{worker}.toml" for worker in BUILTIN_WORKERS
     )
-    for skill in BUILTIN_SKILLS:
-        required.update(
-            {
-                f"{PACKAGE_DIR_NAME}/skills/{skill}/SKILL.md",
-                f"{PACKAGE_DIR_NAME}/skills/{skill}/agents/openai.yaml",
-                f"{PACKAGE_DIR_NAME}/skills/{skill}/scripts/report_tokens.py",
-            }
-        )
     missing = sorted(required.difference(normalized))
     if missing:
         raise ReleaseError("archive is missing: " + ", ".join(missing))
@@ -443,7 +437,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--output-dir", type=Path, default=repository_root() / "dist", help="asset directory"
     )
-    parser.add_argument("--release-tag", help="validate a release tag such as v1.1.15")
+    parser.add_argument("--release-tag", help="validate a release tag such as v1.1.14")
     parser.add_argument("--version", help="validate an expected package version")
     parser.add_argument(
         "--verify",

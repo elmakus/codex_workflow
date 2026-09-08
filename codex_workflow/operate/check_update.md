@@ -6,10 +6,19 @@ Run the installed lifecycle CLI:
 python3 ~/.codex/codex_workflow/runtime/workflow.py check-update --json
 ```
 
-Treat this as an explicit, read-only check regardless of the automatic
-update-check setting. Expect it to compare the installed version with all
-available release assets, report every newer version, and include a compact
-summary of each version's GitHub release notes. Keep workflow files unchanged.
+This is an explicit, read-only network check. It queries GitHub Releases only
+for `elmakus/codex_workflow`, considers non-draft SemVer releases that contain
+both the versioned `codex_workflow-<version>.zip` asset and `SHA256SUMS`, and
+reports every version newer than the installed runtime. Prereleases are valid
+because the private version line uses SemVer prerelease identifiers.
+
+The check follows all release-list pages. Having no qualifying owner release is
+a normal state: the command reports `no releases`, keeps `updates` empty, and
+returns successfully. Network, metadata, or validation failures still fail
+closed.
+
+The check does not modify workflow files, projects, or Git state. No background
+or startup update check is implied.
 
 If an update is available, review the reported summaries and then send
-`codex_workflow --update` when you are ready to install the latest release.
+`codex_workflow --update` when you are ready to install the latest owner release.

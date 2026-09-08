@@ -1,8 +1,9 @@
 # Initial Workflow Bootstrap
 
-Use this guide only for the first installation from a universal GitHub Release
-ZIP. Use Python 3.11 or newer. On Windows, use the equivalent `py -3.11`
-invocation and native paths.
+Use this guide only for the first installation from the approved private
+universal ZIP built from a clean checkout of the reviewed, pushed private
+commit. Do not substitute a public upstream release. Use Python 3.11 or newer.
+On Windows, use the equivalent `py -3.11` invocation and native paths.
 
 Verify `codex_workflow-<version>.zip` against `SHA256SUMS`, extract it into a
 temporary directory, and require exactly one top-level `codex_workflow/`
