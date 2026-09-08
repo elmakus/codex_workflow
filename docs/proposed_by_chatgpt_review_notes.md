@@ -6,7 +6,7 @@ This document records the intent behind the changes on the `proposed-by-chatgpt`
 
 Review this branch for implementation errors, regressions, stale references, migration problems, contradictory instructions, or unnecessary complexity. Do not treat the design choices listed below as bugs merely because they differ from upstream. They were explicitly chosen by the repository owner.
 
-The desired outcome is a simpler private workflow with one substantive orchestration mode, minimal context overhead for small tasks, selective subagent use, and preserved runtime safety limits.
+The desired outcome is a simpler owner-customized workflow with one substantive orchestration mode, minimal context overhead for small tasks, selective subagent use, preserved runtime safety limits, and an owner-controlled release channel.
 
 ## User-approved design decisions
 
@@ -125,11 +125,25 @@ A timeout-only `wait_agent` result with no new worker state or other evidence mu
 
 Reason: an empty polling turn can re-enter the expensive Main with a large context even though no orchestration decision is needed. The desired flow is `worker still healthy -> wait -> timeout with no evidence -> wait again`, not `timeout -> wake Main -> inspect/poll -> wait`.
 
-### 11. Token-reporting and online-update machinery stay removed
+### 11. Owner-controlled release updater is intentional; token reporting stays removed
 
-Do not restore the deployment token report, reporting skill, online release checks, automatic downloads, automatic publication, or similar machinery merely to match upstream.
+The deployment token report, reporting skill, deployment counting, and similar token-reporting machinery remain intentionally removed.
 
-The private package intentionally uses explicit verified local update sources and a simpler closure path.
+Release discovery is now intentionally restored, but **only** for GitHub Releases published from:
+
+`elmakus/codex_workflow`
+
+Expected updater behavior:
+
+- `codex_workflow --check-update` is an explicit read-only network check;
+- `codex_workflow --update` may query only the owner's fork release endpoint when no local `--source` is supplied;
+- usable releases must be non-draft SemVer releases containing both the exact versioned `codex_workflow-<version>.zip` and `SHA256SUMS`;
+- prereleases are allowed because the private version line uses SemVer prerelease identifiers;
+- the ZIP must be checksum-verified and safely extracted before the incoming runtime is allowed to plan/apply the migration;
+- an explicit verified local `--source` path remains available for recovery/testing and for migration from older installed versions that predate release discovery;
+- there is no background/startup update, no updater pointed at `viettran-edgeAI/codex_workflow`, and no automatic release publication.
+
+Reason: once the owner has reviewed and deliberately published a release from this fork, installing that owner-approved artifact should be convenient without allowing upstream releases to overwrite the custom workflow.
 
 ### 12. Heavy Main is an orchestrator, not a production executor
 
@@ -139,9 +153,9 @@ For substantive Heavy work, Main should minimize direct task execution. Code imp
 
 If assigned work stops progressing, the intended order is:
 
-1. inspect the existing worker/thread status;
+1. inspect the existing worker/thread status when intervention is actually needed;
 2. resume that worker when possible;
-3. wait or message it when it is still running/waiting;
+3. wait or message it when appropriate;
 4. if it completed partially, reuse its result and delegate only the remainder;
 5. reassign the remainder only when the original worker is irrecoverably unavailable.
 
@@ -170,11 +184,14 @@ Reason: repeated prose about internal orchestration or routine successful milest
 A review should specifically verify that upgrading an existing installation to this branch behaves safely:
 
 - the retired `medium_route.md` is removed from the installed workflow runtime when it was previously workflow-owned;
+- added/changed workflow-owned files are materialized from the incoming package and previously owned files absent from that package are removed;
 - unrelated user files/settings are preserved;
-- worker ownership cleanup remains safe;
+- worker and skill ownership cleanup remains safe;
 - the runtime still writes `multi_agent = true` and `max_concurrent_threads_per_session = 20`;
-- project-local instructions and durable `agent_docs/` content are preserved;
-- existing rollback / backup behavior remains intact.
+- project-local instructions, personalization, durable `agent_docs/`, and enabled/disabled state are preserved;
+- existing rollback / backup behavior remains intact;
+- owner-release discovery cannot accidentally consume upstream releases or a release missing the expected checksum asset;
+- the existing local `--source` update path still works without network discovery.
 
 ## What the reviewer should challenge
 
@@ -192,6 +209,8 @@ The reviewer should freely challenge implementation quality. In particular, chec
 - concurrency wording that accidentally creates either a new hard global cap or a blanket one-item-at-a-time rule;
 - broken package validation after deleting `medium_route.md`;
 - broken update cleanup for old installed copies of `medium_route.md`;
+- updater code that points to `viettran-edgeAI/codex_workflow`, accepts releases without both required assets, skips checksum/path/type validation, or introduces background updating;
+- updater behavior that loses the explicit local-source fallback or breaks same-runtime project catch-up;
 - incorrect Senior model assertions or worker validation;
 - tests that were weakened instead of updated to the new contract;
 - unnecessary new abstraction, duplication, or indirection introduced only to make tests pass;
