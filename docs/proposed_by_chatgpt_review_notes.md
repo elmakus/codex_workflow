@@ -115,13 +115,15 @@ Keep all six worker definitions available:
 
 The main agent should omit roles that add no value. Companion remains at most one persistent instance, Senior at most one, and one Archivist owns closure for a substantive deployment.
 
-### 10. Existing long-wait behavior should remain
+### 10. Long waits should avoid no-op parent wakeups
 
 When workers are already running and no useful independent work remains, the main agent should prefer one appropriately long event-driven `wait_agent` call over repeated short polling.
 
-The existing guidance around a normal `1800000` ms (30 minute) wait and sensible `300000`-`3600000` ms range is intentional.
+The intended default is `1500000` ms (25 minutes), within the existing sensible `300000`-`3600000` ms range. The 25-minute default is intentionally long because Luna max can be slow and is chosen to avoid repeated expensive Main wakeups while leaving margin below the roughly 30-minute prompt-cache window discussed during this design review.
 
-Reason: Luna max can be slow; avoid wasteful polling turns while still continuing immediately when a child finishes early.
+A timeout-only `wait_agent` result with no new worker state or other evidence must not itself trigger status polling, thread listing, worker messaging, interruption, replacement, progress inspection, or Main takeover. If the worker is still presumed healthy and no new signal requires intervention, Main should simply issue another appropriately long wait.
+
+Reason: an empty polling turn can re-enter the expensive Main with a large context even though no orchestration decision is needed. The desired flow is `worker still healthy -> wait -> timeout with no evidence -> wait again`, not `timeout -> wake Main -> inspect/poll -> wait`.
 
 ### 11. Token-reporting and online-update machinery stay removed
 
@@ -183,6 +185,7 @@ The reviewer should freely challenge implementation quality. In particular, chec
 - accidental need to read Heavy for leaf tasks;
 - any Heavy wording that still encourages Main to perform executor/researcher/tester work directly;
 - any path where a stalled worker is treated as permission for Main takeover before resume/wait/message/reassignment is exhausted;
+- any path where a timeout-only wait with no new evidence causes Main to poll/list/message/interrupt/replace/inspect instead of waiting again;
 - any path where an unavailable predecessor without a complete handoff causes Main to read/reconstruct detailed predecessor state instead of delegating recovery + continuation;
 - any wording that encourages narration after routine wait/resume/status/message/queue operations or routine successful intermediate completions instead of silent tool-call orchestration;
 - final-verification wording broad enough to make Main redo the substantive task;
