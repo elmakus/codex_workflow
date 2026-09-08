@@ -13,7 +13,7 @@ the deployment. Then use only the capsule for that role:
 | --- | --- |
 | Companion | **Project Context Scope**; **Context Task + Goal**; **Main-Agent Context Guidance** |
 | Investigator | **Research Context**; **Research Question + Goal**; **Main-Agent Research Guidance** |
-| Default or Senior Executor | **Implementation Context + Ownership**; **Implementation Task + Goal**; **Main-Agent Implementation Guidance** |
+| Micro, Default, or Senior Executor | **Implementation Context + Ownership**; **Implementation Task + Goal**; **Main-Agent Implementation Guidance** |
 | Tester | **Verification Context**; **Verification Goal**; **Main-Agent Verification Guidance** |
 | Archivist | **Documentation Context + Audience**; **Documentation Task + Goal**; **Main-Agent Documentation Guidance** |
 
@@ -27,7 +27,9 @@ capsule parts whose information changed. Do not resend stable context.
 For Executors, give enough transferred project knowledge to complete the
 bounded package well, but leave local discovery, command selection,
 implementation, self-check, and ordinary repair to the worker. Give Senior the
-unresolved hard-decision context when solving it is the assignment.
+unresolved hard-decision context when solving it is the assignment. Give Micro
+only work whose cause, desired result, ownership, and edit surface are already
+clear.
 
 For Tester, transfer acceptance intent, risks, contracts, boundaries, relevant
 evidence, and any required gates. Let Tester choose and execute the specific
@@ -39,57 +41,56 @@ risk, and only decisions Main must make.
 
 ## Micro Execution
 
-Micro Execution is an optimization for tiny deterministic implementation work
-inside an already substantive Heavy deployment. It uses the existing
-`default_executor` role; it is not a separate ownership role.
+Micro Executor is a distinct worker below Default Executor. Use it only for a
+tiny deterministic implementation subtask inside an already substantive Heavy
+deployment. Do not spawn it when the complete user request is itself a trivial
+leaf task; Main handles those directly.
 
 Good fits include a mechanical rename across known files, changing explicit
 configuration values, a version or manifest edit, adding a small entry that
 follows an existing pattern, tiny boilerplate, a known lint/format repair, or a
 small test edit whose cause and desired result are already established.
 
-Do not use Micro Execution for broad discovery, unknown-root-cause debugging,
+Do not use Micro Executor for broad discovery, unknown-root-cause debugging,
 architecture, security judgement, migration reasoning, repository-wide review,
 or work whose ownership is not already clear.
 
+The installed `micro_executor` profile is the stable fallback and uses Luna High.
+Spark is an optional acceleration path, never a workflow requirement.
+
 ### Preferred route: Spark
 
-If the current `spawn_agent` tool exposes model overrides and lists
-`gpt-5.3-codex-spark` as available, spawn:
+When the current `spawn_agent` surface supports model overrides and Spark is
+available, spawn the Micro Executor with:
 
-- `agent_type="default_executor"`
+- `agent_type="micro_executor"`
 - `fork_turns="none"`
 - `model="gpt-5.3-codex-spark"`
-- `reasoning_effort="high"` when `high` is advertised for Spark; otherwise omit
-  the effort override and use Spark's advertised default.
+- `reasoning_effort="high"` when `high` is supported for Spark; otherwise omit
+  the effort override and use Spark's supported default.
 
 If Spark is unavailable, unsupported, quota-blocked, or rejected specifically
 because that model cannot be spawned, treat that as routing information rather
-than task failure.
+than task failure. Do not retry Spark repeatedly.
 
-### Fallback route: Luna High
+### Stable fallback: Luna High
 
-When model overrides are exposed, retry the same package once with:
+Spawn the same package as:
 
-- `agent_type="default_executor"`
+- `agent_type="micro_executor"`
 - `fork_turns="none"`
-- `model="gpt-5.6-luna"`
-- `reasoning_effort="high"`
 
-If the runtime does not expose model/reasoning overrides at all, use the
-configured `default_executor` as the safe compatibility fallback. That worker is
-Luna Max, so it is slower but preserves correctness.
+with no model override. The installed Micro Executor profile is
+`gpt-5.6-luna` at `high` reasoning, so this fallback also works when the runtime
+does not expose model/reasoning overrides at all.
 
 Do not create a reasoning escalation ladder for Micro Execution. If Spark or
 Luna High reports that the task requires meaningful exploration, architecture,
 security judgement, migration reasoning, broader ownership, or materially
 stronger reasoning, Main reclassifies the package:
 
-- normal bounded implementation -> configured Default Executor (Luna Max);
+- normal bounded implementation -> Default Executor (Luna Max);
 - exceptionally difficult bounded package -> Senior Executor (Astra Low).
-
-Do not retry Spark repeatedly after an availability failure, and do not treat
-Spark access as a workflow requirement.
 
 ## Worker Follow-up and Repair
 
