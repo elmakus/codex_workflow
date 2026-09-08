@@ -1,9 +1,9 @@
 # Archivist Assignments
 
-Use Archivist for verified documentation work in Medium or Heavy. Give each
-assignment a Task ID and the Documentation Context + Audience, Documentation
-Task + Goal, and Main-Agent Documentation Guidance capsule. Identify the write
-surface and provide verified facts or exact evidence references.
+Use Archivist for verified documentation work in Heavy. Give each assignment a
+Task ID and the Documentation Context + Audience, Documentation Task + Goal, and
+Main-Agent Documentation Guidance capsule. Identify the write surface and provide
+verified facts or exact evidence references.
 
 Choose the number, timing, and reuse of Archivist workers according to the task.
 Give concurrent workers non-overlapping document ownership. Ordinary assignments
@@ -29,6 +29,6 @@ Archivist seals it. Assign only one closure owner for each deployment. Relay its
 documentation handoff without repeating its operational checks. A later
 substantive deployment receives its own closure handoff.
 
-For questions and small bounded tasks on the direct fast path, work directly
-without this closure handoff. If Archivist is unavailable or blocked, report the
-limitation and the remaining work accurately.
+For questions and small bounded tasks in leaf state, work directly without this
+closure handoff. If Archivist is unavailable or blocked, report the limitation
+and the remaining work accurately.
