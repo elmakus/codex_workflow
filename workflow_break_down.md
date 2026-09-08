@@ -8,6 +8,11 @@ Heavy is the only workflow route. Leaf-state questions and small bounded tasks
 work directly from `AGENTS.md` without workers and without loading the Heavy
 contract. Substantive work enters deployment state and loads `heavy_route.md`.
 
+The Heavy contract contains only the standing orchestration rules Main needs for
+the whole deployment. Detailed worker-package, Micro Execution, follow-up, and
+recovery instructions live in `delegation.md` and are loaded only when Main is
+actually delegating, following up, or recovering work.
+
 The main agent controls scope, architecture, dependencies, scheduling,
 acceptance, and final claims. In Heavy it is an orchestrator rather than a
 production executor: implementation, broad repository/security analysis,
@@ -35,12 +40,20 @@ keeps multi-agent enabled and enforces `max_concurrent_threads_per_session = 20`
 
 | Role | Model / reasoning | Responsibility |
 | --- | --- | --- |
-| Default Executor | Luna / max | Bounded implementation and repair. |
+| Micro Executor | Spark / high when available; otherwise Luna / high | Tiny deterministic implementation subtasks inside an existing Heavy deployment. |
+| Default Executor | Luna / max | Normal bounded implementation and repair. |
 | Senior Executor | Astra / low | Exceptionally difficult production or solution work. |
 | Tester | Luna / max | Independent verification. |
 | Companion | Luna / max | Read-only project context, created on demand. |
 | Investigator | Luna / max | Read-only external research. |
 | Archivist | Luna / max | Verified documentation and closing handoff. |
+
+Micro Executor is a separate workflow-owned worker below Default Executor. Its
+installed profile is Luna High, so it always has a fast fallback. When the current
+Codex runtime/account exposes GPT-5.3-Codex-Spark and model overrides, Main may
+spawn the same Micro Executor package with Spark High. Spark availability is not
+part of the workflow's correctness contract. A micro package that stops being
+small and deterministic is reclassified to Default Executor or Senior Executor.
 
 Archivist has no usage-reporting responsibility. This package does not include
 token accounting, deployment counting markers, a reporting skill, or report
@@ -67,11 +80,12 @@ handoff records. The main updates the diary. Project-specific handoffs outside
 
 ## Shared user files
 
-`~/.codex/codex_workflow/` contains the Heavy contract, `archivist.md`, runtime
-modules, installed templates, and ownership state. `operate/` contains lifecycle
-guides and version metadata; `runtime/workflow.py` is the launcher. Worker
-definitions are installed under `~/.codex/agents/`; the marked user instruction
-region and workflow-owned settings are shared as well.
+`~/.codex/codex_workflow/` contains the compact Heavy contract,
+`delegation.md`, `archivist.md`, runtime modules, installed templates, and
+ownership state. `operate/` contains lifecycle guides and version metadata;
+`runtime/workflow.py` is the launcher. Worker definitions are installed under
+`~/.codex/agents/`; the marked user instruction region and workflow-owned
+settings are shared as well.
 
 These user files are not separate copies for each project. An update replaces
 the shared runtime once and migrates each intended existing project wrapper with
