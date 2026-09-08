@@ -316,7 +316,10 @@ def _validate_network_url(url: str) -> str:
 
 
 def _validate_asset_url(url: str, version_text: str, asset_name: str) -> str:
-    host, path = _split_network_url(url)
+    try:
+        host, path = _split_network_url(url)
+    except ValidationError as error:
+        raise ValidationError(f"release asset URL is invalid: {url}") from error
     if host != _GITHUB_WEB_HOST:
         raise ValidationError(f"release asset URL must start on github.com: {url}")
 
