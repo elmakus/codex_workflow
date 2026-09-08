@@ -1,22 +1,47 @@
-"""Current regression entry point for the private Heavy-only workflow.
+"""Current regression entry point for the owner-customized Heavy-only workflow.
 
 The full lifecycle regression suite remains in ``workflow_runtime_regression``.
-This entry point replaces only policy assertions that intentionally changed in
-1.1.14-private.2 development: Heavy-only routing and Astra Senior Executor.
+This entry point replaces only assertions whose private contract intentionally
+changed, while retaining the base lifecycle, migration, safety, packaging, and
+platform-setting regression coverage.
 """
 
 from __future__ import annotations
 
+import contextlib
+import hashlib
+import io
 import json
+import sys
+import tempfile
 import tomllib
 import unittest
+import zipfile
 from pathlib import Path
+from unittest import mock
 
 import workflow_runtime_regression as base
 
 
 ROOT = Path(__file__).resolve().parents[1]
 PACKAGE = ROOT / "codex_workflow"
+
+
+def _test_private_version_and_user_marker_are_synchronized(
+    self: unittest.TestCase,
+) -> None:
+    version = (PACKAGE / "operate" / "VERSION").read_text(encoding="utf-8").strip()
+    self.assertEqual(version, "1.1.14-private.3")
+    user_agents = (PACKAGE / "operate" / "user_AGENTS.md").read_text(
+        encoding="utf-8"
+    )
+    marker = f"<!-- codex-workflow-version: {version} -->"
+    self.assertEqual(user_agents.count(marker), 1)
+    self.assertGreater(
+        base.parse_semver("1.1.14-private.3"),
+        base.parse_semver("1.1.14-private.2"),
+    )
+    self.assertEqual(base.NEXT_PACKAGE_VERSION, "1.1.14-private.4")
 
 
 def _test_worker_models_and_reasoning(self: unittest.TestCase) -> None:
@@ -61,6 +86,26 @@ def _test_heavy_only_workflow_keeps_leaf_direct_path(
     self.assertIn("Use as the substantive-work contract under `AGENTS.md`.", heavy)
     self.assertNotIn("## Fast Path", heavy)
     self.assertIn("## Closure", heavy)
+
+
+def _test_user_command_contract_exposes_owner_update_channel(
+    self: unittest.TestCase,
+) -> None:
+    instructions = (PACKAGE / "operate" / "user_AGENTS.md").read_text(
+        encoding="utf-8"
+    )
+    self.assertIn("codex_workflow --update", instructions)
+    self.assertIn("codex_workflow --check-update", instructions)
+    self.assertIn("operate/check_update.md", instructions)
+    self.assertTrue((PACKAGE / "operate" / "check_update.md").is_file())
+    self.assertIn("codex_workflow --remove", instructions)
+
+    personalization = (PACKAGE / "operate" / "personalization_guide.md").read_text(
+        encoding="utf-8"
+    )
+    self.assertIn("resources/personalization.md", personalization)
+    self.assertIn("missing or invalid", personalization)
+    self.assertIn("copy that section's complete", personalization)
 
 
 def _test_operational_policies_are_compact_and_knowledge_aware(
@@ -298,6 +343,215 @@ def _test_operational_policies_are_compact_and_knowledge_aware(
             self.assertNotIn(phrase, lowered, name)
 
 
+def _test_release_module_targets_owner_fork_and_requires_assets(
+    self: unittest.TestCase,
+) -> None:
+    import runtime.release as release
+
+    self.assertEqual(release.RELEASES_REPOSITORY, "elmakus/codex_workflow")
+    self.assertEqual(
+        release.RELEASES_URL,
+        "https://api.github.com/repos/elmakus/codex_workflow/releases?per_page=100",
+    )
+    for name in (
+        "ReleaseSelection",
+        "select_releases",
+        "select_latest",
+        "summarize_release_notes",
+        "acquire",
+    ):
+        self.assertTrue(hasattr(release, name), name)
+
+    records = [
+        {
+            "draft": True,
+            "tag_name": "v9.9.9",
+            "assets": [],
+        },
+        {
+            "draft": False,
+            "tag_name": "v1.1.14-private.4",
+            "assets": [
+                {
+                    "name": "codex_workflow-1.1.14-private.4.zip",
+                    "browser_download_url": "https://example.invalid/incomplete.zip",
+                }
+            ],
+        },
+        {
+            "draft": False,
+            "tag_name": "v1.1.14-private.3",
+            "assets": [
+                {
+                    "name": "codex_workflow-1.1.14-private.3.zip",
+                    "browser_download_url": "https://example.invalid/workflow.zip",
+                },
+                {
+                    "name": "SHA256SUMS",
+                    "browser_download_url": "https://example.invalid/SHA256SUMS",
+                },
+            ],
+            "body": "# Owner release\n- Verified update",
+            "html_url": "https://github.com/elmakus/codex_workflow/releases/tag/v1.1.14-private.3",
+        },
+    ]
+    with mock.patch.object(release, "_read_json_url", return_value=records):
+        selected = release.select_releases()
+    self.assertEqual(len(selected), 1)
+    self.assertEqual(selected[0].version_text, "1.1.14-private.3")
+    self.assertEqual(selected[0].zip_name, "codex_workflow-1.1.14-private.3.zip")
+    self.assertIn("Owner release", release.summarize_release_notes(selected[0].release_notes))
+
+
+def _test_release_acquire_verifies_checksum_and_extracts_asset(
+    self: unittest.TestCase,
+) -> None:
+    import runtime.release as release
+
+    archive_buffer = io.BytesIO()
+    with zipfile.ZipFile(archive_buffer, "w", compression=zipfile.ZIP_DEFLATED) as bundle:
+        bundle.writestr("codex_workflow/operate/VERSION", "1.1.14-private.3\n")
+    archive = archive_buffer.getvalue()
+    digest = hashlib.sha256(archive).hexdigest()
+    selection = release.ReleaseSelection(
+        "1.1.14-private.3",
+        release.parse_semver("1.1.14-private.3"),
+        "codex_workflow-1.1.14-private.3.zip",
+        "https://example.invalid/workflow.zip",
+        "https://example.invalid/SHA256SUMS",
+    )
+    checksums = f"{digest}  {selection.zip_name}\n".encode("ascii")
+    with mock.patch.object(release, "_read_url", side_effect=[archive, checksums]):
+        temporary, package = release.acquire(selection)
+    self.addCleanup(temporary.cleanup)
+    self.assertEqual(
+        (package / "operate" / "VERSION").read_text(encoding="utf-8"),
+        "1.1.14-private.3\n",
+    )
+
+
+def _test_check_update_command_uses_owner_release(self: unittest.TestCase) -> None:
+    import runtime.release as release
+
+    with tempfile.TemporaryDirectory() as temporary:
+        root = Path(temporary)
+        codex_home = root / "codex-home"
+        version_path = codex_home / "codex_workflow" / "operate" / "VERSION"
+        version_path.parent.mkdir(parents=True)
+        version_path.write_text("1.1.14-private.3\n", encoding="utf-8")
+        candidate = release.ReleaseSelection(
+            "1.1.14-private.4",
+            release.parse_semver("1.1.14-private.4"),
+            "codex_workflow-1.1.14-private.4.zip",
+            "https://example.invalid/workflow.zip",
+            "https://example.invalid/SHA256SUMS",
+            "# Changes\n- Safe owner update",
+            "https://github.com/elmakus/codex_workflow/releases/tag/v1.1.14-private.4",
+        )
+        output = io.StringIO()
+        argv = [
+            "workflow.py",
+            "check-update",
+            "--codex-home",
+            str(codex_home),
+            "--json",
+        ]
+        with (
+            mock.patch.object(base.workflow_cli, "select_releases", return_value=[candidate]),
+            mock.patch.object(sys, "argv", argv),
+            contextlib.redirect_stdout(output),
+        ):
+            self.assertEqual(base.workflow_cli.main(), 0)
+        payload = json.loads(output.getvalue())
+        self.assertEqual(payload["status"], "update available")
+        self.assertEqual(payload["installed"], "1.1.14-private.3")
+        self.assertEqual(payload["available"], "1.1.14-private.4")
+        self.assertEqual(payload["asset"], "codex_workflow-1.1.14-private.4.zip")
+        self.assertEqual([item["version"] for item in payload["updates"]], ["1.1.14-private.4"])
+
+
+def _test_source_less_update_uses_verified_owner_release(
+    self: unittest.TestCase,
+) -> None:
+    with tempfile.TemporaryDirectory() as temporary:
+        root = Path(temporary)
+        project = root / "project"
+        project.mkdir()
+        codex_home = root / "codex-home"
+        installed_version = codex_home / "codex_workflow" / "operate" / "VERSION"
+        installed_version.parent.mkdir(parents=True)
+        installed_version.write_text("1.1.14-private.3\n", encoding="utf-8")
+        incoming = root / "incoming"
+        incoming_version = incoming / "operate" / "VERSION"
+        incoming_version.parent.mkdir(parents=True)
+        incoming_version.write_text("1.1.14-private.3\n", encoding="utf-8")
+        release_temporary = mock.Mock()
+        selection = mock.sentinel.selection
+        argv = [
+            "workflow.py",
+            "update",
+            "--codex-home",
+            str(codex_home),
+            "--project",
+            str(project),
+            "--json",
+        ]
+        with (
+            mock.patch.object(base.workflow_cli, "select_latest", return_value=selection) as select,
+            mock.patch.object(
+                base.workflow_cli,
+                "acquire",
+                return_value=(release_temporary, incoming),
+            ) as acquire,
+            mock.patch.object(base.workflow_cli, "_delegate_update", return_value=0) as delegate,
+            mock.patch.object(sys, "argv", argv),
+        ):
+            self.assertEqual(base.workflow_cli.main(), 0)
+        select.assert_called_once_with()
+        acquire.assert_called_once_with(selection)
+        delegate.assert_called_once()
+        release_temporary.cleanup.assert_called_once_with()
+
+
+def _test_explicit_source_update_skips_release_discovery(
+    self: unittest.TestCase,
+) -> None:
+    with tempfile.TemporaryDirectory() as temporary:
+        root = Path(temporary)
+        project = root / "project"
+        project.mkdir()
+        codex_home = root / "codex-home"
+        installed_version = codex_home / "codex_workflow" / "operate" / "VERSION"
+        installed_version.parent.mkdir(parents=True)
+        installed_version.write_text("1.1.14-private.3\n", encoding="utf-8")
+        incoming = root / "incoming"
+        incoming_version = incoming / "operate" / "VERSION"
+        incoming_version.parent.mkdir(parents=True)
+        incoming_version.write_text("1.1.14-private.3\n", encoding="utf-8")
+        argv = [
+            "workflow.py",
+            "update",
+            "--source",
+            str(incoming),
+            "--codex-home",
+            str(codex_home),
+            "--project",
+            str(project),
+            "--json",
+        ]
+        with (
+            mock.patch.object(
+                base.workflow_cli,
+                "select_latest",
+                side_effect=AssertionError("release discovery must not run"),
+            ),
+            mock.patch.object(base.workflow_cli, "_delegate_update", return_value=0) as delegate,
+            mock.patch.object(sys, "argv", argv),
+        ):
+            self.assertEqual(base.workflow_cli.main(), 0)
+        delegate.assert_called_once()
+
+
 def _test_update_removes_retired_medium_route(self: unittest.TestCase) -> None:
     self.bootstrap()
     retired = self.runtime.runtime / "medium_route.md"
@@ -317,6 +571,14 @@ def _test_update_removes_retired_medium_route(self: unittest.TestCase) -> None:
 # lifecycle, migration, safety, packaging, and platform-setting regression test.
 delattr(
     base.PrivateCustomizationTests,
+    "test_private_version_and_user_marker_are_synchronized",
+)
+base.PrivateCustomizationTests.test_private_version_and_user_marker_are_synchronized = (
+    _test_private_version_and_user_marker_are_synchronized
+)
+
+delattr(
+    base.PrivateCustomizationTests,
     "test_worker_customization_changes_only_luna_reasoning",
 )
 base.PrivateCustomizationTests.test_worker_models_and_reasoning = (
@@ -331,9 +593,35 @@ base.PrivateCustomizationTests.test_heavy_only_workflow_keeps_leaf_direct_path =
     _test_heavy_only_workflow_keeps_leaf_direct_path
 )
 
+base.MarkerTests.test_user_command_contract_exposes_only_supported_lifecycle_prompts = (
+    _test_user_command_contract_exposes_owner_update_channel
+)
 base.MarkerTests.test_operational_policies_are_compact_and_knowledge_aware = (
     _test_operational_policies_are_compact_and_knowledge_aware
 )
+
+for retired_test in (
+    "test_release_module_has_no_public_discovery_or_download_api",
+    "test_check_update_command_is_removed",
+    "test_source_less_update_fails_closed_without_network",
+):
+    delattr(base.ReleaseTests, retired_test)
+base.ReleaseTests.test_release_module_targets_owner_fork_and_requires_assets = (
+    _test_release_module_targets_owner_fork_and_requires_assets
+)
+base.ReleaseTests.test_release_acquire_verifies_checksum_and_extracts_asset = (
+    _test_release_acquire_verifies_checksum_and_extracts_asset
+)
+base.ReleaseTests.test_check_update_command_uses_owner_release = (
+    _test_check_update_command_uses_owner_release
+)
+base.ReleaseTests.test_source_less_update_uses_verified_owner_release = (
+    _test_source_less_update_uses_verified_owner_release
+)
+base.ReleaseTests.test_explicit_source_update_skips_release_discovery = (
+    _test_explicit_source_update_skips_release_discovery
+)
+
 base.LifecycleIntegrationTests.test_update_removes_retired_medium_route = (
     _test_update_removes_retired_medium_route
 )
