@@ -11,7 +11,15 @@ owner-specific orchestration and model choices.
 - **Heavy is the only workflow route.** Leaf-state questions and small bounded
   tasks work directly without subagents and without reading `heavy_route.md`.
   The Heavy contract is loaded only for substantive deployment-state work.
-- Luna roles use `max` reasoning. Senior Executor uses Astra `low`.
+- Heavy uses progressive disclosure: the always-loaded Heavy contract stays
+  compact, while detailed work-package, Micro Execution, follow-up, and recovery
+  instructions live in `delegation.md` and are loaded only when needed.
+- Normal Luna roles use `max` reasoning. Micro Executor uses Luna `high` as its
+  stable fast fallback. Senior Executor uses Astra `low`.
+- For tiny deterministic implementation subtasks inside Heavy, Micro Executor
+  may use GPT-5.3-Codex-Spark at high reasoning when the current Codex runtime
+  and account expose it; otherwise the same role runs as Luna High. Spark is
+  optional and never required for workflow correctness.
 - The Codex runtime keeps multi-agent enabled with a fixed ceiling of 20
   concurrent subagents per session; Heavy itself does not impose a second
   aggregate worker-count limit.
@@ -33,17 +41,29 @@ the main agent enters deployment state and loads `codex_workflow/heavy_route.md`
 It then chooses only the worker capabilities useful to the task and owns scope,
 architecture, scheduling, integration, acceptance, and final claims.
 
-The six roles are Default Executor, Senior Executor, Tester, Companion,
-Investigator, and Archivist. Companion is created on demand.
+Detailed delegation instructions are intentionally not part of Heavy entry.
+Before preparing/following up a worker package, using Micro Execution, or
+recovering an unavailable worker, Main loads
+`~/.codex/codex_workflow/delegation.md`.
+
+The seven roles are Micro Executor, Default Executor, Senior Executor, Tester,
+Companion, Investigator, and Archivist. Companion is created on demand.
 
 | Role | Model / reasoning | Responsibility |
 | --- | --- | --- |
-| Default Executor | Luna / max | Bounded implementation and repair. |
+| Micro Executor | Spark / high when available; otherwise Luna / high | Tiny deterministic implementation subtasks inside Heavy. |
+| Default Executor | Luna / max | Normal bounded implementation and repair. |
 | Senior Executor | Astra / low | Exceptionally difficult production or solution work. |
 | Tester | Luna / max | Independent verification. |
 | Companion | Luna / max | Read-only project context, created on demand. |
 | Investigator | Luna / max | Read-only external research. |
 | Archivist | Luna / max | Verified documentation and closing handoff. |
+
+Micro Executor is deliberately below Default Executor. If a micro task turns out
+to require meaningful exploration, architecture, security judgement, migration
+reasoning, broader ownership, or materially stronger reasoning, Main reclassifies
+it to Default Executor or Senior Executor instead of building a reasoning ladder
+inside the micro role.
 
 ## Documentation locations
 
