@@ -294,7 +294,7 @@ def _test_operational_policies_are_compact_and_knowledge_aware(
         self.assertIn(meaningful_update, heavy_flat)
     self.assertIn("Always send the normal final response", heavy_flat)
     self.assertNotIn("at most one brief line", heavy_flat)
-    self.assertIn("Silence limits narration only", heavy)
+    self.assertIn("Silence limits narration only", heavy_flat)
     self.assertIn("## Agents You Can Use", heavy)
     for role in (
         "Companion",
