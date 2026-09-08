@@ -278,7 +278,7 @@ def _test_operational_policies_are_compact_and_knowledge_aware(
         "reused an existing result",
         "next routine orchestration step",
     ):
-        self.assertIn(routine_event, heavy)
+        self.assertIn(routine_event, heavy_flat)
     self.assertIn(
         "Do not report a successful intermediate stage or repository", heavy_flat
     )
@@ -521,6 +521,41 @@ def _test_release_discovery_paginates(self: unittest.TestCase) -> None:
     )
 
 
+def _test_release_pagination_rejects_repeated_full_page(
+    self: unittest.TestCase,
+) -> None:
+    import runtime.release as release
+
+    page = [
+        {"draft": True, "tag_name": f"v0.0.{index}", "assets": []}
+        for index in range(release.RELEASE_PAGE_SIZE)
+    ]
+    with (
+        mock.patch.object(release, "_read_json_url", return_value=page) as read,
+        self.assertRaisesRegex(ValidationError, "repeated a full page"),
+    ):
+        release._read_release_records(1)
+    self.assertEqual(read.call_count, 2)
+
+
+def _test_release_pagination_enforces_page_limit(self: unittest.TestCase) -> None:
+    import runtime.release as release
+
+    pages = [
+        [
+            {"page": page, "slot": slot}
+            for slot in range(release.RELEASE_PAGE_SIZE)
+        ]
+        for page in range(1, release.MAX_RELEASE_PAGES + 1)
+    ]
+    with (
+        mock.patch.object(release, "_read_json_url", side_effect=pages) as read,
+        self.assertRaisesRegex(ValidationError, "pagination exceeded"),
+    ):
+        release._read_release_records(1)
+    self.assertEqual(read.call_count, release.MAX_RELEASE_PAGES)
+
+
 def _test_release_rejects_untrusted_asset_urls(self: unittest.TestCase) -> None:
     import runtime.release as release
 
@@ -546,6 +581,78 @@ def _test_release_rejects_untrusted_asset_urls(self: unittest.TestCase) -> None:
         release.select_releases()
     with self.assertRaisesRegex(ValidationError, "untrusted"):
         release._read_url("file:///tmp/workflow.zip", 1)
+
+
+def _test_release_rejects_http_and_wrong_owner_asset_urls(
+    self: unittest.TestCase,
+) -> None:
+    import runtime.release as release
+
+    version = "1.1.14-private.4"
+    name = f"codex_workflow-{version}.zip"
+    bad_urls = (
+        (
+            "http://github.com/elmakus/codex_workflow/releases/download/"
+            f"v{version}/{name}"
+        ),
+        (
+            "https://github.com/other-owner/codex_workflow/releases/download/"
+            f"v{version}/{name}"
+        ),
+    )
+    for url in bad_urls:
+        with self.subTest(url=url), self.assertRaises(ValidationError):
+            release._validate_asset_url(url, version, name)
+
+
+def _test_release_rejects_decoded_dot_segments(self: unittest.TestCase) -> None:
+    import runtime.release as release
+
+    urls = (
+        "https://api.github.com/repos/elmakus/codex_workflow/releases/../outside",
+        "https://api.github.com/repos/elmakus/codex_workflow/releases/%2e%2e/outside",
+        (
+            "https://github.com/elmakus/codex_workflow/releases/download/"
+            "v1.1.14-private.3/%2e%2e/SHA256SUMS"
+        ),
+    )
+    for url in urls:
+        with (
+            self.subTest(url=url),
+            self.assertRaisesRegex(ValidationError, "dot-segments"),
+        ):
+            release._validate_network_url(url)
+
+
+def _test_release_final_url_validation_blocks_untrusted_redirect(
+    self: unittest.TestCase,
+) -> None:
+    import runtime.release as release
+
+    initial = _asset_url("1.1.14-private.3", "SHA256SUMS")
+
+    class FakeResponse:
+        headers = {}
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, exc_type, exc, tb):
+            return False
+
+        def geturl(self):
+            return "https://example.invalid/redirected"
+
+        def read(self, size: int):
+            return b""
+
+    opener = mock.Mock()
+    opener.open.return_value = FakeResponse()
+    with (
+        mock.patch.object(release.urllib.request, "build_opener", return_value=opener),
+        self.assertRaisesRegex(ValidationError, "untrusted download host"),
+    ):
+        release._read_url(initial, 1)
 
 
 def _test_release_download_enforces_size_limit(self: unittest.TestCase) -> None:
@@ -957,8 +1064,23 @@ base.ReleaseTests.test_release_module_targets_owner_fork_and_requires_assets = (
     _test_release_module_targets_owner_fork_and_requires_assets
 )
 base.ReleaseTests.test_release_discovery_paginates = _test_release_discovery_paginates
+base.ReleaseTests.test_release_pagination_rejects_repeated_full_page = (
+    _test_release_pagination_rejects_repeated_full_page
+)
+base.ReleaseTests.test_release_pagination_enforces_page_limit = (
+    _test_release_pagination_enforces_page_limit
+)
 base.ReleaseTests.test_release_rejects_untrusted_asset_urls = (
     _test_release_rejects_untrusted_asset_urls
+)
+base.ReleaseTests.test_release_rejects_http_and_wrong_owner_asset_urls = (
+    _test_release_rejects_http_and_wrong_owner_asset_urls
+)
+base.ReleaseTests.test_release_rejects_decoded_dot_segments = (
+    _test_release_rejects_decoded_dot_segments
+)
+base.ReleaseTests.test_release_final_url_validation_blocks_untrusted_redirect = (
+    _test_release_final_url_validation_blocks_untrusted_redirect
 )
 base.ReleaseTests.test_release_download_enforces_size_limit = (
     _test_release_download_enforces_size_limit
