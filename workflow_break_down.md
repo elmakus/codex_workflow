@@ -1,6 +1,6 @@
-# Private workflow ownership and layout
+# Owner workflow ownership and layout
 
-This guide describes `1.1.14-private.2`, based on experimental upstream 1.1.14.
+This guide describes `1.1.14-private.3`, based on experimental upstream 1.1.14.
 
 ## Execution
 
@@ -12,17 +12,22 @@ The main agent controls scope, architecture, dependencies, scheduling,
 acceptance, and final claims. In Heavy it is an orchestrator rather than a
 production executor: implementation, broad repository/security analysis,
 testing, task-level Git/GitHub operations, repair, and delegable research stay
-with the appropriate workers by default. When assigned work stalls, Main should
-resume, wait, message, or reassign the remaining work rather than take it over.
-Direct task work is reserved for genuinely trivial operations or operations
-needed solely for orchestration.
+with the appropriate workers by default. When assigned work genuinely needs
+intervention, Main should prefer the existing worker/thread and resume, wait,
+message, or reassign the remainder rather than take over substantive work.
+
+A timeout-only `wait_agent` result with no new evidence is not itself an
+intervention signal. If the worker remains presumed healthy, Main should issue
+another long wait instead of polling status, listing threads, inspecting
+progress, interrupting, replacing, or taking over. The normal wait is 25 minutes
+and returns early if the worker completes sooner.
 
 Independent operations can be batched when parallelism is worthwhile; dependent
 work and overlapping writes remain sequential. For repetitive independent units,
 bounded batches or sequential execution are preferred when they reduce duplicate
-context and main-agent coordination cost. Companion is optional and created when
-bounded context work is useful. Reports have role-specific word budgets, with
-supporting evidence retained outside routine reports.
+context and main-agent coordination cost. Routine orchestration and successful
+intermediate completions remain silent unless the user needs a decision/risk
+update or explicitly asked for progress.
 
 Heavy does not impose an aggregate active-subagent limit; the main chooses
 worker count and concurrency for each task. The Codex platform configuration
@@ -68,21 +73,37 @@ guides and version metadata; `runtime/workflow.py` is the launcher. Worker
 definitions are installed under `~/.codex/agents/`; the marked user instruction
 region and workflow-owned settings are shared as well.
 
-These user files are not separate copies for each project. The planned manual
-rollout replaces the shared runtime once and migrates every existing project
-wrapper in the same operation, using explicit targets. No installed files are
-changed merely by building this package.
+These user files are not separate copies for each project. An update replaces
+the shared runtime once and migrates each intended existing project wrapper with
+an explicit target. No installed files are changed merely by building or
+publishing a package.
 
-## Lifecycle
+## Lifecycle and owner release channel
 
-Installation is explicit. No startup instruction installs into a new Git root.
-The CLI has no release discovery or download path. Manual `update` requires an
-explicit verified local source and preserves unrelated settings, project
-instructions, documents and enabled/disabled state. When the shared runtime is
-already current, an older selected project can still be migrated.
+Installation and updates are explicit owner actions. Opening a project does not
+install or update anything automatically.
 
-A later migration removes retired workflow-owned role and reporting-skill
-files using ownership metadata, while preserving unrelated user skills. Removal
-is planned before confirmation and preserves the project documentation.
+From `1.1.14-private.3`, `check-update` queries GitHub Releases only for
+`elmakus/codex_workflow`. A release is usable only when it is non-draft, has a
+valid SemVer tag, and contains both the exact versioned ZIP and `SHA256SUMS`.
+`update` downloads and checksum-verifies those assets, safely extracts the ZIP,
+and delegates migration to the incoming runtime. There is no upstream release
+channel and no background/startup auto-update.
+
+The explicit verified local `--source` path remains available for recovery and
+manual migration. It is also required for the first transition from private.2,
+whose installed launcher predates owner-release discovery.
+
+The incoming package represents the desired state of workflow-owned files.
+Owned files present in the incoming package are added/replaced; files recorded
+as previously owned but absent from the incoming package are removed. Workers
+and workflow-owned skills use the same ownership-aware approach. Unrelated user
+settings, unrelated workers/skills, content outside managed regions, project
+instructions, personalization, documents and enabled/disabled state are
+preserved. The update is backed up and applied transactionally.
+
+A later migration removes retired workflow-owned files using ownership metadata,
+while preserving unrelated user files. Removal is planned before confirmation
+and preserves project documentation.
 
 See the actual bundled `operate/` guide for the selected operation.
