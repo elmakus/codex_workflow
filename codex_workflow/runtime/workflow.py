@@ -37,7 +37,13 @@ from runtime.lifecycle import (
     plan_remove,
     plan_update,
 )
-from runtime.release import parse_semver
+from runtime.release import (
+    acquire,
+    parse_semver,
+    select_latest,
+    select_releases,
+    summarize_release_notes,
+)
 
 
 def _default_codex_home() -> Path:
@@ -71,7 +77,7 @@ def parse_args() -> argparse.Namespace:
 
     update = commands.add_parser("update")
     _add_common(update)
-    # Internal hand-off from an installed launcher; not a public prompt form.
+    # Internal/recovery hand-off for an already verified extracted package.
     update.add_argument("--source", type=Path, help=argparse.SUPPRESS)
     update.add_argument("--allow-downgrade", action="store_true")
     update.add_argument(
@@ -83,6 +89,9 @@ def parse_args() -> argparse.Namespace:
     remove = commands.add_parser("remove")
     _add_common(remove)
     remove.add_argument("--confirm", action="store_true", help=argparse.SUPPRESS)
+
+    check_update = commands.add_parser("check-update")
+    _add_common(check_update, project=False)
 
     personalize = commands.add_parser("personalize")
     _add_common(personalize)
@@ -150,7 +159,7 @@ def _version_path(root: Path) -> Path:
 
 
 def _package_version(root: Path) -> object:
-    """Read the minimal update-ordering metadata without applying a package schema."""
+    """Read the minimal update-ordering metadata without applying a version-specific schema."""
 
     version_path = _version_path(root)
     try:
@@ -216,6 +225,7 @@ def _delegate_update(incoming_root: Path, args: argparse.Namespace) -> int:
 
 def main() -> int:
     args = parse_args()
+    temporary = None
     try:
         runtime, project = _paths(args)
         if args.command == "validate":
@@ -226,6 +236,45 @@ def main() -> int:
                     "version": package.version,
                     "workers": sorted(package.worker_names),
                     "skills": sorted(package.skill_names),
+                },
+                compact=args.json,
+            )
+            return 0
+        if args.command == "check-update":
+            installed_text = _version_path(runtime.runtime).read_text(encoding="utf-8").strip()
+            installed = parse_semver(installed_text)
+            releases = select_releases()
+            newer = [release for release in releases if release.version > installed]
+            latest = releases[0]
+            updates = [
+                {
+                    "version": release.version_text,
+                    "asset": release.zip_name,
+                    "release_url": release.release_url,
+                    "release_notes": release.release_notes,
+                    "summary": summarize_release_notes(release.release_notes),
+                }
+                for release in newer
+            ]
+            if newer:
+                status = "update available"
+                summary = "\n".join(
+                    f"{item['version']}: {item['summary']}" for item in updates
+                )
+            elif latest.version == installed:
+                status = "current"
+                summary = "The installed workflow is current."
+            else:
+                status = "installed newer"
+                summary = "The installed workflow is newer than the latest owner release."
+            _emit(
+                {
+                    "status": status,
+                    "installed": installed_text,
+                    "available": latest.version_text,
+                    "asset": latest.zip_name,
+                    "summary": summary,
+                    "updates": updates,
                 },
                 compact=args.json,
             )
@@ -290,12 +339,12 @@ def main() -> int:
             return _finish(plan_project_install(package, project), args)
         if args.command == "update":
             assert project is not None
-            if args.source is None:
-                raise WorkflowError(
-                    "private updates require an explicit verified private/local "
-                    "package source via --source"
-                )
-            incoming_root = _package_root(args.source)
+            if args.source is not None:
+                incoming_root = _package_root(args.source)
+            else:
+                selected = select_latest()
+                temporary, package_path = acquire(selected)
+                incoming_root = _package_root(package_path)
             incoming_version, installed_version = _validate_update_order(
                 incoming_root, runtime, allow_downgrade=args.allow_downgrade
             )
@@ -346,6 +395,9 @@ def main() -> int:
     except (OSError, WorkflowError) as error:
         _emit({"error": str(error), "applied": False}, compact=getattr(args, "json", False))
         return 1
+    finally:
+        if temporary is not None:
+            temporary.cleanup()
 
 
 if __name__ == "__main__":
