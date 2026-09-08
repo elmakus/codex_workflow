@@ -159,9 +159,9 @@ Reason: the more expensive Main model should spend context and reasoning on plan
 
 Routine orchestration should happen through tool calls without a user-visible narration after every wait, resume, thread/status check, worker message, queue decision, result reuse, or routine transition. Silence is about output economy only; Main still performs all reasoning, monitoring, lifecycle operations, acceptance verification, and problem handling required for correctness.
 
-User-visible status is reserved for meaningful milestones: a substantive stage/repository completed and verified, a blocker requiring the user's decision, a security/publication risk, a material scope/plan change, or whole-task completion. While more work continues, at most one brief status line per completed meaningful stage/repository is preferred.
+Successful intermediate completions are also silent by default. If individual stages or repositories complete successfully while more work remains and everything is proceeding as expected, Main should not report each completion; defer those results to the final response. During execution, user-visible status is reserved for a blocker requiring the user's decision, a security/publication risk, a material scope/plan change, or progress updates explicitly requested by the user. Whole-task completion still receives the normal final response.
 
-Reason: repeated prose about internal orchestration consumes output/context tokens from the more expensive Main without improving execution or helping the user make a decision.
+Reason: repeated prose about internal orchestration or routine successful milestones consumes output/context tokens from the more expensive Main without improving execution or helping the user make a decision.
 
 ## Migration expectations
 
@@ -184,7 +184,7 @@ The reviewer should freely challenge implementation quality. In particular, chec
 - any Heavy wording that still encourages Main to perform executor/researcher/tester work directly;
 - any path where a stalled worker is treated as permission for Main takeover before resume/wait/message/reassignment is exhausted;
 - any path where an unavailable predecessor without a complete handoff causes Main to read/reconstruct detailed predecessor state instead of delegating recovery + continuation;
-- any wording that encourages narration after routine wait/resume/status/message/queue operations instead of silent tool-call orchestration;
+- any wording that encourages narration after routine wait/resume/status/message/queue operations or routine successful intermediate completions instead of silent tool-call orchestration;
 - final-verification wording broad enough to make Main redo the substantive task;
 - concurrency wording that accidentally creates either a new hard global cap or a blanket one-item-at-a-time rule;
 - broken package validation after deleting `medium_route.md`;
