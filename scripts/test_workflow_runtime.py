@@ -153,15 +153,21 @@ def _test_operational_policies_are_compact_and_knowledge_aware(
         "next routine orchestration step",
     ):
         self.assertIn(routine_event, heavy)
+    self.assertIn(
+        "Do not report a successful intermediate stage or repository", heavy_flat
+    )
+    self.assertIn("everything is proceeding as expected, stay silent", heavy_flat)
+    self.assertIn("defer successful progress to the final response", heavy_flat)
     for meaningful_update in (
-        "completed and verified",
         "blocker requires the user's decision",
         "security or publication risk",
         "scope or plan changes materially",
+        "user explicitly requested progress updates",
         "whole task completes",
     ):
         self.assertIn(meaningful_update, heavy_flat)
-    self.assertIn("at most one brief line", heavy_flat)
+    self.assertIn("Always send the normal final response", heavy_flat)
+    self.assertNotIn("at most one brief line", heavy_flat)
     self.assertIn("Silence limits narration only", heavy)
     self.assertIn("## Agents You Can Use", heavy)
     for role in (
