@@ -60,7 +60,8 @@ only; correctness work continues.
 | --- | --- |
 | Companion | At most one persistent read-only worker for bounded project context and retained operational context. |
 | Investigator | Disposable read-only worker for bounded external-information research; Main retains solution choice. |
-| Default Executor | Luna production worker for bounded implementation. Tiny deterministic Heavy subtasks may use Micro Execution below. |
+| Micro Executor | Fast worker below Default Executor for tiny deterministic implementation subtasks whose cause, result, ownership, and edit surface are already clear. |
+| Default Executor | Luna production worker for normal bounded implementation. |
 | Senior Executor | Reserve the Astra production worker for one exceptionally difficult mathematical, logical, architectural, or cross-cutting package. |
 | Tester | Independent verification from intended behavior, risks, boundaries, and evidence. |
 | Archivist | Verified documentation and deployment handoff under `~/.codex/codex_workflow/archivist.md`. |
@@ -70,13 +71,14 @@ Use roles only when they add value and preserve ownership boundaries.
 ### Micro Execution
 
 For a tiny deterministic implementation subtask inside an already substantive
-Heavy deployment, use `default_executor` with `fork_turns="none"` and the routing
-in `~/.codex/codex_workflow/delegation.md`: Spark when exposed and available,
-otherwise Luna High. If model overrides are unavailable, use the configured Luna
-Max Default Executor. If the task needs exploration, architecture, security
-judgement, migration reasoning, or broader ownership, reclassify it instead of
-escalating Micro through reasoning levels. Do not spawn Micro when the complete
-user request is itself a trivial leaf task.
+Heavy deployment, use `micro_executor` with `fork_turns="none"` and the routing
+in `~/.codex/codex_workflow/delegation.md`: prefer Spark High when the current
+runtime exposes and accepts it; otherwise use the installed Micro Executor
+profile, Luna High. If the task needs exploration, architecture, security
+judgement, migration reasoning, broader ownership, or materially stronger
+reasoning, reclassify it to Default Executor or Senior Executor instead of
+building a Micro reasoning ladder. Do not spawn Micro when the complete user
+request is itself a trivial leaf task.
 
 ## Proportionate Documentation Read
 
