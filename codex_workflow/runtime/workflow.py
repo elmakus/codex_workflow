@@ -244,6 +244,19 @@ def main() -> int:
             installed_text = _version_path(runtime.runtime).read_text(encoding="utf-8").strip()
             installed = parse_semver(installed_text)
             releases = select_releases()
+            if not releases:
+                _emit(
+                    {
+                        "status": "no releases",
+                        "installed": installed_text,
+                        "available": None,
+                        "asset": None,
+                        "summary": "No owner releases are currently published.",
+                        "updates": [],
+                    },
+                    compact=args.json,
+                )
+                return 0
             newer = [release for release in releases if release.version > installed]
             latest = releases[0]
             updates = [
