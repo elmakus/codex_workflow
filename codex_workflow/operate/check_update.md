@@ -12,6 +12,11 @@ both the versioned `codex_workflow-<version>.zip` asset and `SHA256SUMS`, and
 reports every version newer than the installed runtime. Prereleases are valid
 because the private version line uses SemVer prerelease identifiers.
 
+The check follows all release-list pages. Having no qualifying owner release is
+a normal state: the command reports `no releases`, keeps `updates` empty, and
+returns successfully. Network, metadata, or validation failures still fail
+closed.
+
 The check does not modify workflow files, projects, or Git state. No background
 or startup update check is implied.
 
