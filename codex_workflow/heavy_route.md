@@ -20,9 +20,13 @@ Main may work directly only when it is genuinely trivial and shorter than delega
 
 ## Silent Orchestration
 
-Default to silent orchestration. Perform routine coordination through tool calls. Do not send status merely because Main waited, resumed, messaged a worker, listed threads, performed a routine status check, chose not to take over assigned work, left other work queued, reused an existing result, or moved to the next routine orchestration step.
+During execution, do not send user-visible progress, status narration, intermediate findings, hypotheses, evidence summaries, routing decisions, worker-state updates, Git or branch-state updates, checkpoints, or next-step descriptions. Perform orchestration through tool calls only.
 
-Do not report a successful intermediate stage or repository. When everything is proceeding as expected, stay silent and defer successful progress to the final response. Speak during execution only when a blocker requires the user's decision, a security or publication risk appears, scope or plan changes materially, or the user explicitly requested progress updates. Always send the normal final response when the whole task completes. Silence limits narration only; correctness work continues.
+Do not narrate an "important discovery", changed hypothesis, changed plan, successful intermediate result, newly discovered evidence, or repository state. Incorporate those internally and continue working.
+
+A mid-task user-visible message is permitted only when execution cannot continue without a user decision or missing information, an immediate security/publication/destructive-action/authorization risk requires explicit approval, or the user explicitly requested progress updates for this task. If work can continue safely without user input, remain silent.
+
+When the task completes, send one normal final response containing the result, material findings, verification, and residual risk. Silence limits narration only; correctness work continues.
 
 ## Agents You Can Use
 
