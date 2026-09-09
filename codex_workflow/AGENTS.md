@@ -38,7 +38,15 @@ Keep raw logs, temporary reasoning, and short-lived checkpoints out of durable d
 
 ## Workflow
 
-In leaf state, work directly without reading `~/.codex/codex_workflow/heavy_route.md` or spawning subagents. When work is substantive, enter `deployment state`, read that Heavy contract, and use only the worker capabilities that add value to the task.
+In leaf state, work directly without reading `~/.codex/codex_workflow/heavy_route.md` or spawning subagents. When work is substantive, enter `deployment state`, bootstrap the session Companion below, read that Heavy contract, and use only the worker capabilities that add value to the task.
+
+## Early Companion
+
+On the first transition into `deployment state` in a workflow session, immediately create one persistent Companion with `agent_type="companion"`, `task_name="companion"`, and `fork_turns="none"`, or reuse the existing Companion. Do this before broad project discovery, planning, modifying project state, or dispatching any other worker, while Main's context is still small. Never create a second Companion in the same workflow session.
+
+Prepare the bootstrap assignment from the user request and already-known context only; do not perform broad discovery just to prepare it. Include **Task ID**, **Project Context Scope**, **Context Task + Goal**, and **Main-Agent Context Guidance**. Keep the scope bounded to the current deployment goal. Ask Companion to inspect only directly relevant checkpoints, documents, or project surfaces, retain useful supporting detail, and return a compact source-linked brief. Do not ask it to read the complete `agent_docs/` framework or unrelated module documents unless the current scope actually requires them.
+
+After spawning Companion, continue independent Heavy intake and orchestration immediately. Do not wait solely for Companion unless its result is needed for a decision. Reuse the same Companion for later context assignments and later deployments in the same workflow session. If Companion creation is temporarily unavailable, continue with proportionate Main reads rather than compensating with a broad documentation intake; create the single Companion later only if the capability becomes available.
 
 ## Proportionate Documentation Read
 
