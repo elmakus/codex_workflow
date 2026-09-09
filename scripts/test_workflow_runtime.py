@@ -15,11 +15,11 @@ PACKAGE = owner.PACKAGE
 
 def _test_private_version_and_user_marker_are_synchronized(self: unittest.TestCase) -> None:
     version = (PACKAGE / "operate" / "VERSION").read_text(encoding="utf-8").strip()
-    self.assertEqual(version, "1.1.17-private.1")
+    self.assertEqual(version, "1.1.17-private.2")
     user_agents = (PACKAGE / "operate" / "user_AGENTS.md").read_text(encoding="utf-8")
     self.assertEqual(user_agents.count(f"<!-- codex-workflow-version: {version} -->"), 1)
-    self.assertGreater(base.parse_semver("1.1.17-private.1"), base.parse_semver("1.1.17-private.0"))
-    self.assertEqual(base.NEXT_PACKAGE_VERSION, "1.1.17-private.2")
+    self.assertGreater(base.parse_semver("1.1.17-private.2"), base.parse_semver("1.1.17-private.1"))
+    self.assertEqual(base.NEXT_PACKAGE_VERSION, "1.1.17-private.3")
 
 
 def _test_worker_models_and_reasoning(self: unittest.TestCase) -> None:
