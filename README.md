@@ -25,8 +25,10 @@ owner-specific orchestration, model, update-channel, and safety choices.
 - Investigator may inspect one bounded project evidence gap, Internet sources,
   or both, while remaining read-only. Main retains causal, architecture,
   solution, integration, and acceptance decisions.
-- Companion is created on demand only when it materially reduces repeated reads
-  or preserves useful project context.
+- Companion is created once at the first deployment-state entry while Main's
+  context is still small, then reused for bounded context work. Its bootstrap is
+  scoped to the current goal and does not trigger a full `agent_docs/` or
+  unrelated-module intake.
 - Main owns deployment updates to `project_progress.md`, `project_diary.md`, and
   `latest_session_work.md`. Archivist handles other assigned documentation and
   the read-only closing handoff.
@@ -45,11 +47,14 @@ owner-specific orchestration, model, update-channel, and safety choices.
 
 ## Workflow and roles
 
-For substantive work Main enters deployment state and loads
-`codex_workflow/heavy_route.md`. It chooses only useful worker capabilities and
-owns scope, architecture, scheduling, integration, acceptance, and final claims.
-Before preparing/following up a worker package, using Micro Execution, or
-recovering a worker, Main loads `~/.codex/codex_workflow/delegation.md`.
+For substantive work Main enters deployment state, immediately bootstraps the
+single session Companion, and loads `codex_workflow/heavy_route.md`. Companion
+starts only bounded goal-relevant context work; Main can continue independent
+Heavy intake and orchestration without waiting for it. Main chooses only useful
+worker capabilities and owns scope, architecture, scheduling, integration,
+acceptance, and final claims. Before preparing/following up a worker package,
+using Micro Execution, or recovering a worker, Main loads
+`~/.codex/codex_workflow/delegation.md`.
 
 | Role | Model / reasoning | Responsibility |
 | --- | --- | --- |
@@ -57,7 +62,7 @@ recovering a worker, Main loads `~/.codex/codex_workflow/delegation.md`.
 | Default Executor | Luna / max | Normal bounded implementation and repair. |
 | Senior Executor | Astra / low | Exceptionally difficult bounded production or solution work. |
 | Tester | Luna / max | Independent verification. |
-| Companion | Luna / max | Persistent read-only project context, created on demand. |
+| Companion | Luna / max | Persistent read-only project context, created once at first deployment entry and reused. |
 | Investigator | Luna / max | Disposable read-only project/Internet evidence investigation. |
 | Archivist | Luna / max | Verified documentation outside Main-owned deployment-state docs and closing handoff. |
 
