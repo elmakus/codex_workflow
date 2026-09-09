@@ -1,6 +1,6 @@
 # Owner workflow ownership and layout
 
-This guide describes `1.1.17-private.1`, based directly on upstream prerelease
+This guide describes `1.1.17-private.2`, based directly on upstream prerelease
 `v1.1.17` commit `414a5d301ff17ca6e655330474c8346863d0d5d0`.
 
 ## Execution
@@ -8,6 +8,16 @@ This guide describes `1.1.17-private.1`, based directly on upstream prerelease
 Heavy is the only workflow route. Leaf-state questions and small bounded tasks
 work directly from `AGENTS.md` without workers and without loading the Heavy
 contract. Substantive work enters deployment state and loads `heavy_route.md`.
+
+On the first deployment-state entry in a workflow session, Main immediately
+bootstraps one persistent Companion before broad project discovery, planning, or
+other worker dispatch. Its first assignment is built from the current goal and
+already-known context only and stays bounded to directly relevant checkpoints,
+documents, or project surfaces; it does not imply a full `agent_docs/` or
+unrelated-module intake. Main may continue independent Heavy intake and
+orchestration while Companion works and waits only when the Companion result
+gates a decision. The same Companion is reused for later assignments and later
+deployments in the session.
 
 The Heavy contract contains the standing orchestration rules Main needs for the
 whole deployment. Detailed worker-package, Micro Execution, follow-up, and
@@ -36,7 +46,7 @@ and account determine available concurrency.
 | Default Executor | Luna / max | Normal bounded implementation and repair. |
 | Senior Executor | Astra / low | Exceptionally difficult bounded production or solution work. |
 | Tester | Luna / max | Independent verification. |
-| Companion | Luna / max | Persistent read-only project context, created on demand. |
+| Companion | Luna / max | Persistent read-only project context, created once at first deployment entry and reused. |
 | Investigator | Luna / max | Disposable read-only investigation across bounded project evidence, Internet sources, or both. |
 | Archivist | Luna / max | Verified documentation outside Main-owned deployment-state docs and closing handoff. |
 
