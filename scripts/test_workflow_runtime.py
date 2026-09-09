@@ -53,6 +53,11 @@ def _test_current_private_contract(self: unittest.TestCase) -> None:
     self.assertFalse((PACKAGE / "skills").exists())
     self.assertIn("In leaf state, work directly without reading", agents)
     self.assertIn("enter `deployment state`, read that Heavy contract", agents)
+    self.assertIn("## Deployment Output Gate", agents)
+    self.assertIn("before task completion, emit no user-visible prose", agents)
+    self.assertIn("Can execution safely continue without user input?", agents)
+    self.assertIn("Intermediate findings, discoveries, changed hypotheses, changed plans", agents)
+    self.assertIn("At completion, send one normal final response", agents)
     for doc in ("project_progress.md", "project_diary.md", "latest_session_work.md"):
         self.assertIn(doc, agents)
     self.assertIn("Main is an orchestrator, not an executor", heavy)
