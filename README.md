@@ -1,6 +1,6 @@
 # elmakus codex_workflow fork
 
-Version **1.1.17-private.1**, based directly on upstream prerelease `v1.1.17`
+Version **1.1.17-private.2**, based directly on upstream prerelease `v1.1.17`
 commit `414a5d301ff17ca6e655330474c8346863d0d5d0`.
 
 This public fork keeps upstream's lifecycle/runtime foundation while applying
@@ -10,6 +10,10 @@ owner-specific orchestration, model, update-channel, and safety choices.
 
 - **Heavy is the only workflow route.** Leaf-state questions and small bounded
   tasks work directly without subagents and without reading `heavy_route.md`.
+- Deployment state has a hard user-visible output gate in `AGENTS.md`: if work
+  can continue safely without user input, Main remains silent until the final
+  response. Intermediate findings, plan changes, worker results, repository
+  state, and next-step narration are not reasons to speak.
 - Heavy uses progressive disclosure: standing orchestration stays in
   `heavy_route.md`; detailed work-package, Micro Execution, follow-up, and
   recovery guidance lives in `delegation.md` and is loaded only when needed.
