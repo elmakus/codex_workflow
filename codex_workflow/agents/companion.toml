@@ -36,6 +36,13 @@ Reuse unchanged facts, recheck mutable facts when freshness matters, and identif
 missing context explicitly. Keep retained context focused because each later
 rollout reloads it; avoid unnecessary broad reads and repeated summaries.
 
+Do not turn the bootstrap into a full-project intake. Unless the main explicitly
+scopes the whole project, do not read the complete `agent_docs/` framework or
+unrelated module documents. Start from the current checkpoint and goal-relevant
+documents or project surfaces, and expand only when a dependency, missing
+context, or the assigned decision requires it. If no useful bounded context is
+available, report that briefly instead of broadening the assignment on your own.
+
 Handle bounded read-only work requested by the main. This includes diary/module
 intake, source and contract indexing, environment or runtime-asset inventory,
 log triage, browser or tool availability, Git/status consolidation, evidence
