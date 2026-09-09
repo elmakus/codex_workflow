@@ -1,235 +1,120 @@
-# Review Notes for `proposed-by-chatgpt`
+# Current private workflow design notes
 
-This document records the intent behind the changes on the `proposed-by-chatgpt` branch. It is meant for a later independent Codex review so that deliberate user-approved differences are not mistaken for accidental drift from upstream.
+This file records the current owner-approved behavior of `elmakus/codex_workflow` after the `proposed-by-chatgpt` candidate was merged into `main`.
 
-## Review objective
+The canonical implementation is `main`. The current package version is `1.1.17-private.1`. These notes are guidance for future review; source code, tests, and the current runtime contracts remain authoritative.
 
-Review this branch for implementation errors, regressions, stale references, migration problems, contradictory instructions, or unnecessary complexity. Do not treat the design choices listed below as bugs merely because they differ from upstream. They were explicitly chosen by the repository owner.
+## Core workflow
 
-The desired outcome is a simpler owner-customized workflow with one substantive orchestration mode, minimal context overhead for small tasks, selective subagent use, preserved runtime safety limits, and an owner-controlled release channel.
+- Heavy is the only substantive orchestration route.
+- Small, bounded leaf work stays direct and does not enter Heavy merely because multi-agent is enabled.
+- `medium_route.md` is intentionally retired.
+- Documentation reads are proportional to the task rather than loading the complete `agent_docs/` set on every deployment entry.
+- Heavy is orchestrator-first: Main owns direction, architecture, integration, acceptance, and final claims while delegable implementation, testing, research, migration, repair, and similar production work normally stay with workers.
+- Main's model is not pinned by this workflow. Main is whichever model the user selects in the Codex GUI/session.
 
-## User-approved design decisions
+## Progressive disclosure
 
-### 1. Heavy is the only substantive workflow route
+`heavy_route.md` contains the standing Heavy contract. Detailed worker-package, Micro routing, follow-up, repair, and recovery rules live in `delegation.md` and should be loaded only when those details are actually needed.
 
-The previous Light / Medium / Heavy route selection is intentionally removed.
+Do not move all delegation detail back into Heavy and do not split it into unnecessary additional layers.
 
-- `medium_route.md` should not exist in the current package.
-- There should be no user-facing route-selection logic.
-- Substantive work enters `deployment state` and uses `heavy_route.md`.
-- Heavy is not intended to mean "spawn many agents by default". It is the single orchestration contract from which the main agent decides which capabilities are actually useful.
+## Workers
 
-Reason: three routes duplicated policy and forced an unnecessary route-selection decision. The owner preferred one adaptive orchestration model.
+The workflow owns seven workers:
 
-### 2. Small tasks must remain cheap and direct
+1. `micro_executor`
+2. `default_executor`
+3. `senior_executor`
+4. `tester`
+5. `archivist`
+6. `companion`
+7. `investigator`
 
-Questions, small edits, and other bounded work use `leaf state` and should be handled directly by the main agent.
+Current worker model policy:
 
-For leaf work, the intended behavior is:
+- Micro Executor: `gpt-5.6-luna`, high reasoning as the installed fallback profile.
+- Default Executor: `gpt-5.6-luna`, max.
+- Senior Executor: `gpt-6-astra`, low.
+- Tester: `gpt-5.6-luna`, max.
+- Archivist: `gpt-5.6-luna`, max.
+- Companion: `gpt-5.6-luna`, max.
+- Investigator: `gpt-5.6-luna`, max.
 
-- do not spawn subagents merely because multi-agent is enabled;
-- do not require Archivist closure;
-- do not require reading `heavy_route.md` just to answer a small question;
-- read project documentation only when needed for the task.
+For a genuine tiny deterministic subtask, Main may spawn the `micro_executor` role with a runtime model override to `gpt-5.3-codex-spark` at high reasoning when Spark is exposed and accepted. Spark is optional. If it is unavailable, the same role falls back to its installed Luna High profile.
 
-Reason: reduce unnecessary context consumption, agent turns, documentation reads, and process overhead.
+If a Micro task grows into exploration, architecture, security judgement, migration reasoning, broader ownership, or substantially harder reasoning, reclassify it directly to Default Executor or Senior Executor rather than building a Micro reasoning ladder.
 
-### 3. Heavy has no separate instruction-level aggregate worker cap
+Investigator may collect bounded evidence from the project, the Internet, or both. Main retains causal, architectural, solution, and acceptance decisions.
 
-The sentence limiting Heavy itself to "at most 20 active subagents" was intentionally removed.
+## Concurrency
 
-The main agent should choose concurrency according to the work, dependencies, ownership boundaries, and usefulness of parallelism.
+Heavy does not impose an aggregate active-subagent limit. Main chooses useful concurrency according to dependencies and ownership, while the Codex platform determines the slots actually available.
 
-This does **not** mean unlimited Codex runtime concurrency.
+The workflow intentionally does **not** set `max_concurrent_threads_per_session`. Old workflow-owned fixed-concurrency keys are retired during settings patching/migration. Multi-agent remains enabled.
 
-### 4. The Codex runtime ceiling remains exactly 20
+Do not restore a fixed value of 20 merely because older private notes or tests mention it.
 
-This is an explicit owner decision and must be preserved:
+## Wait and recovery behavior
 
-```toml
-[agents]
-enabled = true
-max_concurrent_threads_per_session = 20
+Prefer `delegate -> resume -> wait -> integrate`.
 
-[features]
-multi_agent = true
-```
+When workers are running and no useful independent work remains, use one appropriately long event-driven `wait_agent` call. The normal Heavy wait is `1500000` ms (25 minutes), within the permitted `300000`-`3600000` ms range.
 
-`MAX_CONCURRENT_WORKERS = 20` in `runtime/platform_settings.py` is intentional.
+A timeout with no new evidence is not itself a reason to poll, list threads, message, interrupt, replace, inspect progress, or let Main take over. If the worker is still presumed healthy, wait again.
 
-Reason: remove a redundant policy-level Heavy cap while retaining a real platform safety ceiling. A later reviewer should not "align with upstream" by deleting this runtime limit.
+For an irrecoverably unavailable worker, pass the available recovery sources to a replacement worker and let that worker determine completed versus remaining work. Main should not reconstruct the predecessor's detailed work itself.
 
-### 5. Multi-agent remains enabled
+## Silent orchestration
 
-The workflow must continue to set `multi_agent = true`.
+During execution, Main must not send user-visible progress/status narration, intermediate findings, hypotheses, evidence summaries, routing decisions, worker-state updates, Git/branch-state updates, checkpoints, or next-step descriptions.
 
-Reason: Heavy needs access to Companion, Investigator, Executors, Tester, and Archivist when those roles improve the result. The simplification is about choosing agents adaptively, not disabling multi-agent capability.
+Do not narrate an "important discovery", changed hypothesis, changed plan, successful intermediate result, newly discovered evidence, or repository state. Incorporate it internally and continue.
 
-### 6. Senior Executor intentionally uses Astra Light
+A mid-task user-visible message is allowed only when:
 
-Senior Executor is intentionally configured as:
+- work cannot continue without a user decision or missing information;
+- an immediate security, publication, destructive-action, or authorization risk requires explicit approval; or
+- the user explicitly requested progress updates for that task.
 
-- model: `gpt-6-astra`
-- reasoning effort: `low`
+If work can continue safely without user input, remain silent. Whole-task completion still gets one normal final response.
 
-It remains reserved for an exceptionally difficult bounded implementation/reasoning package rather than routine work.
+Tool/activity rows shown by the Codex UI are not controlled by this prose contract; the rule concerns user-visible narration emitted by Main.
 
-This is an explicit private customization; do not revert it to the previous Sol configuration solely because upstream differs.
+## Documentation ownership
 
-### 7. Proportionate documentation reading is intentional
+During a substantive deployment Main directly maintains:
 
-The private workflow deliberately keeps proportionate documentation reads instead of requiring the complete `agent_docs/` framework to be read on every deployment entry.
+- `agent_docs/project_progress.md`
+- `agent_docs/project_diary.md`
+- `agent_docs/latest_session_work.md`
 
-Expected behavior:
+Archivist must not modify those three during deployment. Archivist owns the remaining verified durable documentation and closing handoff within its assigned scope.
 
-- start from the specified checkpoint when continuing work;
-- search/read only documents or sections needed to understand the task, constraints, and dependencies;
-- expand the read when context is missing;
-- read the complete framework only when the scope actually requires it;
-- a missing unrelated document must not block work.
+`agent_docs/` remains durable cross-session project memory. Preserve unrelated content and avoid duplicating stable facts across documents.
 
-Reason: preserve continuity without paying the token/context cost of full-document ingestion for every task.
+## Updater and release channel
 
-### 8. `agent_docs/` remains durable canonical memory
-
-The new Archivist guidance imported from upstream is intentional and should remain:
-
-- `agent_docs/` is durable cross-session project memory, not a scratch area;
-- each stable fact should have one canonical home;
-- cross-reference rather than duplicate stable information;
-- preserve unrelated existing documentation;
-- maintain the roles of overview, core tech, structure, progress, diary, latest-session, and module-specific docs.
-
-This rule complements, rather than replaces, proportionate reading.
-
-### 9. Existing worker-role boundaries remain useful
-
-Keep all six worker definitions available:
-
-- Companion
-- Investigator
-- Default Executor
-- Senior Executor
-- Tester
-- Archivist
-
-The main agent should omit roles that add no value. Companion remains at most one persistent instance, Senior at most one, and one Archivist owns closure for a substantive deployment.
-
-### 10. Long waits should avoid no-op parent wakeups
-
-When workers are already running and no useful independent work remains, the main agent should prefer one appropriately long event-driven `wait_agent` call over repeated short polling.
-
-The intended default is `1500000` ms (25 minutes), within the existing sensible `300000`-`3600000` ms range. The 25-minute default is intentionally long because Luna max can be slow and is chosen to avoid repeated expensive Main wakeups while leaving margin below the roughly 30-minute prompt-cache window discussed during this design review.
-
-A timeout-only `wait_agent` result with no new worker state or other evidence must not itself trigger status polling, thread listing, worker messaging, interruption, replacement, progress inspection, or Main takeover. If the worker is still presumed healthy and no new signal requires intervention, Main should simply issue another appropriately long wait.
-
-Reason: an empty polling turn can re-enter the expensive Main with a large context even though no orchestration decision is needed. The desired flow is `worker still healthy -> wait -> timeout with no evidence -> wait again`, not `timeout -> wake Main -> inspect/poll -> wait`.
-
-### 11. Owner-controlled release updater is intentional; token reporting stays removed
-
-The deployment token report, reporting skill, deployment counting, and similar token-reporting machinery remain intentionally removed.
-
-Release discovery is now intentionally restored, but **only** for GitHub Releases published from:
+Release discovery is owner-controlled and may use only GitHub Releases from:
 
 `elmakus/codex_workflow`
 
-Expected updater behavior:
+Preserve the hardened updater behavior, including trusted URL/path validation, bounded metadata/download/archive sizes, SHA-256 verification, safe ZIP extraction, strict checksum parsing, transactional update/rollback, ownership-aware cleanup, and preservation of unrelated user state.
 
-- `codex_workflow --check-update` is an explicit read-only network check;
-- `codex_workflow --update` may query only the owner's fork release endpoint when no local `--source` is supplied;
-- usable releases must be non-draft SemVer releases containing both the exact versioned `codex_workflow-<version>.zip` and `SHA256SUMS`;
-- prereleases are allowed because the private version line uses SemVer prerelease identifiers;
-- the ZIP must be checksum-verified and safely extracted before the incoming runtime is allowed to plan/apply the migration;
-- an explicit verified local `--source` path remains available for recovery/testing and for migration from older installed versions that predate release discovery;
-- there is no background/startup update, no updater pointed at `viettran-edgeAI/codex_workflow`, and no automatic release publication.
+A verified explicit local `--source` update path remains supported. There is no background/startup auto-update and no automatic GitHub Release publication.
 
-Reason: once the owner has reviewed and deliberately published a release from this fork, installing that owner-approved artifact should be convenient without allowing upstream releases to overwrite the custom workflow.
+Token-reporting machinery remains intentionally removed.
 
-### 12. Heavy Main is an orchestrator, not a production executor
+## Review checklist
 
-This is an explicit owner decision motivated by Heavy cost economics.
+A future reviewer should challenge implementation quality, but should not mistake the choices above for accidental drift. In particular verify:
 
-For substantive Heavy work, Main should minimize direct task execution. Code implementation, broad repository analysis, security review, testing, repository migration, material Git/GitHub task operations, refactoring, repair, delegable research, and work already assigned to a worker should stay with specialized workers by default.
-
-If assigned work stops progressing, the intended order is:
-
-1. inspect the existing worker/thread status when intervention is actually needed;
-2. resume that worker when possible;
-3. wait or message it when appropriate;
-4. if it completed partially, reuse its result and delegate only the remainder;
-5. reassign the remainder only when the original worker is irrecoverably unavailable.
-
-A slow, stalled, or temporarily allowance-blocked worker is not sufficient reason for Main to take over its work. After allowance recovers, resuming the same worker/thread is preferred.
-
-If the predecessor is irrecoverably unavailable and left no complete handoff, Main should not reconstruct its detailed work. Main should identify only available recovery sources such as predecessor thread ID, worktree, branch, handoff path, or existing commits and pass those references to the replacement worker. The replacement worker owns reading those sources, determining completed versus remaining work, and continuing from the first unfinished step. The intended flow is `resume predecessor -> if impossible, delegate recovery + continuation -> integrate`, not `resume impossible -> Main reconstructs -> delegate remainder`.
-
-Direct Main task execution remains allowed only for genuinely trivial work that costs less than delegation, or operations needed solely for orchestration. That exception must not be stretched to cover implementation, security review, repository migrations, material Git/GitHub task operations, testing, or delegable research. "Take over to make progress" or "take over to go faster" is intentionally rejected as justification.
-
-Main may perform targeted lightweight final inspection for a high-risk decision or final claim, but this must not become a second execution of the worker's substantive task.
-
-For repetitive independent units such as many similar repository migrations, do not maximize concurrency mechanically. Prefer bounded batches or sequential execution when that reduces duplicated context and Main coordination cost. This is a preference, not a global one-repo-at-a-time rule and not a new aggregate subagent cap.
-
-Reason: the more expensive Main model should spend context and reasoning on planning, coordination, integration, acceptance, and user communication rather than duplicating work that a cheaper specialized worker can perform.
-
-### 13. Heavy orchestration is silent by default
-
-Routine orchestration should happen through tool calls without a user-visible narration after every wait, resume, thread/status check, worker message, queue decision, result reuse, or routine transition. Silence is about output economy only; Main still performs all reasoning, monitoring, lifecycle operations, acceptance verification, and problem handling required for correctness.
-
-Successful intermediate completions are also silent by default. If individual stages or repositories complete successfully while more work remains and everything is proceeding as expected, Main should not report each completion; defer those results to the final response. During execution, user-visible status is reserved for a blocker requiring the user's decision, a security/publication risk, a material scope/plan change, or progress updates explicitly requested by the user. Whole-task completion still receives the normal final response.
-
-Reason: repeated prose about internal orchestration or routine successful milestones consumes output/context tokens from the more expensive Main without improving execution or helping the user make a decision.
-
-## Migration expectations
-
-A review should specifically verify that upgrading an existing installation to this branch behaves safely:
-
-- the retired `medium_route.md` is removed from the installed workflow runtime when it was previously workflow-owned;
-- added/changed workflow-owned files are materialized from the incoming package and previously owned files absent from that package are removed;
-- unrelated user files/settings are preserved;
-- worker and skill ownership cleanup remains safe;
-- the runtime still writes `multi_agent = true` and `max_concurrent_threads_per_session = 20`;
-- project-local instructions, personalization, durable `agent_docs/`, and enabled/disabled state are preserved;
-- existing rollback / backup behavior remains intact;
-- owner-release discovery cannot accidentally consume upstream releases or a release missing the expected checksum asset;
-- the existing local `--source` update path still works without network discovery.
-
-## What the reviewer should challenge
-
-The reviewer should freely challenge implementation quality. In particular, check for:
-
-- stale references to Light or Medium in active runtime/instruction surfaces;
-- contradictory state or workflow instructions;
-- accidental need to read Heavy for leaf tasks;
-- any Heavy wording that still encourages Main to perform executor/researcher/tester work directly;
-- any path where a stalled worker is treated as permission for Main takeover before resume/wait/message/reassignment is exhausted;
-- any path where a timeout-only wait with no new evidence causes Main to poll/list/message/interrupt/replace/inspect instead of waiting again;
-- any path where an unavailable predecessor without a complete handoff causes Main to read/reconstruct detailed predecessor state instead of delegating recovery + continuation;
-- any wording that encourages narration after routine wait/resume/status/message/queue operations or routine successful intermediate completions instead of silent tool-call orchestration;
-- final-verification wording broad enough to make Main redo the substantive task;
-- concurrency wording that accidentally creates either a new hard global cap or a blanket one-item-at-a-time rule;
-- broken package validation after deleting `medium_route.md`;
-- broken update cleanup for old installed copies of `medium_route.md`;
-- updater code that points to `viettran-edgeAI/codex_workflow`, accepts releases without both required assets, skips checksum/path/type validation, or introduces background updating;
-- updater behavior that loses the explicit local-source fallback or breaks same-runtime project catch-up;
-- incorrect Senior model assertions or worker validation;
-- tests that were weakened instead of updated to the new contract;
-- unnecessary new abstraction, duplication, or indirection introduced only to make tests pass;
-- any case where the runtime ceiling of 20 was accidentally removed or duplicated as a second Heavy policy limit.
-
-If a cleaner implementation achieves the same approved behavior with less code or less indirection, propose it.
-
-## Verification status at the time this note was added
-
-The branch was prepared as a review candidate. The full regression command should be run by the reviewer before approval:
-
-```sh
-python3 -B scripts/test_workflow_runtime.py -v
-```
-
-Also run package validation:
-
-```sh
-python3 -B codex_workflow/runtime/workflow.py validate --package-root codex_workflow --json
-```
-
-Do not approve the branch solely because these design notes say the changes are intentional; intentional design still needs independent implementation verification.
+- Heavy-only plus direct leaf behavior remains coherent;
+- `delegation.md` is progressively disclosed rather than always loaded;
+- all seven workers are package-owned and lifecycle-safe;
+- Spark is optional and Luna High fallback works;
+- no fixed concurrency key is reintroduced;
+- silent orchestration has no "material plan/scope change" narration loophole;
+- Main-owned deployment documents remain outside Archivist's write scope;
+- owner-only update/release security is preserved;
+- package validation, lifecycle, migration, rollback, and release-security regression coverage remains intact.
