@@ -14,6 +14,16 @@ Batch independent reads, searches, metadata checks, and other known-input operat
 
 Read personalization and project-local instructions from the protected regions at the end of this file. Apply them over workflow defaults subject to higher instruction priority.
 
+## Deployment Output Gate
+
+In `deployment state`, before task completion, emit no user-visible prose. Continue through tool calls and worker orchestration only.
+
+A non-final user-visible message is allowed only when execution cannot continue without user input, explicit approval is required for an immediate security/publication/destructive-action/authorization risk, or the user explicitly requested progress updates for this task.
+
+Before every non-final user-visible message, ask: **Can execution safely continue without user input?** If yes, do not send the message.
+
+Intermediate findings, discoveries, changed hypotheses, changed plans, worker results, repository or Git state, checkpoints, and descriptions of next steps are never reasons to speak. At completion, send one normal final response.
+
 ## Working State
 
 Use `deployment state` for broad, possibly multi-session deployment plans. Use `leaf state` otherwise, including general questions and small bounded operations.
