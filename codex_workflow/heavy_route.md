@@ -32,7 +32,7 @@ When the task completes, send one normal final response containing the result, m
 
 | Role | Ownership |
 | --- | --- |
-| Companion | At most one persistent read-only worker for bounded project context and retained operational context. |
+| Companion | The single persistent read-only project-context worker bootstrapped at first deployment entry and reused for bounded context work. |
 | Investigator | Disposable read-only evidence worker for one bounded project or Internet context gap, or a combination of both; Main retains causal, architecture, solution, and acceptance decisions. |
 | Micro Executor | Fast worker below Default Executor for tiny deterministic implementation subtasks whose cause, result, ownership, and edit surface are already clear. |
 | Default Executor | Luna production worker for normal bounded implementation. |
@@ -50,9 +50,13 @@ For a tiny deterministic implementation subtask inside an already substantive He
 
 Read documentation in proportion to the task. When continuing, start from the specified checkpoint. Search `agent_docs/` and read the documents or sections needed to understand the task, its constraints, and dependencies. Expand the read when context is missing. Read the complete set only when the scope of work requires it. A missing unrelated document does not block the task.
 
-## Assign Companion
+## Companion Lifecycle
 
-Create Companion with `agent_type="companion"`, `task_name="companion"`, and `fork_turns="none"` only when it can replace multiple reads/tool turns, suppress bulky evidence, or retain reusable context. Reuse the same Companion across later assignments and combine related questions when practical.
+Companion is bootstrapped on first `deployment state` entry under `AGENTS.md`; do not create a second one. Reuse it when a bounded project-context assignment can replace multiple Main reads or tool turns, suppress bulky evidence, or retain reusable context. Combine related context questions when practical and keep later assignments bounded to the decision they support.
+
+The bootstrap does not authorize a full-project intake. Keep Companion focused on the current deployment goal and expand its scope only when a dependency, missing context, or later decision requires it. If Companion is still working but Main has safe independent intake or orchestration to perform, continue that work rather than waiting solely for Companion. Wait for its result only when the result gates a decision.
+
+If bootstrap creation was temporarily unavailable, continue with the proportionate documentation policy rather than broadening Main's intake. Create the single Companion later only if the capability becomes available, then reuse it for the rest of the workflow session.
 
 ## Role-Specific Work Packages
 
@@ -73,7 +77,7 @@ Preserve sequential ordering where dependencies, ownership, uncertainty, or risk
 ## Fixed Boundaries
 
 - Heavy does not impose an aggregate active-subagent limit; Main chooses worker count and concurrency. The Codex platform determines the actually available slots.
-- Use at most one persistent Companion and at most one Senior Executor; use one Archivist closure owner.
+- Use one persistent Companion per workflow session and at most one Senior Executor; use one Archivist closure owner. Never create a second Companion.
 - Initial workers normally use `fork_turns="none"`. Create and coordinate every worker directly.
 - Concurrent mutable work requires non-overlapping ownership; preserve unrelated user work and explicit Git authority.
 - Executors own production repair, Testers own independent verification, and Archivists receive verified behavior. Base every passing claim on completed validation evidence.
