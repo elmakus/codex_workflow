@@ -40,6 +40,26 @@ def _test_worker_models_and_reasoning(self: unittest.TestCase) -> None:
         self.assertEqual((config["model"], config["model_reasoning_effort"]), expected[path.stem])
 
 
+def _test_heavy_only_workflow_keeps_leaf_direct_path(self: unittest.TestCase) -> None:
+    agents = (PACKAGE / "AGENTS.md").read_text(encoding="utf-8")
+    self.assertIn("## Workflow", agents)
+    self.assertIn("codex_workflow/heavy_route.md", agents)
+    self.assertIn("In leaf state, work directly without reading", agents)
+    self.assertIn("enter `deployment state`, bootstrap the session Companion below", agents)
+    self.assertIn("read that Heavy contract", agents)
+    self.assertIn("## Early Companion", agents)
+    self.assertNotIn("## Route Selection", agents)
+    self.assertNotIn("**Light**", agents)
+    self.assertNotIn("**Medium**", agents)
+    self.assertFalse((PACKAGE / "medium_route.md").exists())
+
+    heavy = (PACKAGE / "heavy_route.md").read_text(encoding="utf-8")
+    self.assertIn("Use as the substantive-work contract under `AGENTS.md`.", heavy)
+    self.assertIn("## Companion Lifecycle", heavy)
+    self.assertNotIn("## Fast Path", heavy)
+    self.assertIn("## Closure", heavy)
+
+
 def _test_current_private_contract(self: unittest.TestCase) -> None:
     agents = (PACKAGE / "AGENTS.md").read_text(encoding="utf-8")
     heavy = (PACKAGE / "heavy_route.md").read_text(encoding="utf-8")
@@ -139,6 +159,7 @@ def _test_platform_configuration_has_no_fixed_concurrency(self: unittest.TestCas
 
 base.PrivateCustomizationTests.test_private_version_and_user_marker_are_synchronized = _test_private_version_and_user_marker_are_synchronized
 base.PrivateCustomizationTests.test_worker_models_and_reasoning = _test_worker_models_and_reasoning
+base.PrivateCustomizationTests.test_heavy_only_workflow_keeps_leaf_direct_path = _test_heavy_only_workflow_keeps_leaf_direct_path
 base.MarkerTests.test_operational_policies_are_compact_and_knowledge_aware = _test_current_private_contract
 if hasattr(base.PrivateCustomizationTests, "test_platform_configuration_keeps_multi_agent_and_ceiling_twenty"):
     delattr(base.PrivateCustomizationTests, "test_platform_configuration_keeps_multi_agent_and_ceiling_twenty")
