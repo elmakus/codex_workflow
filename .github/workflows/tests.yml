@@ -1,0 +1,40 @@
+name: Tests
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Runtime regression tests
+        run: python3 -B scripts/test_workflow_runtime.py -v
+
+      - name: Validate package
+        run: python3 -B codex_workflow/runtime/workflow.py validate --package-root codex_workflow --json
+
+      - name: Build package
+        run: |
+          rm -rf /tmp/codex-workflow-dist
+          mkdir -p /tmp/codex-workflow-dist
+          python3 -B scripts/package_release.py --output-dir /tmp/codex-workflow-dist
+
+      - name: Verify package archive
+        run: |
+          VERSION="$(cat codex_workflow/operate/VERSION)"
+          python3 -B scripts/package_release.py --verify "/tmp/codex-workflow-dist/codex_workflow-${VERSION}.zip"
