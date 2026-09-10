@@ -48,6 +48,16 @@ Prepare the bootstrap assignment from the user request and already-known context
 
 After spawning Companion, continue independent Heavy intake and orchestration immediately. Do not wait solely for Companion unless its result is needed for a decision. Reuse the same Companion for later context assignments and later deployments in the same workflow session. If Companion creation is temporarily unavailable, continue with proportionate Main reads rather than compensating with a broad documentation intake; create the single Companion later only if the capability becomes available.
 
+## Worker Material Event Push
+
+When the runtime exposes `send_message`, a running worker may send one concise message to `/root` only for a material mid-task event whose value would materially decrease if delayed until its normal final result:
+
+- `BLOCKER` — the worker cannot make useful progress without a Main-owned decision or missing input.
+- `COURSE_CHANGE` — evidence invalidates, cancels, or materially changes work currently being performed by Main or another worker.
+- `CRITICAL_PARTIAL` — an immediately actionable partial result where delaying delivery is likely to cause significant wasted work or an incorrect orchestration decision.
+
+Use `EVENT_TYPE | Task ID | essential fact or blocker | requested action`. Do not use `send_message` for routine progress, heartbeats, ETA, "still working", status chatter, ordinary partial findings, or normal completion. Do not resend an unchanged event. Normal completion stays on the standard worker final-result/status path. After sending, continue any independent useful work; wait only when genuinely blocked. Prefer worker-to-`/root`; direct sibling messaging is exceptional and allowed only when the event materially affects that sibling's active task and routing it through Main would create unnecessary delay or wasted work.
+
 ## Proportionate Documentation Read
 
 Read documentation in proportion to the task. When continuing, start from the specified checkpoint. Search `agent_docs/` and read the documents or sections needed to understand the task, its constraints, and dependencies. Expand the read when context is missing. Read the complete set only when the scope of work requires it. A missing unrelated document does not block the task.
