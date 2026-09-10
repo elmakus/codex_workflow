@@ -74,6 +74,14 @@ Initial packages use **Task ID** and the role-specific capsule defined there. Ma
 
 Preserve sequential ordering where dependencies, ownership, uncertainty, or risk require it. Do not maximize concurrency without a concrete benefit.
 
+## Material Event Handling
+
+The standing worker-side `send_message` policy lives in `AGENTS.md`. Keep the long event-driven `wait_agent` lifecycle unchanged; material-event push complements it and does not replace normal completion notifications or waiting.
+
+When a material worker message wakes Main, process only the necessary orchestration consequence. A mailbox wake must not cause status polling, repeated worker listings, progress requests, broad check-ins, interruption, or replacement. If the event changes another active package, steer only the affected worker or decision. Then continue independent useful work or return to another long `wait_agent` when idle.
+
+Do not ask workers to send routine progress and do not use `send_message` as a status-request channel. Main should not manually request normal completion notifications; the standard worker final-result/status path already owns completion. Prefer worker-to-Main routing. Direct worker-to-worker messaging is exceptional under the rule in `AGENTS.md`, not the default topology.
+
 ## Fixed Boundaries
 
 - Heavy does not impose an aggregate active-subagent limit; Main chooses worker count and concurrency. The Codex platform determines the actually available slots.
