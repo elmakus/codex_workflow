@@ -38,6 +38,10 @@ owner-specific orchestration, model, update-channel, and safety choices.
 - Heavy is orchestrator-first, uses long event-driven waits, treats an empty
   timeout as a reason to wait again rather than poll, and keeps routine
   orchestration silent unless the user needs a decision or risk update.
+- Running workers may use `send_message` to `/root` only for rare material
+  mid-task `BLOCKER`, `COURSE_CHANGE`, or `CRITICAL_PARTIAL` events. Routine
+  progress and normal completion never use that channel; a material mailbox wake
+  complements the existing long `wait_agent` lifecycle rather than replacing it.
 - No token-accounting skill, deployment counting marker, usage-report table, or
   reporting obligation is included.
 - Release discovery and downloads are restricted to GitHub Releases published
