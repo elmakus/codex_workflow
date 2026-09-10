@@ -1,0 +1,176 @@
+name: Release
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: codex-workflow-release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require main branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ "${GITHUB_REF}" != "refs/heads/main" ]]; then
+            echo "Release workflow must be run from main; got ${GITHUB_REF}" >&2
+            exit 1
+          fi
+
+      - name: Checkout exact release commit
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Read and validate version metadata
+        id: version
+        shell: bash
+        run: |
+          set -euo pipefail
+          VERSION="$(tr -d '\r\n' < codex_workflow/operate/VERSION)"
+          if [[ -z "${VERSION}" ]]; then
+            echo "VERSION is empty" >&2
+            exit 1
+          fi
+          if ! grep -Fqx "<!-- codex-workflow-version: ${VERSION} -->" codex_workflow/operate/user_AGENTS.md; then
+            echo "VERSION and user_AGENTS.md marker are not synchronized" >&2
+            exit 1
+          fi
+          if ! grep -Fq "Version **${VERSION}**" README.md; then
+            echo "README.md does not describe ${VERSION}" >&2
+            exit 1
+          fi
+          if ! grep -Fq "current version is \`${VERSION}\`" RELEASING.md; then
+            echo "RELEASING.md does not describe ${VERSION}" >&2
+            exit 1
+          fi
+          echo "version=${VERSION}" >> "${GITHUB_OUTPUT}"
+          echo "tag=v${VERSION}" >> "${GITHUB_OUTPUT}"
+
+      - name: Refuse an existing tag or release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.version.outputs.tag }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if git show-ref --verify --quiet "refs/tags/${TAG}"; then
+            echo "Tag ${TAG} already exists" >&2
+            exit 1
+          fi
+          if gh api --silent "repos/${GITHUB_REPOSITORY}/releases/tags/${TAG}" >/dev/null 2>&1; then
+            echo "Release ${TAG} already exists" >&2
+            exit 1
+          fi
+
+      - name: Runtime regression tests
+        run: python3 -B scripts/test_workflow_runtime.py -v
+
+      - name: Validate package
+        run: python3 -B codex_workflow/runtime/workflow.py validate --package-root codex_workflow --json
+
+      - name: Build release package
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf /tmp/codex-workflow-dist
+          mkdir -p /tmp/codex-workflow-dist
+          python3 -B scripts/package_release.py --output-dir /tmp/codex-workflow-dist
+
+      - name: Verify release package
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          ZIP="/tmp/codex-workflow-dist/codex_workflow-${VERSION}.zip"
+          SUMS="/tmp/codex-workflow-dist/SHA256SUMS"
+          test -f "${ZIP}"
+          test -f "${SUMS}"
+          python3 -B scripts/package_release.py --verify "${ZIP}"
+          (
+            cd /tmp/codex-workflow-dist
+            sha256sum -c SHA256SUMS
+          )
+          test "$(find /tmp/codex-workflow-dist -maxdepth 1 -type f | wc -l)" -eq 2
+
+      - name: Prepare release notes
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          ZIP="/tmp/codex-workflow-dist/codex_workflow-${VERSION}.zip"
+          SHA256="$(sha256sum "${ZIP}" | awk '{print $1}')"
+          cat > /tmp/release-notes.md <<EOF
+          # codex_workflow ${VERSION}
+
+          Source commit: \`${GITHUB_SHA}\`
+
+          ## Changes
+
+          - Senior Executor uses GPT-5.6 Sol at medium reasoning instead of GPT-6 Astra at low reasoning.
+          - Release metadata, documentation, delegation contract, and regression expectations are synchronized with that profile.
+
+          ## Verification
+
+          - Runtime regression suite: passed
+          - Package validation: passed
+          - Archive verification: passed
+          - SHA256SUMS verification: passed
+          - ZIP SHA-256: \`${SHA256}\`
+          EOF
+
+      - name: Publish prerelease with verified assets
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.version.outputs.version }}
+          TAG: ${{ steps.version.outputs.tag }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          ZIP="/tmp/codex-workflow-dist/codex_workflow-${VERSION}.zip"
+          SUMS="/tmp/codex-workflow-dist/SHA256SUMS"
+          gh release create "${TAG}" \
+            "${ZIP}" \
+            "${SUMS}" \
+            --repo "${GITHUB_REPOSITORY}" \
+            --target "${GITHUB_SHA}" \
+            --title "codex_workflow ${VERSION}" \
+            --notes-file /tmp/release-notes.md \
+            --prerelease
+
+      - name: Verify published release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.version.outputs.tag }}
+          VERSION: ${{ steps.version.outputs.version }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh release view "${TAG}" --repo "${GITHUB_REPOSITORY}" --json isDraft,isPrerelease,tagName,targetCommitish > /tmp/release.json
+          python3 - <<'PY'
+          import json, os
+          data = json.load(open('/tmp/release.json', encoding='utf-8'))
+          assert data['isDraft'] is False, data
+          assert data['isPrerelease'] is True, data
+          assert data['tagName'] == os.environ['TAG'], data
+          PY
+          mapfile -t ASSETS < <(gh release view "${TAG}" --repo "${GITHUB_REPOSITORY}" --json assets --jq '.assets[].name' | sort)
+          EXPECTED=("SHA256SUMS" "codex_workflow-${VERSION}.zip")
+          if [[ "${ASSETS[*]}" != "${EXPECTED[*]}" ]]; then
+            printf 'Unexpected release assets: %s\n' "${ASSETS[*]}" >&2
+            exit 1
+          fi
