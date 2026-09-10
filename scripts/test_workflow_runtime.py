@@ -15,11 +15,11 @@ PACKAGE = owner.PACKAGE
 
 def _test_private_version_and_user_marker_are_synchronized(self: unittest.TestCase) -> None:
     version = (PACKAGE / "operate" / "VERSION").read_text(encoding="utf-8").strip()
-    self.assertEqual(version, "1.1.17-private.2")
+    self.assertEqual(version, "1.1.17-private.3")
     user_agents = (PACKAGE / "operate" / "user_AGENTS.md").read_text(encoding="utf-8")
     self.assertEqual(user_agents.count(f"<!-- codex-workflow-version: {version} -->"), 1)
-    self.assertGreater(base.parse_semver("1.1.17-private.2"), base.parse_semver("1.1.17-private.1"))
-    self.assertEqual(base.NEXT_PACKAGE_VERSION, "1.1.17-private.3")
+    self.assertGreater(base.parse_semver("1.1.17-private.3"), base.parse_semver("1.1.17-private.2"))
+    self.assertEqual(base.NEXT_PACKAGE_VERSION, "1.1.17-private.4")
 
 
 def _test_worker_models_and_reasoning(self: unittest.TestCase) -> None:
@@ -97,6 +97,16 @@ def _test_current_private_contract(self: unittest.TestCase) -> None:
     self.assertIn("later deployments in the same workflow session", agents)
     self.assertIn("continue with proportionate Main reads", agents)
 
+    self.assertIn("## Worker Material Event Push", agents)
+    self.assertIn("`send_message`", agents)
+    self.assertIn("`BLOCKER`", agents)
+    self.assertIn("`COURSE_CHANGE`", agents)
+    self.assertIn("`CRITICAL_PARTIAL`", agents)
+    self.assertIn("routine progress", agents)
+    self.assertIn("normal completion", agents)
+    self.assertIn("Do not resend an unchanged event", agents)
+    self.assertIn("worker-to-`/root`", agents)
+
     self.assertIn("Main is an orchestrator, not an executor", heavy)
     self.assertIn("do not send user-visible progress", heavy)
     self.assertIn("intermediate findings", heavy)
@@ -119,6 +129,11 @@ def _test_current_private_contract(self: unittest.TestCase) -> None:
     self.assertIn("bootstrap does not authorize a full-project intake", heavy)
     self.assertIn("Wait for its result only when the result gates a decision", heavy)
     self.assertIn("Use one persistent Companion per workflow session", heavy)
+    self.assertIn("## Material Event Handling", heavy)
+    self.assertIn("long event-driven `wait_agent` lifecycle unchanged", heavy)
+    self.assertIn("When Main receives a material worker message", heavy)
+    self.assertIn("must not cause status polling", heavy)
+    self.assertIn("Do not ask workers to send routine progress", heavy)
 
     self.assertIn("Do not turn the bootstrap into a full-project intake", companion)
     self.assertIn("do not read the complete `agent_docs/` framework", companion)
@@ -129,6 +144,10 @@ def _test_current_private_contract(self: unittest.TestCase) -> None:
         self.assertNotIn("created on demand", public_doc)
         self.assertIn("first deployment", public_doc)
         self.assertIn("full `agent_docs/`", public_doc)
+        self.assertIn("send_message", public_doc)
+        self.assertIn("BLOCKER", public_doc)
+        self.assertIn("COURSE_CHANGE", public_doc)
+        self.assertIn("CRITICAL_PARTIAL", public_doc)
 
     self.assertIn("## Work Packages", delegation)
     self.assertIn("## Micro Execution", delegation)
@@ -140,6 +159,10 @@ def _test_current_private_contract(self: unittest.TestCase) -> None:
     self.assertIn('model="gpt-5.3-codex-spark"', delegation)
     self.assertIn("Default Executor (Luna Max)", delegation)
     self.assertIn("Senior Executor (Astra Low)", delegation)
+    self.assertIn("## Material Event Push", delegation)
+    self.assertIn("do not repeat it in every task capsule", delegation)
+    self.assertIn("Do not use Main follow-ups to poll worker status", delegation)
+    self.assertIn("A `wait_agent` timeout without new evidence is not a reason to request an update", delegation)
     self.assertIn("project evidence, Internet sources, or both", investigator)
     self.assertIn("Do not\nedit those files during a deployment", archivist)
     for template in ("project_progress.md", "latest_session_work.md"):

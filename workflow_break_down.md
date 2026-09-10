@@ -1,6 +1,6 @@
 # Owner workflow ownership and layout
 
-This guide describes `1.1.17-private.2`, based directly on upstream prerelease
+This guide describes `1.1.17-private.3`, based directly on upstream prerelease
 `v1.1.17` commit `414a5d301ff17ca6e655330474c8346863d0d5d0`.
 
 ## Execution
@@ -38,9 +38,9 @@ early if the worker completes sooner.
 Workers may also push one rare material mid-task event to Main with
 `send_message` when the runtime exposes it. Only `BLOCKER`, `COURSE_CHANGE`, and
 `CRITICAL_PARTIAL` qualify; progress, ETA, heartbeats, routine partial findings,
-and normal completion stay silent. Such a mailbox event can wake the existing
-wait early, after which Main handles only the affected orchestration consequence
-and then resumes independent work or the long wait. This does not replace
+and normal completion stay silent. Main handles only the affected orchestration
+consequence when such a message is received, including when it wakes an existing
+wait early, then resumes independent work or the long wait. This does not replace
 `wait_agent` or the standard completion path.
 
 Routine orchestration and successful intermediate completions remain silent

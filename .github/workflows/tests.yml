@@ -25,9 +25,6 @@ jobs:
       - name: Runtime regression tests
         run: python3 -B scripts/test_workflow_runtime.py -v
 
-      - name: Material-event push regression
-        run: python3 -B scripts/test_material_event_push.py
-
       - name: Validate package
         run: python3 -B codex_workflow/runtime/workflow.py validate --package-root codex_workflow --json
 

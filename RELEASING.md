@@ -6,7 +6,7 @@ explicit owner action after review and verification.
 
 ## Source and version
 
-The current version is `1.1.17-private.2`, based directly on upstream `v1.1.17`
+The current version is `1.1.17-private.3`, based directly on upstream `v1.1.17`
 commit `414a5d301ff17ca6e655330474c8346863d0d5d0`. Keep
 `codex_workflow/operate/VERSION` and the marker in
 `codex_workflow/operate/user_AGENTS.md` identical.
@@ -25,12 +25,15 @@ Use Python 3.11 or newer from a clean checkout of the exact reviewed commit:
 python3 -B scripts/test_workflow_runtime.py -v
 python3 -B codex_workflow/runtime/workflow.py validate --package-root codex_workflow --json
 python3 -B scripts/package_release.py --output-dir /absolute/path/to/fresh-output
-python3 -B scripts/package_release.py --verify /absolute/path/to/fresh-output/codex_workflow-1.1.17-private.2.zip
+python3 -B scripts/package_release.py --verify /absolute/path/to/fresh-output/codex_workflow-1.1.17-private.3.zip
 ```
+
+The main runtime regression suite includes the material-event `send_message`
+policy contract; no separate release-only regression command is required.
 
 Expected release assets:
 
-- `codex_workflow-1.1.17-private.2.zip`
+- `codex_workflow-1.1.17-private.3.zip`
 - `SHA256SUMS`
 
 Record the exact source commit and completed verification in the release notes or
@@ -41,7 +44,7 @@ other durable provenance record.
 After the candidate is approved and merged to the intended release commit:
 
 1. create a GitHub Release in `elmakus/codex_workflow` for tag
-   `v1.1.17-private.2`;
+   `v1.1.17-private.3`;
 2. attach exactly the verified versioned ZIP and its `SHA256SUMS`;
 3. include concise release notes and the source commit SHA;
 4. publish only after both assets are present and verified.

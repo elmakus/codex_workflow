@@ -1,6 +1,6 @@
 # elmakus codex_workflow fork
 
-Version **1.1.17-private.2**, based directly on upstream prerelease `v1.1.17`
+Version **1.1.17-private.3**, based directly on upstream prerelease `v1.1.17`
 commit `414a5d301ff17ca6e655330474c8346863d0d5d0`.
 
 This public fork keeps upstream's lifecycle/runtime foundation while applying
@@ -40,8 +40,9 @@ owner-specific orchestration, model, update-channel, and safety choices.
   orchestration silent unless the user needs a decision or risk update.
 - Running workers may use `send_message` to `/root` only for rare material
   mid-task `BLOCKER`, `COURSE_CHANGE`, or `CRITICAL_PARTIAL` events. Routine
-  progress and normal completion never use that channel; a material mailbox wake
-  complements the existing long `wait_agent` lifecycle rather than replacing it.
+  progress and normal completion never use that channel; receipt of a material
+  event, including a `wait_agent` wake, complements the existing long-wait
+  lifecycle rather than replacing it.
 - No token-accounting skill, deployment counting marker, usage-report table, or
   reporting obligation is included.
 - Release discovery and downloads are restricted to GitHub Releases published
