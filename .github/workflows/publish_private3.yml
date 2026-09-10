@@ -1,4 +1,4 @@
-name: Publish private.3
+name: Fix private.3 release notes
 
 on:
   push:
@@ -11,80 +11,38 @@ permissions:
   contents: write
 
 jobs:
-  publish:
+  fix-notes:
     runs-on: ubuntu-latest
     env:
-      VERSION: 1.1.17-private.3
       TAG: v1.1.17-private.3
       SOURCE_SHA: 7187d38a3e0ad1ed445858ff4b2adff6eeae3fd9
+      ZIP_SHA: 3e6ad31226dc41a7207154c6cc34d8d18d4824fd3b97a5453e0056c8e1b093a4
     steps:
-      - name: Checkout release source
+      - name: Checkout repository
         uses: actions/checkout@v4
-        with:
-          ref: ${{ env.SOURCE_SHA }}
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
-
-      - name: Verify runtime regressions
-        run: python3 -B scripts/test_workflow_runtime.py -v
-
-      - name: Validate package
-        run: python3 -B codex_workflow/runtime/workflow.py validate --package-root codex_workflow --json
-
-      - name: Build and verify release assets
+      - name: Prepare corrected release notes
         run: |
-          rm -rf /tmp/codex-workflow-release
-          mkdir -p /tmp/codex-workflow-release
-          python3 -B scripts/package_release.py --output-dir /tmp/codex-workflow-release
-          python3 -B scripts/package_release.py --verify "/tmp/codex-workflow-release/codex_workflow-${VERSION}.zip"
-          ZIP_SHA="$(sha256sum "/tmp/codex-workflow-release/codex_workflow-${VERSION}.zip" | awk '{print $1}')"
-          echo "ZIP_SHA=${ZIP_SHA}" >> "$GITHUB_ENV"
+          cp docs/release_notes_1.1.17-private.3.md /tmp/release-notes.md
+          printf '\n## Published artifact\n\n' >> /tmp/release-notes.md
+          printf -- '- Source commit: `%s`\n' "$SOURCE_SHA" >> /tmp/release-notes.md
+          printf -- '- Runtime regression tests: 81 passed\n' >> /tmp/release-notes.md
+          printf -- '- Package validation: passed\n' >> /tmp/release-notes.md
+          printf -- '- Archive verification: passed\n' >> /tmp/release-notes.md
+          printf -- '- Published asset checksum verification: passed\n' >> /tmp/release-notes.md
+          printf -- '- ZIP SHA-256: `%s`\n' "$ZIP_SHA" >> /tmp/release-notes.md
 
-      - name: Prepare release notes
-        run: |
-          cp "docs/release_notes_1.1.17-private.3.md" /tmp/release-notes.md
-          cat >> /tmp/release-notes.md <<EOF
-
-          ## Published artifact
-
-          - Source commit: `${SOURCE_SHA}`
-          - Runtime regression tests: 81 passed
-          - Package validation: passed
-          - Archive verification: passed
-          - ZIP SHA-256: `${ZIP_SHA}`
-          EOF
-
-      - name: Publish GitHub Release
+      - name: Update GitHub Release notes
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
-            echo "Release $TAG already exists; refusing to overwrite."
-            exit 1
-          fi
-          gh release create "$TAG" \
-            "/tmp/codex-workflow-release/codex_workflow-${VERSION}.zip" \
-            "/tmp/codex-workflow-release/SHA256SUMS" \
+          gh release edit "$TAG" \
             --repo "$GITHUB_REPOSITORY" \
-            --target "$SOURCE_SHA" \
-            --title "codex_workflow ${VERSION}" \
-            --notes-file /tmp/release-notes.md \
-            --prerelease
+            --notes-file /tmp/release-notes.md
 
-      - name: Verify published assets
+      - name: Verify release metadata
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          rm -rf /tmp/release-check
-          mkdir -p /tmp/release-check
-          gh release download "$TAG" --repo "$GITHUB_REPOSITORY" \
-            --pattern "codex_workflow-${VERSION}.zip" \
-            --pattern "SHA256SUMS" \
-            --dir /tmp/release-check
-          cd /tmp/release-check
-          sha256sum -c SHA256SUMS
           gh release view "$TAG" --repo "$GITHUB_REPOSITORY" \
-            --json tagName,isDraft,isPrerelease,targetCommitish,assets
+            --json tagName,isDraft,isPrerelease,targetCommitish,assets,body
