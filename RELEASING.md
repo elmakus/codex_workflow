@@ -11,6 +11,8 @@ commit `414a5d301ff17ca6e655330474c8346863d0d5d0`. Keep
 `codex_workflow/operate/VERSION` and the marker in
 `codex_workflow/operate/user_AGENTS.md` identical.
 
+This release changes Senior Executor from Astra Low to Sol Medium.
+
 Only publish a release from a reviewed commit intended for this fork's `main`.
 Do not publish a candidate branch merely to make the updater see it.
 
