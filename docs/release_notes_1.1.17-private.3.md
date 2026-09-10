@@ -2,6 +2,8 @@
 
 Source basis: upstream `v1.1.17` commit `414a5d301ff17ca6e655330474c8346863d0d5d0` plus owner-specific changes through this release.
 
+This repository-side note records release intent and provenance; it is not part of the packaged runtime.
+
 ## Changes
 
 - Keep the existing long event-driven `wait_agent` lifecycle unchanged.
