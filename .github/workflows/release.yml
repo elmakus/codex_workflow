@@ -1,6 +1,11 @@
 name: Release
 
 on:
+  push:
+    branches:
+      - main
+    paths:
+      - codex_workflow/operate/VERSION
   workflow_dispatch:
 
 permissions:
@@ -114,24 +119,29 @@ jobs:
           set -euo pipefail
           ZIP="/tmp/codex-workflow-dist/codex_workflow-${VERSION}.zip"
           SHA256="$(sha256sum "${ZIP}" | awk '{print $1}')"
-          cat > /tmp/release-notes.md <<EOF
-          # codex_workflow ${VERSION}
+          PREVIOUS_TAG="$(git describe --tags --abbrev=0 --match 'v*' 2>/dev/null || true)"
 
-          Source commit: \`${GITHUB_SHA}\`
-
-          ## Changes
-
-          - Senior Executor uses GPT-5.6 Sol at medium reasoning instead of GPT-6 Astra at low reasoning.
-          - Release metadata, documentation, delegation contract, and regression expectations are synchronized with that profile.
-
-          ## Verification
-
-          - Runtime regression suite: passed
-          - Package validation: passed
-          - Archive verification: passed
-          - SHA256SUMS verification: passed
-          - ZIP SHA-256: \`${SHA256}\`
-          EOF
+          {
+            echo "# codex_workflow ${VERSION}"
+            echo
+            echo "Source commit: \`${GITHUB_SHA}\`"
+            echo
+            echo "## Changes"
+            echo
+            if [[ -n "${PREVIOUS_TAG}" ]]; then
+              git log --no-merges --pretty='- %s (`%h`)' "${PREVIOUS_TAG}..${GITHUB_SHA}"
+            else
+              git log --no-merges --pretty='- %s (`%h`)' "${GITHUB_SHA}"
+            fi
+            echo
+            echo "## Verification"
+            echo
+            echo "- Runtime regression suite: passed"
+            echo "- Package validation: passed"
+            echo "- Archive verification: passed"
+            echo "- SHA256SUMS verification: passed"
+            echo "- ZIP SHA-256: \`${SHA256}\`"
+          } > /tmp/release-notes.md
 
       - name: Publish prerelease with verified assets
         env:
