@@ -36,7 +36,7 @@ When the task completes, send one normal final response containing the result, m
 | Investigator | Disposable read-only evidence worker for one bounded project or Internet context gap, or a combination of both; Main retains causal, architecture, solution, and acceptance decisions. |
 | Micro Executor | Fast worker below Default Executor for tiny deterministic implementation subtasks whose cause, result, ownership, and edit surface are already clear. |
 | Default Executor | Luna production worker for normal bounded implementation. |
-| Senior Executor | Reserve the Astra production worker for one exceptionally difficult mathematical, logical, architectural, or cross-cutting package. |
+| Senior Executor | Reserve the Sol production worker for one exceptionally difficult mathematical, logical, architectural, or cross-cutting package. |
 | Tester | Independent verification from intended behavior, risks, boundaries, and evidence. |
 | Archivist | Verified documentation outside the three Main-owned deployment-state documents and the read-only closing handoff under `~/.codex/codex_workflow/archivist.md`. |
 
