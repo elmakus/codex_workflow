@@ -35,6 +35,14 @@ intervention signal. If the worker remains presumed healthy, Main issues another
 long wait instead of polling status. The normal wait is 25 minutes and returns
 early if the worker completes sooner.
 
+Workers may also push one rare material mid-task event to Main with
+`send_message` when the runtime exposes it. Only `BLOCKER`, `COURSE_CHANGE`, and
+`CRITICAL_PARTIAL` qualify; progress, ETA, heartbeats, routine partial findings,
+and normal completion stay silent. Such a mailbox event can wake the existing
+wait early, after which Main handles only the affected orchestration consequence
+and then resumes independent work or the long wait. This does not replace
+`wait_agent` or the standard completion path.
+
 Routine orchestration and successful intermediate completions remain silent
 unless the user needs a decision/risk update or explicitly asked for progress.
 Heavy has no workflow-imposed aggregate active-subagent limit; the Codex platform
