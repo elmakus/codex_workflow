@@ -1,6 +1,6 @@
 # elmakus codex_workflow fork
 
-Version **1.1.17-private.3**, based directly on upstream prerelease `v1.1.17`
+Version **1.1.17-private.4**, based directly on upstream prerelease `v1.1.17`
 commit `414a5d301ff17ca6e655330474c8346863d0d5d0`.
 
 This public fork keeps upstream's lifecycle/runtime foundation while applying
@@ -20,7 +20,7 @@ owner-specific orchestration, model, update-channel, and safety choices.
 - Micro Executor is a distinct seventh worker below Default Executor. Its stable
   profile is Luna High; when the current Codex runtime/account supports it, the
   same role may run with GPT-5.3-Codex-Spark at high reasoning. Spark is optional.
-- Default Executor uses Luna Max. Senior Executor uses Astra Low. Tester,
+- Default Executor uses Luna Max. Senior Executor uses Sol Medium. Tester,
   Companion, Investigator, and Archivist use Luna Max.
 - Investigator may inspect one bounded project evidence gap, Internet sources,
   or both, while remaining read-only. Main retains causal, architecture,
@@ -65,7 +65,7 @@ using Micro Execution, or recovering a worker, Main loads
 | --- | --- | --- |
 | Micro Executor | Spark / high when available; otherwise Luna / high | Tiny deterministic implementation subtasks inside Heavy. |
 | Default Executor | Luna / max | Normal bounded implementation and repair. |
-| Senior Executor | Astra / low | Exceptionally difficult bounded production or solution work. |
+| Senior Executor | Sol / medium | Exceptionally difficult bounded production or solution work. |
 | Tester | Luna / max | Independent verification. |
 | Companion | Luna / max | Persistent read-only project context, created once at first deployment entry and reused. |
 | Investigator | Luna / max | Disposable read-only project/Internet evidence investigation. |

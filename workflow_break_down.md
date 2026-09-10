@@ -1,6 +1,6 @@
 # Owner workflow ownership and layout
 
-This guide describes `1.1.17-private.3`, based directly on upstream prerelease
+This guide describes `1.1.17-private.4`, based directly on upstream prerelease
 `v1.1.17` commit `414a5d301ff17ca6e655330474c8346863d0d5d0`.
 
 ## Execution
@@ -52,7 +52,7 @@ and account determine available concurrency.
 | --- | --- | --- |
 | Micro Executor | Spark / high when available; otherwise Luna / high | Tiny deterministic implementation subtasks inside an existing Heavy deployment. |
 | Default Executor | Luna / max | Normal bounded implementation and repair. |
-| Senior Executor | Astra / low | Exceptionally difficult bounded production or solution work. |
+| Senior Executor | Sol / medium | Exceptionally difficult bounded production or solution work. |
 | Tester | Luna / max | Independent verification. |
 | Companion | Luna / max | Persistent read-only project context, created once at first deployment entry and reused. |
 | Investigator | Luna / max | Disposable read-only investigation across bounded project evidence, Internet sources, or both. |

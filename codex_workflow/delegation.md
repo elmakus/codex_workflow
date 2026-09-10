@@ -67,7 +67,7 @@ with no model override. The installed Micro Executor profile is `gpt-5.6-luna` a
 Do not create a reasoning escalation ladder for Micro Execution. If Spark or Luna High reports that the task requires meaningful exploration, architecture, security judgement, migration reasoning, broader ownership, or materially stronger reasoning, Main reclassifies the package:
 
 - normal bounded implementation -> Default Executor (Luna Max);
-- exceptionally difficult bounded package -> Senior Executor (Astra Low).
+- exceptionally difficult bounded package -> Senior Executor (Sol Medium).
 
 ## Worker Follow-up and Repair
 
