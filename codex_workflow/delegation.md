@@ -28,6 +28,12 @@ For Tester, transfer acceptance intent, risks, contracts, boundaries, relevant e
 
 Ask every worker for a concise decision-ready return containing outcome, material changes or findings, verification evidence, limitations, residual risk, and only decisions Main must make.
 
+## Material Event Push
+
+The standing worker-side material-event policy is defined once in project `AGENTS.md`; do not repeat it in every task capsule. Workers may use runtime `send_message` to `/root` only for `BLOCKER`, `COURSE_CHANGE`, or `CRITICAL_PARTIAL` events under that policy. Ordinary progress, ETA, heartbeats, status chatter, routine partial findings, and normal completion are not follow-up traffic.
+
+Do not use Main follow-ups to poll worker status. Send a follow-up only when Main has new evidence, a changed decision, or changed capsule information that the existing worker needs. A `wait_agent` timeout without new evidence is not a reason to request an update. Prefer worker-to-Main material-event routing; do not instruct sibling messaging unless the sibling's active task is materially affected and Main routing would create unnecessary delay or wasted work.
+
 ## Micro Execution
 
 Micro Executor is a distinct worker below Default Executor. Use it only for a tiny deterministic implementation subtask inside an already substantive Heavy deployment. Do not spawn it when the complete user request is itself a trivial leaf task; Main handles those directly.
