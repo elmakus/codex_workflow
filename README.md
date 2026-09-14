@@ -1,6 +1,6 @@
 # elmakus codex_workflow fork
 
-Version **1.1.17-private.5**, based directly on upstream prerelease `v1.1.17`
+Version **1.1.17-private.6**, based directly on upstream prerelease `v1.1.17`
 commit `414a5d301ff17ca6e655330474c8346863d0d5d0`.
 
 This public fork keeps upstream's lifecycle/runtime foundation while applying
@@ -17,6 +17,11 @@ owner-specific orchestration, model, update-channel, and safety choices.
 - Heavy uses progressive disclosure: standing orchestration stays in
   `heavy_route.md`; detailed work-package, Micro Execution, follow-up, and
   recovery guidance lives in `delegation.md` and is loaded only when needed.
+- Fresh/independent execution boundaries use new internal workers with
+  `fork_turns="none"` by default. App-level `create_thread` is not used merely
+  to obtain review independence, milestone isolation, or a context reset; it is
+  reserved for explicit top-level-thread requests or capabilities unavailable
+  to internal workers.
 - Worker compute is selected by one global runtime profile. `plus` preserves the
   historical Luna-heavy allocation. `pro-x5` moves ordinary worker roles to
   GPT-5.6 Sol Low while keeping Senior Executor at Sol Medium. Main is never
