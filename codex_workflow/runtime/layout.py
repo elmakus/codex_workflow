@@ -128,11 +128,13 @@ class PackageLayout:
                 "operate/check_update.md",
                 "operate/remove.md",
                 "operate/personalization_guide.md",
+                "operate/profile.md",
                 "operate/enable.md",
                 "operate/disable.md",
                 "runtime/__init__.py",
                 "runtime/_toml.py",
                 "runtime/backup.py",
+                "runtime/compute_profiles.py",
                 "runtime/layout.py",
                 "runtime/lifecycle.py",
                 "runtime/markers.py",
@@ -243,6 +245,10 @@ class RuntimePaths:
     @property
     def user_agents(self) -> Path:
         return self.codex_home / "AGENTS.md"
+
+    @property
+    def compute_settings(self) -> Path:
+        return self.runtime / "settings.toml"
 
 
 @dataclass(frozen=True)

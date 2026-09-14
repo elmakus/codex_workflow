@@ -1,7 +1,7 @@
 # codex-workflow-worker: default_executor
 name = "default_executor"
 
-description = "Default Luna production executor for a bounded implementation package."
+description = "Default production executor for a bounded implementation package."
 
 model = "gpt-5.6-luna"
 model_reasoning_effort = "max"

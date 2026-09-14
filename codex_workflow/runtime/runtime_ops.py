@@ -5,6 +5,11 @@ from __future__ import annotations
 import re
 from pathlib import Path
 
+from .compute_profiles import (
+    read_compute_profile,
+    render_compute_settings,
+    render_worker_for_profile,
+)
 from .platform_settings import (
     patch_codex_settings,
     remove_workflow_owned_settings,
@@ -146,15 +151,19 @@ def plan_platform_and_workers(
     mutations: list[Mutation] = []
     current_state = read_json(runtime.runtime / USER_STATE, default={})
     previous_owned = set(read_string_list(current_state, "owned_workers"))
+    profile = read_compute_profile(runtime)
     workers = {
         path.stem for path in templates.glob("*.toml") if path.is_file()
     }
     for worker in sorted(workers):
         source = templates / f"{worker}.toml"
+        rendered = render_worker_for_profile(
+            source.read_text(encoding="utf-8"), worker, profile
+        )
         mutations.append(
             text_mutation(
                 runtime.agents / f"{worker}.toml",
-                source.read_text(encoding="utf-8"),
+                rendered,
             )
         )
     for worker in sorted(previous_owned - workers):
@@ -162,6 +171,9 @@ def plan_platform_and_workers(
         if target.exists():
             validate_worker_owner(target, worker)
             mutations.append(Mutation(target, None))
+    mutations.append(
+        text_mutation(runtime.compute_settings, render_compute_settings(profile))
+    )
     config_text = (
         runtime.config_toml.read_text(encoding="utf-8")
         if runtime.config_toml.is_file()

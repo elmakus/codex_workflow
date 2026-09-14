@@ -1,6 +1,6 @@
 # Owner workflow ownership and layout
 
-This guide describes `1.1.17-private.4`, based directly on upstream prerelease
+This guide describes `1.1.17-private.5`, based directly on upstream prerelease
 `v1.1.17` commit `414a5d301ff17ca6e655330474c8346863d0d5d0`.
 
 ## Execution
@@ -48,22 +48,30 @@ unless the user needs a decision/risk update or explicitly asked for progress.
 Heavy has no workflow-imposed aggregate active-subagent limit; the Codex platform
 and account determine available concurrency.
 
-| Role | Model / reasoning | Responsibility |
-| --- | --- | --- |
-| Micro Executor | Spark / high when available; otherwise Luna / high | Tiny deterministic implementation subtasks inside an existing Heavy deployment. |
-| Default Executor | Luna / max | Normal bounded implementation and repair. |
-| Senior Executor | Sol / medium | Exceptionally difficult bounded production or solution work. |
-| Tester | Luna / max | Independent verification. |
-| Companion | Luna / max | Persistent read-only project context, created once at first deployment entry and reused. |
-| Investigator | Luna / max | Disposable read-only investigation across bounded project evidence, Internet sources, or both. |
-| Archivist | Luna / max | Verified documentation outside Main-owned deployment-state docs and closing handoff. |
+| Role | `plus` | `pro-x5` | Responsibility |
+| --- | --- | --- | --- |
+| Micro Executor | Spark/high when available; fallback Luna/high | Spark/high when available; fallback Sol/low | Tiny deterministic implementation subtasks inside an existing Heavy deployment. |
+| Default Executor | Luna/max | Sol/low | Normal bounded implementation and repair. |
+| Senior Executor | Sol/medium | Sol/medium | Exceptionally difficult bounded production or solution work. |
+| Tester | Luna/max | Sol/low | Independent verification. |
+| Companion | Luna/max | Sol/low | Persistent read-only project context, created once at first deployment entry and reused. |
+| Investigator | Luna/max | Sol/low | Disposable read-only investigation across bounded project evidence, Internet sources, or both. |
+| Archivist | Luna/max | Sol/low | Verified documentation outside Main-owned deployment-state docs and closing handoff. |
 
 Micro Executor is a separate workflow-owned worker below Default Executor. Its
-installed profile is Luna High. When the runtime/account exposes
+installed stable fallback follows the selected compute profile: Luna High in
+`plus`, Sol Low in `pro-x5`. When the runtime/account exposes
 GPT-5.3-Codex-Spark and model overrides, Main may spawn the same Micro package
 with Spark High. Spark availability is not part of correctness. A package that
 stops being small and deterministic is reclassified directly to Default or
 Senior Executor.
+
+The compute profile is global user-runtime state, not project personalization.
+It is stored in `~/.codex/codex_workflow/settings.toml`; missing settings on an
+older installation mean `plus`. A profile switch renders model and reasoning
+fields from one central mapping into the existing worker definitions and changes
+all managed worker files plus the settings file in one compensating transaction.
+Main is outside this mechanism. The workflow never auto-detects a subscription.
 
 Archivist has no usage-reporting responsibility. This package does not include
 token accounting, deployment counting markers, a reporting skill, or report
@@ -91,10 +99,10 @@ handoff.
 ## Shared user files
 
 `~/.codex/codex_workflow/` contains the compact Heavy contract,
-`delegation.md`, `archivist.md`, runtime modules, installed templates, and
-ownership state. `operate/` contains lifecycle guides and version metadata;
-`runtime/workflow.py` is the launcher. Worker definitions are installed under
-`~/.codex/agents/`.
+`delegation.md`, `archivist.md`, runtime modules, installed templates, ownership
+state, and the persistent compute-profile selection. `operate/` contains
+lifecycle guides and version metadata; `runtime/workflow.py` is the launcher.
+Worker definitions are installed under `~/.codex/agents/`.
 
 The workflow enables Codex multi-agent support but does not impose the retired
 `max_concurrent_threads_per_session = 20` setting. Migration removes that old
@@ -102,8 +110,9 @@ workflow-owned key while preserving unrelated Codex configuration.
 
 ## Lifecycle and owner release channel
 
-Installation and updates are explicit owner actions. Opening a project does not
-install or update anything automatically.
+Installation, updates, and compute-profile changes are explicit owner actions.
+Opening a project does not install, update, or change compute profile
+automatically.
 
 `check-update` queries GitHub Releases only for `elmakus/codex_workflow`. A
 release is usable only when it is non-draft, has a valid SemVer tag, and contains
@@ -117,5 +126,5 @@ Owned files present in the package are added/replaced; previously owned files
 absent from it are retired. Workers and workflow-owned skills use the same
 ownership-aware approach. Unrelated user settings, unrelated workers/skills,
 content outside managed regions, project instructions, personalization,
-documents, and enabled/disabled state are preserved. Updates are backed up and
-applied transactionally.
+documents, enabled/disabled state, and the selected compute profile are
+preserved. Updates are backed up and applied transactionally.

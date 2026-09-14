@@ -35,16 +35,16 @@ When the task completes, send one normal final response containing the result, m
 | Companion | The single persistent read-only project-context worker bootstrapped at first deployment entry and reused for bounded context work. |
 | Investigator | Disposable read-only evidence worker for one bounded project or Internet context gap, or a combination of both; Main retains causal, architecture, solution, and acceptance decisions. |
 | Micro Executor | Fast worker below Default Executor for tiny deterministic implementation subtasks whose cause, result, ownership, and edit surface are already clear. |
-| Default Executor | Luna production worker for normal bounded implementation. |
-| Senior Executor | Reserve the Sol production worker for one exceptionally difficult mathematical, logical, architectural, or cross-cutting package. |
+| Default Executor | Production worker for normal bounded implementation using the active compute profile. |
+| Senior Executor | Reserve the stronger Senior production worker for one exceptionally difficult mathematical, logical, architectural, or cross-cutting package. |
 | Tester | Independent verification from intended behavior, risks, boundaries, and evidence. |
 | Archivist | Verified documentation outside the three Main-owned deployment-state documents and the read-only closing handoff under `~/.codex/codex_workflow/archivist.md`. |
 
-Use roles only when they add value and preserve ownership boundaries.
+Use roles only when they add value and preserve ownership boundaries. Compute profiles change worker model/reasoning allocation, not these role boundaries or Main's routing authority.
 
 ### Micro Execution
 
-For a tiny deterministic implementation subtask inside an already substantive Heavy deployment, use `micro_executor` with `fork_turns="none"` and the routing in `~/.codex/codex_workflow/delegation.md`: prefer Spark High when the current runtime exposes and accepts it; otherwise use the installed Micro Executor profile, Luna High. If the task needs exploration, architecture, security judgement, migration reasoning, broader ownership, or materially stronger reasoning, reclassify it to Default Executor or Senior Executor instead of building a Micro reasoning ladder. Do not spawn Micro when the complete user request is itself a trivial leaf task.
+For a tiny deterministic implementation subtask inside an already substantive Heavy deployment, use `micro_executor` with `fork_turns="none"` and the routing in `~/.codex/codex_workflow/delegation.md`: prefer Spark High when the current runtime exposes and accepts it; otherwise use the installed Micro Executor fallback selected by the active compute profile (Luna High in `plus`, Sol Low in `pro-x5`). If the task needs exploration, architecture, security judgement, migration reasoning, broader ownership, or materially stronger reasoning, reclassify it to Default Executor or Senior Executor instead of building a Micro reasoning ladder. Do not spawn Micro when the complete user request is itself a trivial leaf task.
 
 ## Proportionate Documentation Read
 
