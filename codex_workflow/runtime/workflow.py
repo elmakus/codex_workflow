@@ -23,6 +23,12 @@ PACKAGE_ROOT = Path(__file__).resolve().parent.parent
 if str(PACKAGE_ROOT) not in sys.path:
     sys.path.insert(0, str(PACKAGE_ROOT))
 
+from runtime.compute_profiles import (
+    COMPUTE_PROFILES,
+    plan_compute_profile,
+    profile_summary,
+    read_compute_profile,
+)
 from runtime.errors import WorkflowError
 from runtime.layout import PROJECT_ID
 from runtime.lifecycle import (
@@ -92,6 +98,10 @@ def parse_args() -> argparse.Namespace:
 
     check_update = commands.add_parser("check-update")
     _add_common(check_update, project=False)
+
+    profile = commands.add_parser("profile")
+    _add_common(profile, project=False)
+    profile.add_argument("profile", nargs="?", choices=sorted(COMPUTE_PROFILES))
 
     personalize = commands.add_parser("personalize")
     _add_common(personalize)
@@ -240,6 +250,25 @@ def main() -> int:
                 compact=args.json,
             )
             return 0
+        if args.command == "profile":
+            if not _has_package_version(runtime.runtime):
+                raise WorkflowError(
+                    "the user-level workflow bootstrap is not installed; "
+                    "complete the initial bootstrap before selecting a compute profile"
+                )
+            if args.profile is None:
+                current_profile = read_compute_profile(runtime)
+                _emit(
+                    {
+                        "applied": False,
+                        "profile": current_profile,
+                        "workers": profile_summary(current_profile),
+                        "main_agent": "unchanged",
+                    },
+                    compact=args.json,
+                )
+                return 0
+            return _finish(plan_compute_profile(runtime, args.profile), args)
         if args.command == "check-update":
             installed_text = _version_path(runtime.runtime).read_text(encoding="utf-8").strip()
             installed = parse_semver(installed_text)
