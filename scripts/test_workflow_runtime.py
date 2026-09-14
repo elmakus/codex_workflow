@@ -2,10 +2,22 @@
 
 from __future__ import annotations
 
+import shutil
+import tempfile
 import tomllib
 import unittest
+from pathlib import Path
 
 import workflow_owner_regression as owner
+from runtime.compute_profiles import (
+    COMPUTE_PROFILES,
+    DEFAULT_COMPUTE_PROFILE,
+    plan_compute_profile,
+    read_compute_profile,
+)
+from runtime.errors import TransactionError, ValidationError
+from runtime.layout import PackageLayout, ProjectPaths, RuntimePaths
+from runtime.lifecycle import plan_bootstrap, plan_update
 from runtime.platform_settings import patch_codex_settings
 
 
@@ -15,11 +27,11 @@ PACKAGE = owner.PACKAGE
 
 def _test_private_version_and_user_marker_are_synchronized(self: unittest.TestCase) -> None:
     version = (PACKAGE / "operate" / "VERSION").read_text(encoding="utf-8").strip()
-    self.assertEqual(version, "1.1.17-private.4")
+    self.assertEqual(version, "1.1.17-private.5")
     user_agents = (PACKAGE / "operate" / "user_AGENTS.md").read_text(encoding="utf-8")
     self.assertEqual(user_agents.count(f"<!-- codex-workflow-version: {version} -->"), 1)
-    self.assertGreater(base.parse_semver("1.1.17-private.4"), base.parse_semver("1.1.17-private.3"))
-    self.assertEqual(base.NEXT_PACKAGE_VERSION, "1.1.17-private.5")
+    self.assertGreater(base.parse_semver("1.1.17-private.5"), base.parse_semver("1.1.17-private.4"))
+    self.assertEqual(base.NEXT_PACKAGE_VERSION, "1.1.17-private.6")
 
 
 def _test_worker_models_and_reasoning(self: unittest.TestCase) -> None:
@@ -123,6 +135,8 @@ def _test_current_private_contract(self: unittest.TestCase) -> None:
     self.assertIn("Micro Executor", heavy)
     self.assertIn("Spark High", heavy)
     self.assertIn("Luna High", heavy)
+    self.assertIn("Sol Low", heavy)
+    self.assertIn("active compute profile", heavy)
     self.assertIn("## Companion Lifecycle", heavy)
     self.assertIn("bootstrapped on first `deployment state` entry", heavy)
     self.assertIn("do not create a second one", heavy)
@@ -148,6 +162,8 @@ def _test_current_private_contract(self: unittest.TestCase) -> None:
         self.assertIn("BLOCKER", public_doc)
         self.assertIn("COURSE_CHANGE", public_doc)
         self.assertIn("CRITICAL_PARTIAL", public_doc)
+        self.assertIn("pro-x5", public_doc)
+        self.assertIn("settings.toml", public_doc)
 
     self.assertIn("## Work Packages", delegation)
     self.assertIn("## Micro Execution", delegation)
@@ -157,8 +173,8 @@ def _test_current_private_contract(self: unittest.TestCase) -> None:
     self.assertIn("project evidence, Internet sources, or both", delegation_flat)
     self.assertIn('agent_type="micro_executor"', delegation)
     self.assertIn('model="gpt-5.3-codex-spark"', delegation)
-    self.assertIn("Default Executor (Luna Max)", delegation)
-    self.assertIn("Senior Executor (Sol Medium)", delegation)
+    self.assertIn("Default Executor using the active compute profile", delegation)
+    self.assertIn("Senior Executor (Sol Medium in both current profiles)", delegation)
     self.assertIn("## Material Event Push", delegation)
     self.assertIn("do not repeat it in every task capsule", delegation)
     self.assertIn("Do not use Main follow-ups to poll worker status", delegation)
@@ -178,6 +194,118 @@ def _test_platform_configuration_has_no_fixed_concurrency(self: unittest.TestCas
     self.assertTrue(config["agents"]["enabled"])
     self.assertTrue(config["features"]["multi_agent"])
     self.assertNotIn("max_concurrent_threads_per_session", rendered)
+
+
+def _installed_worker_models(runtime: RuntimePaths) -> dict[str, tuple[str, str]]:
+    result: dict[str, tuple[str, str]] = {}
+    for path in sorted(runtime.agents.glob("*.toml")):
+        config = tomllib.loads(path.read_text(encoding="utf-8"))
+        result[path.stem] = (config["model"], config["model_reasoning_effort"])
+    return result
+
+
+def _expected_profile_models(profile: str) -> dict[str, tuple[str, str]]:
+    return {
+        worker: (spec.model, spec.reasoning_effort)
+        for worker, spec in COMPUTE_PROFILES[profile].items()
+    }
+
+
+class ComputeProfileTests(unittest.TestCase):
+    def setUp(self) -> None:
+        self.temporary = tempfile.TemporaryDirectory()
+        root = Path(self.temporary.name)
+        self.runtime = RuntimePaths(root / "codex-home")
+        self.project = ProjectPaths(root / "project")
+        self.package = PackageLayout.resolve(PACKAGE)
+        plan_bootstrap(self.package, self.runtime, self.project).apply()
+
+    def tearDown(self) -> None:
+        self.temporary.cleanup()
+
+    def test_bootstrap_defaults_to_plus_and_materializes_settings(self) -> None:
+        self.assertEqual(read_compute_profile(self.runtime), DEFAULT_COMPUTE_PROFILE)
+        self.assertEqual(DEFAULT_COMPUTE_PROFILE, "plus")
+        self.assertTrue(self.runtime.compute_settings.is_file())
+        self.assertEqual(
+            _installed_worker_models(self.runtime),
+            _expected_profile_models("plus"),
+        )
+
+    def test_missing_pre_profile_settings_are_backward_compatible_plus(self) -> None:
+        self.runtime.compute_settings.unlink()
+        self.assertEqual(read_compute_profile(self.runtime), "plus")
+        plan_compute_profile(self.runtime, "plus").apply()
+        self.assertTrue(self.runtime.compute_settings.is_file())
+        self.assertEqual(read_compute_profile(self.runtime), "plus")
+
+    def test_switches_to_pro_x5_and_back_to_plus(self) -> None:
+        plan_compute_profile(self.runtime, "pro-x5").apply()
+        self.assertEqual(read_compute_profile(self.runtime), "pro-x5")
+        self.assertEqual(
+            _installed_worker_models(self.runtime),
+            _expected_profile_models("pro-x5"),
+        )
+        plan_compute_profile(self.runtime, "plus").apply()
+        self.assertEqual(read_compute_profile(self.runtime), "plus")
+        self.assertEqual(
+            _installed_worker_models(self.runtime),
+            _expected_profile_models("plus"),
+        )
+
+    def test_invalid_profile_changes_nothing(self) -> None:
+        before_settings = self.runtime.compute_settings.read_bytes()
+        before_workers = {
+            path.name: path.read_bytes() for path in self.runtime.agents.glob("*.toml")
+        }
+        with self.assertRaisesRegex(ValidationError, "unsupported compute profile"):
+            plan_compute_profile(self.runtime, "unlimited")
+        self.assertEqual(self.runtime.compute_settings.read_bytes(), before_settings)
+        self.assertEqual(
+            {path.name: path.read_bytes() for path in self.runtime.agents.glob("*.toml")},
+            before_workers,
+        )
+
+    def test_profile_apply_rolls_back_earlier_worker_writes_on_failure(self) -> None:
+        plan = plan_compute_profile(self.runtime, "pro-x5")
+        before_settings = self.runtime.compute_settings.read_bytes()
+        before_workers = {
+            path.name: path.read_bytes() for path in self.runtime.agents.glob("*.toml")
+        }
+        blocker = self.runtime.agents / "investigator.toml"
+        blocker.unlink()
+        blocker.mkdir()
+        with self.assertRaises(TransactionError):
+            plan.apply()
+        self.assertEqual(self.runtime.compute_settings.read_bytes(), before_settings)
+        for name, content in before_workers.items():
+            if name == "investigator.toml":
+                continue
+            self.assertEqual((self.runtime.agents / name).read_bytes(), content)
+
+    def test_update_preserves_selected_profile(self) -> None:
+        plan_compute_profile(self.runtime, "pro-x5").apply()
+        root = Path(self.temporary.name)
+        incoming_root = root / "incoming"
+        shutil.copytree(PACKAGE, incoming_root)
+        next_version = base.NEXT_PACKAGE_VERSION
+        (incoming_root / "operate" / "VERSION").write_text(
+            next_version + "\n", encoding="utf-8"
+        )
+        user_agents = incoming_root / "operate" / "user_AGENTS.md"
+        user_agents.write_text(
+            user_agents.read_text(encoding="utf-8").replace(
+                "1.1.17-private.5", next_version
+            ),
+            encoding="utf-8",
+        )
+        incoming = PackageLayout.resolve(incoming_root)
+        plan_update(incoming, self.runtime, self.project).apply()
+        self.assertEqual(read_compute_profile(self.runtime), "pro-x5")
+        self.assertEqual(
+            _installed_worker_models(self.runtime),
+            _expected_profile_models("pro-x5"),
+        )
 
 
 base.PrivateCustomizationTests.test_private_version_and_user_marker_are_synchronized = _test_private_version_and_user_marker_are_synchronized
