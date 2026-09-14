@@ -1,5 +1,5 @@
 <!-- codex-workflow-user-id: viettran-edgeAI/codex_workflow -->
-<!-- codex-workflow-version: 1.1.17-private.4 -->
+<!-- codex-workflow-version: 1.1.17-private.5 -->
 <!-- codex-workflow-user-managed-start -->
 # AGENTS.md
 
@@ -18,6 +18,15 @@ exactly.
 
 - codex_workflow --remove
   Guide: ~/.codex/codex_workflow/operate/remove.md.
+
+- codex_workflow --profile
+  Guide: ~/.codex/codex_workflow/operate/profile.md.
+
+- codex_workflow --profile plus
+  Guide: ~/.codex/codex_workflow/operate/profile.md.
+
+- codex_workflow --profile pro-x5
+  Guide: ~/.codex/codex_workflow/operate/profile.md.
 
 - codex_workflow --personal
   Guide: ~/.codex/codex_workflow/operate/personalization_guide.md.
