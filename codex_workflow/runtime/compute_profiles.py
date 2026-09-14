@@ -146,16 +146,18 @@ def plan_compute_profile(runtime: RuntimePaths, profile: str) -> OperationPlan:
         source = templates / f"{worker}.toml"
         if not source.is_file():
             raise ValidationError(f"installed worker template is missing: {source}")
+        # Validate the package template as part of the installed workflow contract,
+        # but patch the installed worker in place so a profile switch changes only
+        # the model and reasoning fields.
+        render_worker_for_profile(source.read_text(encoding="utf-8"), worker, profile)
         target = runtime.agents / f"{worker}.toml"
-        if target.is_symlink() or (target.exists() and not target.is_file()):
-            raise ValidationError(f"worker path is not a regular file: {target}")
-        if target.is_file():
-            target_match = WORKER_MARKER.search(target.read_text(encoding="utf-8"))
-            if target_match is None or target_match.group(1) != worker:
-                raise ValidationError(f"refusing to replace non-owned worker file: {target}")
-        rendered = render_worker_for_profile(
-            source.read_text(encoding="utf-8"), worker, profile
-        )
+        if target.is_symlink() or not target.is_file():
+            raise ValidationError(f"installed workflow worker is missing or invalid: {target}")
+        target_text = target.read_text(encoding="utf-8")
+        target_match = WORKER_MARKER.search(target_text)
+        if target_match is None or target_match.group(1) != worker:
+            raise ValidationError(f"refusing to replace non-owned worker file: {target}")
+        rendered = render_worker_for_profile(target_text, worker, profile)
         mutations.append(text_mutation(target, rendered))
     mutations.append(text_mutation(runtime.compute_settings, render_compute_settings(profile)))
     return OperationPlan(
