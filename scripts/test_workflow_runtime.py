@@ -27,11 +27,11 @@ PACKAGE = owner.PACKAGE
 
 def _test_private_version_and_user_marker_are_synchronized(self: unittest.TestCase) -> None:
     version = (PACKAGE / "operate" / "VERSION").read_text(encoding="utf-8").strip()
-    self.assertEqual(version, "1.1.17-private.5")
+    self.assertEqual(version, "1.1.17-private.6")
     user_agents = (PACKAGE / "operate" / "user_AGENTS.md").read_text(encoding="utf-8")
     self.assertEqual(user_agents.count(f"<!-- codex-workflow-version: {version} -->"), 1)
-    self.assertGreater(base.parse_semver("1.1.17-private.5"), base.parse_semver("1.1.17-private.4"))
-    self.assertEqual(base.NEXT_PACKAGE_VERSION, "1.1.17-private.6")
+    self.assertGreater(base.parse_semver("1.1.17-private.6"), base.parse_semver("1.1.17-private.5"))
+    self.assertEqual(base.NEXT_PACKAGE_VERSION, "1.1.17-private.7")
 
 
 def _test_worker_models_and_reasoning(self: unittest.TestCase) -> None:
@@ -143,6 +143,11 @@ def _test_current_private_contract(self: unittest.TestCase) -> None:
     self.assertIn("bootstrap does not authorize a full-project intake", heavy)
     self.assertIn("Wait for its result only when the result gates a decision", heavy)
     self.assertIn("Use one persistent Companion per workflow session", heavy)
+    self.assertIn("## Fresh and Independent Context Routing", heavy)
+    self.assertIn('`fork_turns="none"`', heavy)
+    self.assertIn("Do not call app-level `create_thread` solely", heavy)
+    self.assertIn("Use a new Tester for independent review", heavy)
+    self.assertIn("effective child permissions must be treated as separate runtime state", heavy)
     self.assertIn("## Material Event Handling", heavy)
     self.assertIn("long event-driven `wait_agent` lifecycle unchanged", heavy)
     self.assertIn("When Main receives a material worker message", heavy)
@@ -166,6 +171,11 @@ def _test_current_private_contract(self: unittest.TestCase) -> None:
         self.assertIn("settings.toml", public_doc)
 
     self.assertIn("## Work Packages", delegation)
+    self.assertIn("## Fresh and Independent Contexts", delegation)
+    self.assertIn("new internal worker/subagent by default", delegation)
+    self.assertIn("Do not use app-level `create_thread` solely", delegation)
+    self.assertIn("implementing worker must not substitute for the independent reviewer", delegation)
+    self.assertIn("effective child permissions as an independent runtime fact", delegation)
     self.assertIn("## Micro Execution", delegation)
     self.assertIn("## Recovery", delegation)
     self.assertIn("**Investigation Context**", delegation)
@@ -295,7 +305,7 @@ class ComputeProfileTests(unittest.TestCase):
         user_agents = incoming_root / "operate" / "user_AGENTS.md"
         user_agents.write_text(
             user_agents.read_text(encoding="utf-8").replace(
-                "1.1.17-private.5", next_version
+                "1.1.17-private.6", next_version
             ),
             encoding="utf-8",
         )
