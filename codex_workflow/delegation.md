@@ -28,6 +28,16 @@ For Tester, transfer acceptance intent, risks, contracts, boundaries, relevant e
 
 Ask every worker for a concise decision-ready return containing outcome, material changes or findings, verification evidence, limitations, residual risk, and only decisions Main must make.
 
+## Fresh and Independent Contexts
+
+When a controlling project/workflow requirement says `FRESH CODEX REQUIRED`, `FRESH CODEX RECOMMENDED`, fresh independent review, fresh execution context, context reset, or equivalent, satisfy freshness with a new internal worker/subagent by default. Use the normal worker mechanism (for example `spawn_agent` when exposed), set `fork_turns="none"`, and transfer only the minimal durable handoff and bounded task context needed for the assignment.
+
+Freshness means conversational/context isolation, not a new top-level Codex App thread. Do not use app-level `create_thread` solely to obtain review independence, milestone isolation, or a context reset.
+
+For an independent review, create a new Tester worker (and an Investigator only when a bounded evidence gap materially helps) that did not perform the implementation being reviewed. Give it the exact target/base identity, acceptance intent, relevant durable evidence, and minimal required context. The implementing worker must not substitute for the independent reviewer.
+
+App-level `create_thread` is allowed only when the user explicitly asks for a separate top-level application thread/session, or when the required task genuinely needs a capability or isolation property unavailable to internal workers. If that exception is used, do not assume the child thread inherited the parent's approval, sandbox, network, or permission profile; treat effective child permissions as an independent runtime fact.
+
 ## Material Event Push
 
 The standing worker-side material-event policy is defined once in project `AGENTS.md`; do not repeat it in every task capsule. Workers may use runtime `send_message` to `/root` only for `BLOCKER`, `COURSE_CHANGE`, or `CRITICAL_PARTIAL` events under that policy. Ordinary progress, ETA, heartbeats, status chatter, routine partial findings, and normal completion are not follow-up traffic.

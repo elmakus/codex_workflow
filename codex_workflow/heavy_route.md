@@ -64,6 +64,14 @@ Read the workflow-owned delegation contract at `~/.codex/codex_workflow/delegati
 
 Initial packages use **Task ID** and the role-specific capsule defined there. Main retains topology, dependencies, acceptance, and lifecycle. Inspect only controlling evidence for high-risk or final claims. Do not repeat the worker's substantive task.
 
+## Fresh and Independent Context Routing
+
+Treat project/workflow phrases such as `FRESH CODEX REQUIRED`, `FRESH CODEX RECOMMENDED`, fresh independent review, fresh execution context, or context reset as requirements for an isolated execution context, not for a new top-level Codex App conversation. By default, satisfy them by creating a new internal worker/subagent with `fork_turns="none"` and only the minimal durable handoff and bounded task context required.
+
+Do not call app-level `create_thread` solely to satisfy freshness, independent review, milestone isolation, or context reset. Use a new Tester for independent review; that Tester must not be the worker that implemented the target. Add a bounded Investigator only when independent evidence gathering materially helps the review.
+
+Use app-level `create_thread` only when the user explicitly asks for a separate top-level application thread/session, or when the assignment requires a capability or isolation property unavailable to internal workers. If that exception is used, do not assume approval, sandbox, network, or permission settings are inherited from the parent; effective child permissions must be treated as separate runtime state.
+
 ## Orchestration Guidance
 
 - Dispatch independent workers for one decision together and synthesize their results once.
