@@ -1,6 +1,6 @@
 # elmakus codex_workflow fork
 
-Version **1.1.17-private.4**, based directly on upstream prerelease `v1.1.17`
+Version **1.1.17-private.5**, based directly on upstream prerelease `v1.1.17`
 commit `414a5d301ff17ca6e655330474c8346863d0d5d0`.
 
 This public fork keeps upstream's lifecycle/runtime foundation while applying
@@ -17,11 +17,14 @@ owner-specific orchestration, model, update-channel, and safety choices.
 - Heavy uses progressive disclosure: standing orchestration stays in
   `heavy_route.md`; detailed work-package, Micro Execution, follow-up, and
   recovery guidance lives in `delegation.md` and is loaded only when needed.
+- Worker compute is selected by one global runtime profile. `plus` preserves the
+  historical Luna-heavy allocation. `pro-x5` moves ordinary worker roles to
+  GPT-5.6 Sol Low while keeping Senior Executor at Sol Medium. Main is never
+  changed by the profile.
 - Micro Executor is a distinct seventh worker below Default Executor. Its stable
-  profile is Luna High; when the current Codex runtime/account supports it, the
-  same role may run with GPT-5.3-Codex-Spark at high reasoning. Spark is optional.
-- Default Executor uses Luna Max. Senior Executor uses Sol Medium. Tester,
-  Companion, Investigator, and Archivist use Luna Max.
+  fallback is Luna High in `plus` and Sol Low in `pro-x5`; when the current Codex
+  runtime/account supports it, the same role may run with GPT-5.3-Codex-Spark at
+  high reasoning. Spark is optional.
 - Investigator may inspect one bounded project evidence gap, Internet sources,
   or both, while remaining read-only. Main retains causal, architecture,
   solution, integration, and acceptance decisions.
@@ -48,7 +51,8 @@ owner-specific orchestration, model, update-channel, and safety choices.
 - Release discovery and downloads are restricted to GitHub Releases published
   from `elmakus/codex_workflow`. There is no background/startup auto-update and
   no release channel from upstream.
-- Installation and updates happen only when the owner asks.
+- Installation, updates, and compute-profile changes happen only when the owner
+  asks. Subscription type is never detected or inferred automatically.
 
 ## Workflow and roles
 
@@ -61,19 +65,25 @@ acceptance, and final claims. Before preparing/following up a worker package,
 using Micro Execution, or recovering a worker, Main loads
 `~/.codex/codex_workflow/delegation.md`.
 
-| Role | Model / reasoning | Responsibility |
-| --- | --- | --- |
-| Micro Executor | Spark / high when available; otherwise Luna / high | Tiny deterministic implementation subtasks inside Heavy. |
-| Default Executor | Luna / max | Normal bounded implementation and repair. |
-| Senior Executor | Sol / medium | Exceptionally difficult bounded production or solution work. |
-| Tester | Luna / max | Independent verification. |
-| Companion | Luna / max | Persistent read-only project context, created once at first deployment entry and reused. |
-| Investigator | Luna / max | Disposable read-only project/Internet evidence investigation. |
-| Archivist | Luna / max | Verified documentation outside Main-owned deployment-state docs and closing handoff. |
+| Role | `plus` | `pro-x5` | Responsibility |
+| --- | --- | --- | --- |
+| Micro Executor | Spark/high when available; fallback Luna/high | Spark/high when available; fallback Sol/low | Tiny deterministic implementation subtasks inside Heavy. |
+| Default Executor | Luna/max | Sol/low | Normal bounded implementation and repair. |
+| Senior Executor | Sol/medium | Sol/medium | Exceptionally difficult bounded production or solution work. |
+| Tester | Luna/max | Sol/low | Independent verification. |
+| Companion | Luna/max | Sol/low | Persistent read-only project context, created once at first deployment entry and reused. |
+| Investigator | Luna/max | Sol/low | Disposable read-only project/Internet evidence investigation. |
+| Archivist | Luna/max | Sol/low | Verified documentation outside Main-owned deployment-state docs and closing handoff. |
 
 If a micro task ceases to be tiny and deterministic, Main reclassifies it
 directly to Default Executor or Senior Executor; there is no Micro reasoning
 escalation ladder.
+
+The active selection is stored in
+`~/.codex/codex_workflow/settings.toml`. Missing settings on a pre-profile
+installation mean `plus`. Profile switches rewrite only the workflow-owned
+worker model/reasoning fields plus that settings file in one compensating
+transaction. Updates preserve the selected profile.
 
 ## Documentation locations
 
@@ -104,8 +114,9 @@ remains available internally for recovery and explicit/manual migrations.
 
 The incoming package is the desired state of workflow-owned files. Unrelated
 Codex settings/workers/skills, user content outside managed regions,
-project-local instructions, personalization, and `agent_docs/` are preserved.
-Updates create a timestamped backup and apply through a compensating transaction.
+project-local instructions, personalization, `agent_docs/`, and the selected
+compute profile are preserved. Updates create a timestamped backup and apply
+through a compensating transaction.
 
 ## Commands
 
@@ -114,6 +125,9 @@ Updates create a timestamped backup and apply through a compensating transaction
 | `codex_workflow --install` | Install into the explicitly selected project. |
 | `codex_workflow --check-update` | Read-only check of owner releases. |
 | `codex_workflow --update` | Install the latest verified owner release into the selected project/runtime. |
+| `codex_workflow --profile` | Show the active global compute profile and worker mapping. |
+| `codex_workflow --profile plus` | Use the historical Luna-heavy worker allocation. |
+| `codex_workflow --profile pro-x5` | Use Sol Low for ordinary workers and Sol Medium for Senior. |
 | `codex_workflow --personal` | Change project workflow preferences. |
 | `codex_workflow --disable` / `--enable` | Disable or enable the selected project. |
 | `codex_workflow --remove` | Preview removal, then remove owned files after explicit confirmation; preserve project documents. |
