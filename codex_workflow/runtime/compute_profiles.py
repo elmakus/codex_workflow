@@ -31,6 +31,15 @@ COMPUTE_PROFILES: dict[str, dict[str, WorkerModel]] = {
         "companion": WorkerModel("gpt-5.6-luna", "max"),
         "investigator": WorkerModel("gpt-5.6-luna", "max"),
     },
+    "luna-xhigh": {
+        "micro_executor": WorkerModel("gpt-5.6-luna", "xhigh"),
+        "default_executor": WorkerModel("gpt-5.6-luna", "xhigh"),
+        "senior_executor": WorkerModel("gpt-5.6-sol", "medium"),
+        "tester": WorkerModel("gpt-5.6-luna", "xhigh"),
+        "archivist": WorkerModel("gpt-5.6-luna", "xhigh"),
+        "companion": WorkerModel("gpt-5.6-luna", "xhigh"),
+        "investigator": WorkerModel("gpt-5.6-luna", "xhigh"),
+    },
     "pro-x5": {
         "micro_executor": WorkerModel("gpt-5.6-sol", "low"),
         "default_executor": WorkerModel("gpt-5.6-sol", "low"),
