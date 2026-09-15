@@ -8,8 +8,9 @@ owner-specific orchestration, model, update-channel, and safety choices.
 
 ## Private behavior
 
-- **Heavy is the only workflow route.** Leaf-state questions and small bounded
-  tasks work directly without subagents and without reading `heavy_route.md`.
+- **Heavy is the only workflow route.** Leaf-state questions and genuinely
+  trivial bounded actions work directly without subagents and without reading
+  `heavy_route.md`; bounded but nontrivial work still enters Heavy.
 - Deployment state has a hard user-visible output gate in `AGENTS.md`: if work
   can continue safely without user input, Main remains silent until the final
   response. Intermediate findings, plan changes, worker results, repository
@@ -45,7 +46,7 @@ owner-specific orchestration, model, update-channel, and safety choices.
 - Heavy has no workflow-imposed aggregate worker limit. The workflow does not
   write a fixed `max_concurrent_threads_per_session`; available concurrency is
   left to the Codex platform/account.
-- Heavy is orchestrator-first, uses long event-driven waits, treats an empty
+- Heavy is orchestration-only for Main, uses long event-driven waits, treats an empty
   timeout as a reason to wait again rather than poll, and keeps routine
   orchestration silent unless the user needs a decision or risk update.
 - Running workers may use `send_message` to `/root` only for rare material

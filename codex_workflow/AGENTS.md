@@ -26,7 +26,7 @@ Intermediate findings, discoveries, changed hypotheses, changed plans, worker re
 
 ## Working State
 
-Use `deployment state` for broad, possibly multi-session deployment plans. Use `leaf state` otherwise, including general questions and small bounded operations.
+Use `deployment state` for substantive work, including any implementation, testing, repair, migration, broad analysis, or material repository operation. Use `leaf state` only for questions and genuinely trivial bounded actions.
 
 ## Project Documentation
 
@@ -38,7 +38,7 @@ Keep raw logs, temporary reasoning, and short-lived checkpoints out of durable d
 
 ## Workflow
 
-In leaf state, work directly without reading `~/.codex/codex_workflow/heavy_route.md` or spawning subagents. When work is substantive, enter `deployment state`, bootstrap the session Companion below, read that Heavy contract, and use only the worker capabilities that add value to the task.
+In leaf state, work directly without reading `~/.codex/codex_workflow/heavy_route.md` or spawning subagents. Do not classify nontrivial work as leaf merely because it is bounded or short. When work is substantive, enter `deployment state`, bootstrap the session Companion below, read that Heavy contract, and delegate execution under it.
 
 ## Early Companion
 

@@ -14,4 +14,4 @@ Reuse an Archivist when its retained context plus a concise delta is sufficient.
 
 Ensure other workers have finished changes relevant to the handoff before Archivist seals it. Assign only one closure owner for each deployment. Wait for its documentation and read-only Git handoff, then relay the evidence-backed result without repeating operational checks.
 
-For questions and small bounded tasks in leaf state, work directly without this closure handoff. If Archivist is unavailable or blocked, report the limitation and remaining work accurately.
+For questions and genuinely trivial bounded actions classified as leaf state before Heavy entry, work directly without this closure handoff. Bounded but nontrivial documentation work belongs to Archivist after entering Heavy. If Archivist is unavailable or blocked, report the limitation and remaining work accurately; do not transfer its work to Main.

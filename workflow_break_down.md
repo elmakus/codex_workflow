@@ -5,9 +5,10 @@ This guide describes `1.1.17-private.7`, based directly on upstream prerelease
 
 ## Execution
 
-Heavy is the only workflow route. Leaf-state questions and small bounded tasks
-work directly from `AGENTS.md` without workers and without loading the Heavy
-contract. Substantive work enters deployment state and loads `heavy_route.md`.
+Heavy is the only workflow route. Leaf-state questions and genuinely trivial
+bounded actions work directly from `AGENTS.md` without workers and without
+loading the Heavy contract. Bounded but nontrivial work enters deployment state
+and loads `heavy_route.md`.
 
 On the first deployment-state entry in a workflow session, Main immediately
 bootstraps one persistent Companion before broad project discovery, planning, or
@@ -25,10 +26,10 @@ recovery instructions live in `delegation.md` and are loaded only when Main is
 actually delegating, following up, routing Micro work, or recovering work.
 
 Main controls scope, architecture, dependencies, scheduling, acceptance, and
-final claims. In Heavy it is an orchestrator rather than a production executor:
+final claims. In Heavy it is strictly an orchestrator rather than a production executor:
 implementation, broad repository/security analysis, testing, task-level
 Git/GitHub operations, repair, and delegable research stay with the appropriate
-workers by default.
+workers. Capacity pressure does not transfer that ownership to Main.
 
 A timeout-only `wait_agent` result with no new evidence is not itself an
 intervention signal. If the worker remains presumed healthy, Main issues another

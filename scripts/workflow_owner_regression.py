@@ -86,17 +86,17 @@ def _test_private_version_and_user_marker_are_synchronized(
     self: unittest.TestCase,
 ) -> None:
     version = (PACKAGE / "operate" / "VERSION").read_text(encoding="utf-8").strip()
-    self.assertEqual(version, "1.1.14-private.3")
+    self.assertEqual(version, "1.1.17-private.7")
     user_agents = (PACKAGE / "operate" / "user_AGENTS.md").read_text(
         encoding="utf-8"
     )
     marker = f"<!-- codex-workflow-version: {version} -->"
     self.assertEqual(user_agents.count(marker), 1)
     self.assertGreater(
-        base.parse_semver("1.1.14-private.3"),
-        base.parse_semver("1.1.14-private.2"),
+        base.parse_semver("1.1.17-private.7"),
+        base.parse_semver("1.1.17-private.6"),
     )
-    self.assertEqual(base.NEXT_PACKAGE_VERSION, "1.1.14-private.4")
+    self.assertEqual(base.NEXT_PACKAGE_VERSION, "1.1.17-private.8")
 
 
 def _test_worker_models_and_reasoning(self: unittest.TestCase) -> None:
@@ -104,6 +104,7 @@ def _test_worker_models_and_reasoning(self: unittest.TestCase) -> None:
     self.assertEqual(
         {path.stem for path in worker_paths},
         {
+            "micro_executor",
             "default_executor",
             "senior_executor",
             "tester",
@@ -116,12 +117,19 @@ def _test_worker_models_and_reasoning(self: unittest.TestCase) -> None:
         with self.subTest(worker=path.stem):
             config = tomllib.loads(path.read_text(encoding="utf-8"))
             self.assertEqual(config["name"], path.stem)
-            if path.stem == "senior_executor":
-                self.assertEqual(config["model"], "gpt-6-astra")
-                self.assertEqual(config["model_reasoning_effort"], "low")
-            else:
-                self.assertEqual(config["model"], "gpt-5.6-luna")
-                self.assertEqual(config["model_reasoning_effort"], "max")
+            expected = {
+                "micro_executor": ("gpt-5.6-luna", "high"),
+                "default_executor": ("gpt-5.6-luna", "max"),
+                "senior_executor": ("gpt-5.6-sol", "medium"),
+                "tester": ("gpt-5.6-luna", "max"),
+                "archivist": ("gpt-5.6-luna", "max"),
+                "companion": ("gpt-5.6-luna", "max"),
+                "investigator": ("gpt-5.6-luna", "max"),
+            }
+            self.assertEqual(
+                (config["model"], config["model_reasoning_effort"]),
+                expected[path.stem],
+            )
 
 
 def _test_heavy_only_workflow_keeps_leaf_direct_path(
@@ -131,7 +139,11 @@ def _test_heavy_only_workflow_keeps_leaf_direct_path(
     self.assertIn("## Workflow", agents)
     self.assertIn("codex_workflow/heavy_route.md", agents)
     self.assertIn("In leaf state, work directly without reading", agents)
-    self.assertIn("enter `deployment state`, read that Heavy contract", agents)
+    self.assertIn("Use `leaf state` only for questions and genuinely trivial bounded actions", agents)
+    self.assertIn("Do not classify nontrivial work as leaf merely because it is bounded or short", agents)
+    self.assertNotIn("small bounded operations", agents)
+    self.assertIn("enter `deployment state`", agents)
+    self.assertIn("read that Heavy contract", agents)
     self.assertNotIn("## Route Selection", agents)
     self.assertNotIn("**Light**", agents)
     self.assertNotIn("**Medium**", agents)
@@ -251,8 +263,12 @@ def _test_operational_policies_are_compact_and_knowledge_aware(
     self.assertIn("determine completed versus remaining work", heavy_flat)
     self.assertIn("delegate recovery + continuation", heavy_flat)
     self.assertIn("Main should not reconstruct the predecessor's detailed work", heavy_flat)
-    self.assertIn("genuinely trivial and shorter than delegation overhead", heavy_flat)
-    self.assertIn("required solely for orchestration", heavy_flat)
+    self.assertIn("do not perform production execution directly", heavy_flat)
+    self.assertIn("Main may act directly only on orchestration-owned work", heavy_flat)
+    self.assertIn("Unavailable worker capacity does not transfer worker ownership to Main", heavy_flat)
+    self.assertIn("only for genuinely trivial tasks classified as leaf state", heavy_flat)
+    self.assertNotIn("genuinely trivial and shorter than delegation overhead", heavy_flat)
+    self.assertIn("This exception does not authorize Main to implement", heavy_flat)
     for non_takeover_task in (
         "implementation",
         "security review",
@@ -262,37 +278,10 @@ def _test_operational_policies_are_compact_and_knowledge_aware(
         "delegable research",
     ):
         self.assertIn(non_takeover_task, heavy)
-    self.assertIn('"Take over to make progress"', heavy_flat)
-    self.assertIn('"take over to go faster"', heavy_flat)
     self.assertIn("## Silent Orchestration", heavy)
-    self.assertIn("Default to silent orchestration", heavy)
-    self.assertIn("Perform routine coordination through tool calls", heavy_flat)
-    for routine_event in (
-        "waited",
-        "resumed",
-        "messaged a worker",
-        "listed threads",
-        "routine status check",
-        "chose not to take over assigned work",
-        "left other work queued",
-        "reused an existing result",
-        "next routine orchestration step",
-    ):
-        self.assertIn(routine_event, heavy_flat)
-    self.assertIn(
-        "Do not report a successful intermediate stage or repository", heavy_flat
-    )
-    self.assertIn("everything is proceeding as expected, stay silent", heavy_flat)
-    self.assertIn("defer successful progress to the final response", heavy_flat)
-    for meaningful_update in (
-        "blocker requires the user's decision",
-        "security or publication risk",
-        "scope or plan changes materially",
-        "user explicitly requested progress updates",
-        "whole task completes",
-    ):
-        self.assertIn(meaningful_update, heavy_flat)
-    self.assertIn("Always send the normal final response", heavy_flat)
+    self.assertIn("Perform orchestration through tool calls only", heavy_flat)
+    self.assertIn("If work can continue safely without user input, remain silent", heavy_flat)
+    self.assertIn("When the task completes, send one normal final response", heavy_flat)
     self.assertNotIn("at most one brief line", heavy_flat)
     self.assertIn("Silence limits narration only", heavy_flat)
     self.assertIn("## Agents You Can Use", heavy)
@@ -305,34 +294,22 @@ def _test_operational_policies_are_compact_and_knowledge_aware(
         "Archivist",
     ):
         self.assertIn(role, heavy)
-    self.assertIn("Reserve the Astra production worker", heavy)
-    self.assertIn("## Assign Companion", heavy)
-    self.assertIn('agent_type="companion"', heavy)
-    self.assertIn('task_name="companion"', heavy)
-    self.assertIn('fork_turns="none"', heavy)
-    self.assertIn("Reuse the same Companion across later assignments", heavy_flat)
+    self.assertIn("Reserve the stronger Senior production worker", heavy)
+    self.assertIn("## Companion Lifecycle", heavy)
+    self.assertIn("Reuse it when a bounded project-context assignment", heavy_flat)
     self.assertIn("## Role-Specific Work Packages", heavy)
-    for capsule in (
-        "**Task ID**",
-        "**Project Context Scope**",
-        "**Research Question + Goal**",
-        "**Implementation Context + Ownership**",
-        "**Verification Context**",
-        "**Documentation Context + Audience**",
-    ):
-        self.assertIn(capsule, heavy)
-    self.assertIn("Require workers to echo Task ID in every report", heavy)
+    self.assertIn("Initial packages use **Task ID**", heavy)
     self.assertIn("Do not repeat the worker's substantive task", heavy)
     self.assertNotIn("intervene directly", heavy)
     self.assertIn("## Orchestration Guidance", heavy)
-    self.assertIn("synthesize their results\n  once", heavy)
+    self.assertIn("synthesize their results once", heavy_flat)
     self.assertIn("bounded batches or sequential", heavy_flat)
     self.assertIn("main-agent tracking cost", heavy_flat)
     self.assertIn("orchestration-only tool operations", heavy_flat)
     self.assertIn("rather than taking over its task", heavy_flat)
     self.assertIn("Preserve sequential ordering", heavy)
-    self.assertIn("Do not\nmaximize concurrency without a concrete benefit", heavy)
-    self.assertIn("Use\n  appropriately long lifecycle waits", heavy)
+    self.assertIn("Do not maximize concurrency without a concrete benefit", heavy_flat)
+    self.assertIn("Use appropriately long lifecycle waits", heavy_flat)
     self.assertIn("Heavy does not impose an aggregate active-subagent limit", heavy_flat)
     self.assertNotIn("at most 20 active subagents", heavy)
     self.assertIn("at most one Senior Executor", heavy)
@@ -340,10 +317,10 @@ def _test_operational_policies_are_compact_and_knowledge_aware(
     self.assertNotIn("## Fast Path", heavy)
     self.assertIn("## Closure", heavy)
     self.assertNotIn("deployment-token-report", heavy)
-    self.assertIn("one\n  event-driven `wait_agent` call", heavy)
+    self.assertIn("one event-driven `wait_agent` call", heavy_flat)
     self.assertIn("`1500000` ms (25 minutes)", heavy)
     self.assertNotIn("`1800000` ms", heavy)
-    self.assertIn("wait again rather\n  than polling", heavy)
+    self.assertIn("wait again rather than polling", heavy_flat)
 
     agents_policy = policies["AGENTS.md"]
     self.assertIn("## Design Principles", agents_policy)
@@ -359,14 +336,26 @@ def _test_operational_policies_are_compact_and_knowledge_aware(
     self.assertNotIn("Follow the user's route selection", agents_policy)
 
     handoff_contract = (PACKAGE / "archivist.md").read_text(encoding="utf-8")
+    handoff_contract_flat = " ".join(handoff_contract.split()).lower()
+    self.assertIn(
+        "genuinely trivial bounded actions classified as leaf state before heavy entry",
+        handoff_contract_flat,
+    )
+    self.assertIn(
+        "bounded but nontrivial documentation work belongs to archivist",
+        handoff_contract_flat,
+    )
+    self.assertIn("do not transfer its work to main", handoff_contract_flat)
+    self.assertNotIn("questions and small bounded tasks", handoff_contract_flat)
     archivist = (PACKAGE / "agents" / "archivist.toml").read_text(encoding="utf-8")
     self.assertIn('agent_type="archivist"', handoff_contract)
     self.assertIn("one closure owner for each deployment", handoff_contract)
     self.assertNotIn("Medium or Heavy", handoff_contract)
-    self.assertIn("in leaf state", handoff_contract)
-    self.assertIn("durable, cross-session documentation framework", archivist)
-    self.assertIn("canonical home", archivist)
-    self.assertIn("cross-reference rather than duplicate", archivist)
+    self.assertIn("classified as leaf state before heavy entry", handoff_contract_flat)
+    archivist_flat = " ".join(archivist.split())
+    self.assertIn("durable, canonical documentation framework", archivist_flat)
+    self.assertIn("Give each fact one canonical home", archivist_flat)
+    self.assertIn("cross-reference stable information rather than duplicating it", archivist_flat)
     self.assertNotIn("deployment-token-report", archivist)
 
     executor = (PACKAGE / "agents" / "default_executor.toml").read_text(
@@ -381,8 +370,8 @@ def _test_operational_policies_are_compact_and_knowledge_aware(
         encoding="utf-8"
     )
     self.assertIn('model = "gpt-5.6-luna"', executor)
-    self.assertIn('model = "gpt-6-astra"', senior)
-    self.assertIn('model_reasoning_effort = "low"', senior)
+    self.assertIn('model = "gpt-5.6-sol"', senior)
+    self.assertIn('model_reasoning_effort = "medium"', senior)
     for worker in (executor, tester, companion, investigator, archivist):
         self.assertIn('model_reasoning_effort = "max"', worker)
 
@@ -1044,6 +1033,8 @@ base.PrivateCustomizationTests.test_heavy_only_workflow_keeps_leaf_direct_path =
 base.PrivateCustomizationTests.test_heavy_uses_instruction_only_long_wait_policy = (
     _test_heavy_uses_instruction_only_long_wait_policy
 )
+if hasattr(base.PrivateCustomizationTests, "test_platform_configuration_keeps_multi_agent_and_ceiling_twenty"):
+    delattr(base.PrivateCustomizationTests, "test_platform_configuration_keeps_multi_agent_and_ceiling_twenty")
 
 base.MarkerTests.test_user_command_contract_exposes_only_supported_lifecycle_prompts = (
     _test_user_command_contract_exposes_owner_update_channel

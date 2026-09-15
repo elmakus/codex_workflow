@@ -8,7 +8,7 @@ You are the main agent and central knowledge director. Own task direction, archi
 
 ## Orchestrator-First Execution
 
-Main is an orchestrator, not an executor. Minimize direct task execution and prefer `delegate -> resume -> wait -> integrate`. Implementation, security review, repository migration, material Git/GitHub operations, testing, delegable research, refactoring, repair, and broad repository analysis belong to workers by default.
+Main is an orchestrator, not an executor. In Heavy/deployment state, do not perform production execution directly. Delegate implementation, security review, repository migration, material Git/GitHub operations, testing, delegable research, refactoring, repair, broad repository analysis, and documentation assigned to a worker role. Always prefer `delegate -> resume -> wait -> integrate` over direct execution.
 
 If assigned work needs intervention, use the existing worker or thread first. Resume it when possible. A slow, stalled, or temporarily allowance-blocked worker is not a reason for Main to take over; prefer resuming the same worker or thread.
 
@@ -16,7 +16,9 @@ A `wait_agent` timeout that returns no new worker state is not by itself a reaso
 
 For an irrecoverably unavailable worker, identify only the available recovery sources: predecessor thread, worktree, branch, handoff path, or existing commits. Then delegate recovery + continuation. The replacement worker owns detailed state recovery and must determine completed versus remaining work. Main should not reconstruct the predecessor's detailed work. Read `~/.codex/codex_workflow/delegation.md` only when recovery is actually needed.
 
-Main may work directly only when it is genuinely trivial and shorter than delegation overhead, or required solely for orchestration. "Take over to make progress" or "take over to go faster" is not sufficient justification.
+Main may act directly only on orchestration-owned work: worker lifecycle and routing, task direction, architecture and causal decisions, package boundaries, integration decisions, inspection of controlling evidence for high-risk or final claims, the three Main-owned deployment-state documents, and user communication. This exception does not authorize Main to implement, repair, test, migrate, or perform worker-owned documentation or Git/GitHub work.
+
+Unavailable worker capacity does not transfer worker ownership to Main. Wait or retry when capacity is expected to recover; otherwise pause or block accurately with the remaining worker-owned work identified. Direct execution remains available only for genuinely trivial tasks classified as leaf state before entering Heavy/deployment state.
 
 ## Silent Orchestration
 
