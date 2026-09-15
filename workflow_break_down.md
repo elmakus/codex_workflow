@@ -1,6 +1,6 @@
 # Owner workflow ownership and layout
 
-This guide describes `1.1.17-private.5`, based directly on upstream prerelease
+This guide describes `1.1.17-private.7`, based directly on upstream prerelease
 `v1.1.17` commit `414a5d301ff17ca6e655330474c8346863d0d5d0`.
 
 ## Execution
@@ -48,23 +48,24 @@ unless the user needs a decision/risk update or explicitly asked for progress.
 Heavy has no workflow-imposed aggregate active-subagent limit; the Codex platform
 and account determine available concurrency.
 
-| Role | `plus` | `pro-x5` | Responsibility |
-| --- | --- | --- | --- |
-| Micro Executor | Spark/high when available; fallback Luna/high | Spark/high when available; fallback Sol/low | Tiny deterministic implementation subtasks inside an existing Heavy deployment. |
-| Default Executor | Luna/max | Sol/low | Normal bounded implementation and repair. |
-| Senior Executor | Sol/medium | Sol/medium | Exceptionally difficult bounded production or solution work. |
-| Tester | Luna/max | Sol/low | Independent verification. |
-| Companion | Luna/max | Sol/low | Persistent read-only project context, created once at first deployment entry and reused. |
-| Investigator | Luna/max | Sol/low | Disposable read-only investigation across bounded project evidence, Internet sources, or both. |
-| Archivist | Luna/max | Sol/low | Verified documentation outside Main-owned deployment-state docs and closing handoff. |
+| Role | `plus` | `luna-xhigh` | `pro-x5` | Responsibility |
+| --- | --- | --- | --- | --- |
+| Micro Executor | Spark/high when available; fallback Luna/high | Luna/xhigh | Spark/high when available; fallback Sol/low | Tiny deterministic implementation subtasks inside an existing Heavy deployment. |
+| Default Executor | Luna/max | Luna/xhigh | Sol/low | Normal bounded implementation and repair. |
+| Senior Executor | Sol/medium | Sol/medium | Sol/medium | Exceptionally difficult bounded production or solution work. |
+| Tester | Luna/max | Luna/xhigh | Sol/low | Independent verification. |
+| Companion | Luna/max | Luna/xhigh | Sol/low | Persistent read-only project context, created once at first deployment entry and reused. |
+| Investigator | Luna/max | Luna/xhigh | Sol/low | Disposable read-only investigation across bounded project evidence, Internet sources, or both. |
+| Archivist | Luna/max | Luna/xhigh | Sol/low | Verified documentation outside Main-owned deployment-state docs and closing handoff. |
 
 Micro Executor is a separate workflow-owned worker below Default Executor. Its
-installed stable fallback follows the selected compute profile: Luna High in
-`plus`, Sol Low in `pro-x5`. When the runtime/account exposes
-GPT-5.3-Codex-Spark and model overrides, Main may spawn the same Micro package
-with Spark High. Spark availability is not part of correctness. A package that
-stops being small and deterministic is reclassified directly to Default or
-Senior Executor.
+installed model follows the selected compute profile: Luna High in `plus`, Luna
+XHigh in `luna-xhigh`, and Sol Low in `pro-x5`. When the active profile is
+`plus` or `pro-x5` and the runtime/account exposes GPT-5.3-Codex-Spark plus model
+overrides, Main may spawn the same Micro package with Spark High. Under
+`luna-xhigh`, Main does not use the Spark override, preserving Luna XHigh for
+every non-Senior workflow worker. A package that stops being small and
+deterministic is reclassified directly to Default or Senior Executor.
 
 The compute profile is global user-runtime state, not project personalization.
 It is stored in `~/.codex/codex_workflow/settings.toml`; missing settings on an
