@@ -52,11 +52,11 @@ Good fits include a mechanical rename across known files, changing explicit conf
 
 Do not use Micro Executor for broad discovery, unknown-root-cause debugging, architecture, security judgement, migration reasoning, repository-wide review, or work whose ownership is not already clear.
 
-The installed `micro_executor` profile is the stable fallback selected by the active compute profile: Luna High in `plus`, Sol Low in `pro-x5`. Spark is an optional acceleration path, never a workflow requirement.
+The installed `micro_executor` profile is selected by the active compute profile: Luna High in `plus`, Luna XHigh in `luna-xhigh`, and Sol Low in `pro-x5`. Spark is an optional acceleration path only for `plus` and `pro-x5`; `luna-xhigh` intentionally keeps Micro on Luna XHigh so every non-Senior workflow worker uses the same Luna XHigh allocation.
 
-### Preferred route: Spark
+### Preferred route: Spark where enabled
 
-When the current `spawn_agent` surface supports model overrides and Spark is available, spawn the Micro Executor with:
+When the active profile is `plus` or `pro-x5`, and the current `spawn_agent` surface supports model overrides and Spark is available, spawn the Micro Executor with:
 
 - `agent_type="micro_executor"`
 - `fork_turns="none"`
@@ -65,19 +65,21 @@ When the current `spawn_agent` surface supports model overrides and Spark is ava
 
 If Spark is unavailable, unsupported, quota-blocked, or rejected specifically because that model cannot be spawned, treat that as routing information rather than task failure. Do not retry Spark repeatedly.
 
-### Stable fallback: active compute profile
+When the active profile is `luna-xhigh`, skip the Spark route and spawn `micro_executor` with no model override.
+
+### Stable route: active compute profile
 
 Spawn the same package as:
 
 - `agent_type="micro_executor"`
 - `fork_turns="none"`
 
-with no model override. The installed Micro Executor fallback is rendered from the active global compute profile, so this route works when the runtime does not expose model/reasoning overrides at all.
+with no model override. The installed Micro Executor is rendered from the active global compute profile, so this route works when the runtime does not expose model/reasoning overrides at all and is the required route for `luna-xhigh`.
 
-Do not create a reasoning escalation ladder for Micro Execution. If Spark or the installed Micro fallback reports that the task requires meaningful exploration, architecture, security judgement, migration reasoning, broader ownership, or materially stronger reasoning, Main reclassifies the package:
+Do not create a reasoning escalation ladder for Micro Execution. If Spark or the installed Micro worker reports that the task requires meaningful exploration, architecture, security judgement, migration reasoning, broader ownership, or materially stronger reasoning, Main reclassifies the package:
 
 - normal bounded implementation -> Default Executor using the active compute profile;
-- exceptionally difficult bounded package -> Senior Executor (Sol Medium in both current profiles).
+- exceptionally difficult bounded package -> Senior Executor (Sol Medium in every current profile).
 
 The compute profile changes model allocation only. It does not change role semantics, task classification, ownership, or escalation boundaries.
 
