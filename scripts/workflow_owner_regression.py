@@ -86,17 +86,17 @@ def _test_private_version_and_user_marker_are_synchronized(
     self: unittest.TestCase,
 ) -> None:
     version = (PACKAGE / "operate" / "VERSION").read_text(encoding="utf-8").strip()
-    self.assertEqual(version, "1.1.17-private.7")
+    self.assertEqual(version, "1.1.17-private.8")
     user_agents = (PACKAGE / "operate" / "user_AGENTS.md").read_text(
         encoding="utf-8"
     )
     marker = f"<!-- codex-workflow-version: {version} -->"
     self.assertEqual(user_agents.count(marker), 1)
     self.assertGreater(
+        base.parse_semver("1.1.17-private.8"),
         base.parse_semver("1.1.17-private.7"),
-        base.parse_semver("1.1.17-private.6"),
     )
-    self.assertEqual(base.NEXT_PACKAGE_VERSION, "1.1.17-private.8")
+    self.assertEqual(base.NEXT_PACKAGE_VERSION, "1.1.17-private.9")
 
 
 def _test_worker_models_and_reasoning(self: unittest.TestCase) -> None:
