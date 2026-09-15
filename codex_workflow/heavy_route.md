@@ -44,7 +44,7 @@ Use roles only when they add value and preserve ownership boundaries. Compute pr
 
 ### Micro Execution
 
-For a tiny deterministic implementation subtask inside an already substantive Heavy deployment, use `micro_executor` with `fork_turns="none"` and the routing in `~/.codex/codex_workflow/delegation.md`: prefer Spark High when the current runtime exposes and accepts it; otherwise use the installed Micro Executor fallback selected by the active compute profile (Luna High in `plus`, Sol Low in `pro-x5`). If the task needs exploration, architecture, security judgement, migration reasoning, broader ownership, or materially stronger reasoning, reclassify it to Default Executor or Senior Executor instead of building a Micro reasoning ladder. Do not spawn Micro when the complete user request is itself a trivial leaf task.
+For a tiny deterministic implementation subtask inside an already substantive Heavy deployment, use `micro_executor` with `fork_turns="none"` and the routing in `~/.codex/codex_workflow/delegation.md`. Under `plus` and `pro-x5`, prefer Spark High when the current runtime exposes and accepts it; otherwise use the installed Micro Executor fallback selected by the active compute profile (Luna High in `plus`, Sol Low in `pro-x5`). Under `luna-xhigh`, do not override Micro with Spark: use the installed Luna XHigh worker so every non-Senior workflow worker remains Luna XHigh. If the task needs exploration, architecture, security judgement, migration reasoning, broader ownership, or materially stronger reasoning, reclassify it to Default Executor or Senior Executor instead of building a Micro reasoning ladder. Do not spawn Micro when the complete user request is itself a trivial leaf task.
 
 ## Proportionate Documentation Read
 
