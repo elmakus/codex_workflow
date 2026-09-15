@@ -27,11 +27,11 @@ PACKAGE = owner.PACKAGE
 
 def _test_private_version_and_user_marker_are_synchronized(self: unittest.TestCase) -> None:
     version = (PACKAGE / "operate" / "VERSION").read_text(encoding="utf-8").strip()
-    self.assertEqual(version, "1.1.17-private.6")
+    self.assertEqual(version, "1.1.17-private.7")
     user_agents = (PACKAGE / "operate" / "user_AGENTS.md").read_text(encoding="utf-8")
     self.assertEqual(user_agents.count(f"<!-- codex-workflow-version: {version} -->"), 1)
-    self.assertGreater(base.parse_semver("1.1.17-private.6"), base.parse_semver("1.1.17-private.5"))
-    self.assertEqual(base.NEXT_PACKAGE_VERSION, "1.1.17-private.7")
+    self.assertGreater(base.parse_semver("1.1.17-private.7"), base.parse_semver("1.1.17-private.6"))
+    self.assertEqual(base.NEXT_PACKAGE_VERSION, "1.1.17-private.8")
 
 
 def _test_worker_models_and_reasoning(self: unittest.TestCase) -> None:
@@ -135,7 +135,9 @@ def _test_current_private_contract(self: unittest.TestCase) -> None:
     self.assertIn("Micro Executor", heavy)
     self.assertIn("Spark High", heavy)
     self.assertIn("Luna High", heavy)
+    self.assertIn("Luna XHigh", heavy)
     self.assertIn("Sol Low", heavy)
+    self.assertIn("luna-xhigh", heavy)
     self.assertIn("active compute profile", heavy)
     self.assertIn("## Companion Lifecycle", heavy)
     self.assertIn("bootstrapped on first `deployment state` entry", heavy)
@@ -168,6 +170,7 @@ def _test_current_private_contract(self: unittest.TestCase) -> None:
         self.assertIn("COURSE_CHANGE", public_doc)
         self.assertIn("CRITICAL_PARTIAL", public_doc)
         self.assertIn("pro-x5", public_doc)
+        self.assertIn("luna-xhigh", public_doc)
         self.assertIn("settings.toml", public_doc)
 
     self.assertIn("## Work Packages", delegation)
@@ -184,7 +187,8 @@ def _test_current_private_contract(self: unittest.TestCase) -> None:
     self.assertIn('agent_type="micro_executor"', delegation)
     self.assertIn('model="gpt-5.3-codex-spark"', delegation)
     self.assertIn("Default Executor using the active compute profile", delegation)
-    self.assertIn("Senior Executor (Sol Medium in both current profiles)", delegation)
+    self.assertIn("Senior Executor (Sol Medium in every current profile)", delegation)
+    self.assertIn("luna-xhigh", delegation)
     self.assertIn("## Material Event Push", delegation)
     self.assertIn("do not repeat it in every task capsule", delegation)
     self.assertIn("Do not use Main follow-ups to poll worker status", delegation)
@@ -249,19 +253,25 @@ class ComputeProfileTests(unittest.TestCase):
         self.assertTrue(self.runtime.compute_settings.is_file())
         self.assertEqual(read_compute_profile(self.runtime), "plus")
 
-    def test_switches_to_pro_x5_and_back_to_plus(self) -> None:
-        plan_compute_profile(self.runtime, "pro-x5").apply()
-        self.assertEqual(read_compute_profile(self.runtime), "pro-x5")
-        self.assertEqual(
-            _installed_worker_models(self.runtime),
-            _expected_profile_models("pro-x5"),
-        )
-        plan_compute_profile(self.runtime, "plus").apply()
-        self.assertEqual(read_compute_profile(self.runtime), "plus")
-        self.assertEqual(
-            _installed_worker_models(self.runtime),
-            _expected_profile_models("plus"),
-        )
+    def test_luna_xhigh_uses_luna_xhigh_except_senior(self) -> None:
+        expected = {
+            worker: (
+                ("gpt-5.6-sol", "medium")
+                if worker == "senior_executor"
+                else ("gpt-5.6-luna", "xhigh")
+            )
+            for worker in COMPUTE_PROFILES["luna-xhigh"]
+        }
+        self.assertEqual(_expected_profile_models("luna-xhigh"), expected)
+
+    def test_switches_between_all_profiles(self) -> None:
+        for profile in ("luna-xhigh", "pro-x5", "plus"):
+            plan_compute_profile(self.runtime, profile).apply()
+            self.assertEqual(read_compute_profile(self.runtime), profile)
+            self.assertEqual(
+                _installed_worker_models(self.runtime),
+                _expected_profile_models(profile),
+            )
 
     def test_invalid_profile_changes_nothing(self) -> None:
         before_settings = self.runtime.compute_settings.read_bytes()
@@ -277,7 +287,7 @@ class ComputeProfileTests(unittest.TestCase):
         )
 
     def test_profile_apply_rolls_back_earlier_worker_writes_on_failure(self) -> None:
-        plan = plan_compute_profile(self.runtime, "pro-x5")
+        plan = plan_compute_profile(self.runtime, "luna-xhigh")
         before_settings = self.runtime.compute_settings.read_bytes()
         before_workers = {
             path.name: path.read_bytes() for path in self.runtime.agents.glob("*.toml")
@@ -293,8 +303,8 @@ class ComputeProfileTests(unittest.TestCase):
                 continue
             self.assertEqual((self.runtime.agents / name).read_bytes(), content)
 
-    def test_update_preserves_selected_profile(self) -> None:
-        plan_compute_profile(self.runtime, "pro-x5").apply()
+    def test_update_preserves_selected_luna_xhigh_profile(self) -> None:
+        plan_compute_profile(self.runtime, "luna-xhigh").apply()
         root = Path(self.temporary.name)
         incoming_root = root / "incoming"
         shutil.copytree(PACKAGE, incoming_root)
@@ -305,16 +315,16 @@ class ComputeProfileTests(unittest.TestCase):
         user_agents = incoming_root / "operate" / "user_AGENTS.md"
         user_agents.write_text(
             user_agents.read_text(encoding="utf-8").replace(
-                "1.1.17-private.6", next_version
+                "1.1.17-private.7", next_version
             ),
             encoding="utf-8",
         )
         incoming = PackageLayout.resolve(incoming_root)
         plan_update(incoming, self.runtime, self.project).apply()
-        self.assertEqual(read_compute_profile(self.runtime), "pro-x5")
+        self.assertEqual(read_compute_profile(self.runtime), "luna-xhigh")
         self.assertEqual(
             _installed_worker_models(self.runtime),
-            _expected_profile_models("pro-x5"),
+            _expected_profile_models("luna-xhigh"),
         )
 
 

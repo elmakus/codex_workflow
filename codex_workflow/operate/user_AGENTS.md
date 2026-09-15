@@ -1,5 +1,5 @@
 <!-- codex-workflow-user-id: viettran-edgeAI/codex_workflow -->
-<!-- codex-workflow-version: 1.1.17-private.6 -->
+<!-- codex-workflow-version: 1.1.17-private.7 -->
 <!-- codex-workflow-user-managed-start -->
 # AGENTS.md
 
@@ -23,6 +23,9 @@ exactly.
   Guide: ~/.codex/codex_workflow/operate/profile.md.
 
 - codex_workflow --profile plus
+  Guide: ~/.codex/codex_workflow/operate/profile.md.
+
+- codex_workflow --profile luna-xhigh
   Guide: ~/.codex/codex_workflow/operate/profile.md.
 
 - codex_workflow --profile pro-x5

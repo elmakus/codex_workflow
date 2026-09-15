@@ -4,6 +4,7 @@ Use this procedure only when the user's trimmed message is exactly one of:
 
     codex_workflow --profile
     codex_workflow --profile plus
+    codex_workflow --profile luna-xhigh
     codex_workflow --profile pro-x5
 
 Compute profile is user-runtime state, not project personalization. It applies to
@@ -32,7 +33,8 @@ anything.
 
 ## Switch profile
 
-For `plus` or `pro-x5`, run exactly one complete profile transaction:
+For `plus`, `luna-xhigh`, or `pro-x5`, run exactly one complete profile
+transaction:
 
 ```text
 python3 ~/.codex/codex_workflow/runtime/workflow.py profile <profile> --json
@@ -48,12 +50,16 @@ The profiles are:
 - `plus`: preserves the historical worker allocation. Micro fallback is GPT-5.6
   Luna / high; Default, Tester, Companion, Investigator and Archivist use GPT-5.6
   Luna / max; Senior uses GPT-5.6 Sol / medium.
+- `luna-xhigh`: Micro, Default, Tester, Companion, Investigator and Archivist use
+  GPT-5.6 Luna / xhigh; Senior stays GPT-5.6 Sol / medium.
 - `pro-x5`: Micro fallback, Default, Tester, Companion, Investigator and Archivist
   use GPT-5.6 Sol / low; Senior stays GPT-5.6 Sol / medium.
 
 Micro's optional GPT-5.3-Codex-Spark / high override remains an acceleration path
-when the current runtime exposes and accepts model overrides. The selected
-compute profile controls the installed stable fallback.
+for `plus` and `pro-x5` when the current runtime exposes and accepts model
+overrides. In `luna-xhigh`, do not use the Spark override: Micro follows the
+installed GPT-5.6 Luna / xhigh profile so every non-Senior workflow worker uses
+Luna / xhigh.
 
 Profile state is global to this Codex home and is preserved by workflow updates.
 A pre-profile installation with no settings file is interpreted as `plus`, and
