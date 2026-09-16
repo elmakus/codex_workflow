@@ -21,6 +21,41 @@ class WorkerModel:
     reasoning_effort: str
 
 
+PROFILE_COMMUNICATION_POLICIES: dict[str, str] = {
+    "plus": """## Orchestration Communication
+
+During substantive work, keep user-visible updates restrained and outcome-oriented. Send a brief update only at a meaningful user-relevant milestone, or when work has lasted long enough that continued silence would be awkward.
+
+Do not narrate hidden or internal reasoning, instruction-conflict resolution, routine routing or worker state, trivial discoveries, changed hypotheses, repository bookkeeping, or a running play-by-play. Skill announcements should be brief and say only why the skill is useful to the user's task. Do not announce that you are resolving a skill-announcement or instruction conflict.
+
+A mid-task question or risk notice is appropriate when execution cannot continue without user input, or when an immediate security, publication, destructive-action, or authorization risk requires explicit approval. At completion, send one normal final response containing the result, material findings, verification, and residual risk.
+""",
+    "luna-xhigh": """## Silent Orchestration
+
+During execution, do not send user-visible progress, status narration, intermediate findings, hypotheses, evidence summaries, routing decisions, worker-state updates, Git or branch-state updates, checkpoints, or next-step descriptions. Perform orchestration through tool calls only.
+
+Do not narrate an \"important discovery\", changed hypothesis, changed plan, successful intermediate result, newly discovered evidence, repository state, skill selection, or instruction-conflict resolution. Incorporate those internally and continue working.
+
+A mid-task user-visible message is permitted only when execution cannot continue without a user decision or missing information, an immediate security/publication/destructive-action/authorization risk requires explicit approval, or the user explicitly requested progress updates for this task. If work can continue safely without user input, remain silent.
+
+When the task completes, send one normal final response containing the result, material findings, verification, and residual risk. Silence limits narration only; correctness work continues.
+""",
+    "pro-x5": """## Orchestration Communication
+
+Use normal concise commentary during substantive work. Give relevant progress updates, including a brief announcement when a skill is used and why it helps, often enough that the user can follow meaningful progress without a routine play-by-play.
+
+Keep updates focused on user-relevant outcomes, assumptions, blockers, and material milestones. Do not expose hidden or internal reasoning, narrate instruction-conflict resolution, or report routine routing, worker state, trivial discoveries, and repository bookkeeping.
+
+Ask promptly when execution cannot continue without user input, or when an immediate security, publication, destructive-action, or authorization risk requires explicit approval. At completion, send one normal final response containing the result, material findings, verification, and residual risk.
+""",
+}
+
+_COMMUNICATION_SECTION = re.compile(
+    r"^## (?:Silent Orchestration|Orchestration Communication)\n.*?(?=^## Agents You Can Use\n)",
+    re.MULTILINE | re.DOTALL,
+)
+
+
 COMPUTE_PROFILES: dict[str, dict[str, WorkerModel]] = {
     "plus": {
         "micro_executor": WorkerModel("gpt-5.6-luna", "high"),
@@ -114,6 +149,20 @@ def profile_summary(profile: str) -> dict[str, dict[str, str]]:
     }
 
 
+def render_heavy_route_for_profile(text: str, profile: str) -> str:
+    validate_compute_profile(profile)
+    if len(_COMMUNICATION_SECTION.findall(text)) != 1:
+        raise ValidationError(
+            "heavy route must contain exactly one profile communication section"
+        )
+    rendered = _COMMUNICATION_SECTION.sub(
+        PROFILE_COMMUNICATION_POLICIES[profile] + "\n", text, count=1
+    )
+    if PROFILE_COMMUNICATION_POLICIES[profile] not in rendered:
+        raise ValidationError("rendered heavy-route communication policy verification failed")
+    return rendered
+
+
 def render_worker_for_profile(text: str, worker: str, profile: str) -> str:
     spec = worker_model(profile, worker)
     match = WORKER_MARKER.search(text)
@@ -169,6 +218,17 @@ def plan_compute_profile(runtime: RuntimePaths, profile: str) -> OperationPlan:
         rendered = render_worker_for_profile(target_text, worker, profile)
         mutations.append(text_mutation(target, rendered))
     mutations.append(text_mutation(runtime.compute_settings, render_compute_settings(profile)))
+    heavy_route = runtime.runtime / "heavy_route.md"
+    if heavy_route.is_symlink() or not heavy_route.is_file():
+        raise ValidationError(f"installed heavy route is missing or invalid: {heavy_route}")
+    mutations.append(
+        text_mutation(
+            heavy_route,
+            render_heavy_route_for_profile(
+                heavy_route.read_text(encoding="utf-8"), profile
+            ),
+        )
+    )
     return OperationPlan(
         "profile",
         deduplicate(mutations),
@@ -177,6 +237,7 @@ def plan_compute_profile(runtime: RuntimePaths, profile: str) -> OperationPlan:
         {
             "profile": profile,
             "workers": profile_summary(profile),
+            "communication_policy": profile,
             "main_agent": "unchanged",
         },
     )

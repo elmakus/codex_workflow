@@ -263,6 +263,7 @@ def main() -> int:
                         "applied": False,
                         "profile": current_profile,
                         "workers": profile_summary(current_profile),
+                        "communication_policy": current_profile,
                         "main_agent": "unchanged",
                     },
                     compact=args.json,

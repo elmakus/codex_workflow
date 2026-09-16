@@ -40,8 +40,9 @@ transaction:
 python3 ~/.codex/codex_workflow/runtime/workflow.py profile <profile> --json
 ```
 
-The CLI validates the installed workflow, all managed worker templates and the
-requested profile before applying changes. The worker files and persistent
+The CLI validates the installed workflow, all managed worker templates, the
+Heavy communication section, and the requested profile before applying changes.
+The worker files, rendered Heavy communication policy, and persistent
 `~/.codex/codex_workflow/settings.toml` selection are changed in one compensating
 transaction, so a failure must not leave a partial profile switch.
 
@@ -49,11 +50,14 @@ The profiles are:
 
 - `plus`: preserves the historical worker allocation. Micro fallback is GPT-5.6
   Luna / high; Default, Tester, Companion, Investigator and Archivist use GPT-5.6
-  Luna / max; Senior uses GPT-5.6 Sol / medium.
+  Luna / max; Senior uses GPT-5.6 Sol / medium. User-visible communication is
+  restrained to meaningful milestones and avoids routine orchestration chatter.
 - `luna-xhigh`: Micro, Default, Tester, Companion, Investigator and Archivist use
-  GPT-5.6 Luna / xhigh; Senior stays GPT-5.6 Sol / medium.
+  GPT-5.6 Luna / xhigh; Senior stays GPT-5.6 Sol / medium. Orchestration remains
+  strictly silent except for blockers, required approvals, or requested updates.
 - `pro-x5`: Micro fallback, Default, Tester, Companion, Investigator and Archivist
-  use GPT-5.6 Sol / low; Senior stays GPT-5.6 Sol / medium.
+  use GPT-5.6 Sol / low; Senior stays GPT-5.6 Sol / medium. Main may use normal
+  concise progress and skill announcements without internal meta-reasoning.
 
 Micro's optional GPT-5.3-Codex-Spark / high override remains an acceleration path
 for `plus` and `pro-x5` when the current runtime exposes and accepts model

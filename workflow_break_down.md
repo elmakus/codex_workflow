@@ -1,6 +1,6 @@
 # Owner workflow ownership and layout
 
-This guide describes `1.1.17-private.8`, based directly on upstream prerelease
+This guide describes `1.1.17-private.9`, based directly on upstream prerelease
 `v1.1.17` commit `414a5d301ff17ca6e655330474c8346863d0d5d0`.
 
 ## Execution
@@ -44,8 +44,10 @@ consequence when such a message is received, including when it wakes an existing
 wait early, then resumes independent work or the long wait. This does not replace
 `wait_agent` or the standard completion path.
 
-Routine orchestration and successful intermediate completions remain silent
-unless the user needs a decision/risk update or explicitly asked for progress.
+User-visible orchestration follows the active profile: restrained meaningful
+milestones in `plus`, strict silence in `luna-xhigh`, and normal concise progress
+and skill announcements in `pro-x5`. Every profile excludes hidden reasoning,
+instruction-conflict narration, and routine worker-state chatter.
 Heavy has no workflow-imposed aggregate active-subagent limit; the Codex platform
 and account determine available concurrency.
 
@@ -71,8 +73,9 @@ deterministic is reclassified directly to Default or Senior Executor.
 The compute profile is global user-runtime state, not project personalization.
 It is stored in `~/.codex/codex_workflow/settings.toml`; missing settings on an
 older installation mean `plus`. A profile switch renders model and reasoning
-fields from one central mapping into the existing worker definitions and changes
-all managed worker files plus the settings file in one compensating transaction.
+fields plus the Heavy communication section from central mappings, and changes
+all managed worker files, the Heavy contract, and the settings file in one
+compensating transaction.
 Main is outside this mechanism. The workflow never auto-detects a subscription.
 
 Archivist has no usage-reporting responsibility. This package does not include

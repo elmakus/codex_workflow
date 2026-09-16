@@ -1,6 +1,6 @@
 # elmakus codex_workflow fork
 
-Version **1.1.17-private.8**, based directly on upstream prerelease `v1.1.17`
+Version **1.1.17-private.9**, based directly on upstream prerelease `v1.1.17`
 commit `414a5d301ff17ca6e655330474c8346863d0d5d0`.
 
 This public fork keeps upstream's lifecycle/runtime foundation while applying
@@ -11,10 +11,11 @@ owner-specific orchestration, model, update-channel, and safety choices.
 - **Heavy is the only workflow route.** Leaf-state questions and genuinely
   trivial bounded actions work directly without subagents and without reading
   `heavy_route.md`; bounded but nontrivial work still enters Heavy.
-- Deployment state has a hard user-visible output gate in `AGENTS.md`: if work
-  can continue safely without user input, Main remains silent until the final
-  response. Intermediate findings, plan changes, worker results, repository
-  state, and next-step narration are not reasons to speak.
+- Deployment communication follows the active profile. `plus` allows restrained,
+  outcome-oriented milestone updates, `luna-xhigh` keeps strict silent
+  orchestration, and `pro-x5` allows normal concise progress and skill
+  announcements. No profile permits hidden reasoning or narration of internal
+  instruction-conflict resolution.
 - Heavy uses progressive disclosure: standing orchestration stays in
   `heavy_route.md`; detailed work-package, Micro Execution, follow-up, and
   recovery guidance lives in `delegation.md` and is loaded only when needed.
@@ -46,9 +47,9 @@ owner-specific orchestration, model, update-channel, and safety choices.
 - Heavy has no workflow-imposed aggregate worker limit. The workflow does not
   write a fixed `max_concurrent_threads_per_session`; available concurrency is
   left to the Codex platform/account.
-- Heavy is orchestration-only for Main, uses long event-driven waits, treats an empty
-  timeout as a reason to wait again rather than poll, and keeps routine
-  orchestration silent unless the user needs a decision or risk update.
+- Heavy is orchestration-only for Main, uses long event-driven waits, and treats
+  an empty timeout as a reason to wait again rather than poll. Its user-visible
+  update cadence follows the active profile.
 - Running workers may use `send_message` to `/root` only for rare material
   mid-task `BLOCKER`, `COURSE_CHANGE`, or `CRITICAL_PARTIAL` events. Routine
   progress and normal completion never use that channel; receipt of a material
@@ -89,9 +90,9 @@ escalation ladder.
 
 The active selection is stored in
 `~/.codex/codex_workflow/settings.toml`. Missing settings on a pre-profile
-installation mean `plus`. Profile switches rewrite only the workflow-owned
-worker model/reasoning fields plus that settings file in one compensating
-transaction. Updates preserve the selected profile.
+installation mean `plus`. Profile switches rewrite the workflow-owned worker
+model/reasoning fields, rendered Heavy communication section, and settings file
+in one compensating transaction. Updates preserve the selected profile.
 
 ## Documentation locations
 

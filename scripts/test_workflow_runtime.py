@@ -14,6 +14,7 @@ from runtime.compute_profiles import (
     DEFAULT_COMPUTE_PROFILE,
     plan_compute_profile,
     read_compute_profile,
+    render_heavy_route_for_profile,
 )
 from runtime.errors import TransactionError, ValidationError
 from runtime.layout import PackageLayout, ProjectPaths, RuntimePaths
@@ -27,11 +28,11 @@ PACKAGE = owner.PACKAGE
 
 def _test_private_version_and_user_marker_are_synchronized(self: unittest.TestCase) -> None:
     version = (PACKAGE / "operate" / "VERSION").read_text(encoding="utf-8").strip()
-    self.assertEqual(version, "1.1.17-private.8")
+    self.assertEqual(version, "1.1.17-private.9")
     user_agents = (PACKAGE / "operate" / "user_AGENTS.md").read_text(encoding="utf-8")
     self.assertEqual(user_agents.count(f"<!-- codex-workflow-version: {version} -->"), 1)
-    self.assertGreater(base.parse_semver("1.1.17-private.8"), base.parse_semver("1.1.17-private.7"))
-    self.assertEqual(base.NEXT_PACKAGE_VERSION, "1.1.17-private.9")
+    self.assertGreater(base.parse_semver("1.1.17-private.9"), base.parse_semver("1.1.17-private.8"))
+    self.assertEqual(base.NEXT_PACKAGE_VERSION, "1.1.17-private.10")
 
 
 def _test_worker_models_and_reasoning(self: unittest.TestCase) -> None:
@@ -96,11 +97,10 @@ def _test_current_private_contract(self: unittest.TestCase) -> None:
     self.assertIn("Do not classify nontrivial work as leaf merely because it is bounded or short", agents)
     self.assertNotIn("small bounded operations", agents)
     self.assertIn("enter `deployment state`, bootstrap the session Companion", agents)
-    self.assertIn("## Deployment Output Gate", agents)
-    self.assertIn("before task completion, emit no user-visible prose", agents)
-    self.assertIn("Can execution safely continue without user input?", agents)
-    self.assertIn("Intermediate findings, discoveries, changed hypotheses, changed plans", agents)
-    self.assertIn("At completion, send one normal final response", agents)
+    self.assertIn("## Deployment Communication", agents)
+    self.assertIn("profile-specific user-communication policy", agents)
+    self.assertIn("never expose hidden reasoning", agents)
+    self.assertIn("instruction-conflict resolution", agents)
     for doc in ("project_progress.md", "project_diary.md", "latest_session_work.md"):
         self.assertIn(doc, agents)
 
@@ -138,12 +138,11 @@ def _test_current_private_contract(self: unittest.TestCase) -> None:
     self.assertIn("Unavailable worker capacity does not transfer worker ownership to Main", heavy)
     self.assertIn("only for genuinely trivial tasks classified as leaf state", heavy)
     self.assertNotIn("genuinely trivial and shorter than delegation overhead", heavy)
-    self.assertIn("do not send user-visible progress", heavy)
-    self.assertIn("intermediate findings", heavy)
-    self.assertIn('Do not narrate an "important discovery"', heavy)
-    self.assertIn("changed hypothesis", heavy)
-    self.assertIn("changed plan", heavy)
-    self.assertIn("If work can continue safely without user input, remain silent", heavy)
+    self.assertIn("## Orchestration Communication", heavy)
+    self.assertIn("restrained and outcome-oriented", heavy)
+    self.assertIn("meaningful user-relevant milestone", heavy)
+    self.assertIn("instruction-conflict resolution", heavy)
+    self.assertIn("Skill announcements should be brief", heavy)
     self.assertNotIn("scope or plan changes materially", heavy)
     self.assertIn("one event-driven `wait_agent` call", heavy_flat)
     self.assertIn("`1500000` ms (25 minutes)", heavy)
@@ -295,6 +294,24 @@ class ComputeProfileTests(unittest.TestCase):
                 _expected_profile_models(profile),
             )
 
+    def test_profile_switch_renders_distinct_communication_policies(self) -> None:
+        heavy_path = self.runtime.runtime / "heavy_route.md"
+        expected = {
+            "plus": ("restrained and outcome-oriented", "Silent Orchestration"),
+            "luna-xhigh": ("If work can continue safely without user input, remain silent", "Skill announcements should be brief"),
+            "pro-x5": ("Use normal concise commentary", "If work can continue safely without user input, remain silent"),
+        }
+        for profile, (present, absent) in expected.items():
+            plan_compute_profile(self.runtime, profile).apply()
+            heavy = heavy_path.read_text(encoding="utf-8")
+            self.assertIn(present, heavy)
+            self.assertNotIn(absent, heavy)
+            self.assertIn("instruction-conflict resolution", heavy)
+
+    def test_heavy_route_renderer_rejects_missing_owned_section(self) -> None:
+        with self.assertRaisesRegex(ValidationError, "exactly one"):
+            render_heavy_route_for_profile("# Heavy Route\n", "plus")
+
     def test_invalid_profile_changes_nothing(self) -> None:
         before_settings = self.runtime.compute_settings.read_bytes()
         before_workers = {
@@ -311,6 +328,8 @@ class ComputeProfileTests(unittest.TestCase):
     def test_profile_apply_rolls_back_earlier_worker_writes_on_failure(self) -> None:
         plan = plan_compute_profile(self.runtime, "luna-xhigh")
         before_settings = self.runtime.compute_settings.read_bytes()
+        heavy_path = self.runtime.runtime / "heavy_route.md"
+        before_heavy = heavy_path.read_bytes()
         before_workers = {
             path.name: path.read_bytes() for path in self.runtime.agents.glob("*.toml")
         }
@@ -320,6 +339,7 @@ class ComputeProfileTests(unittest.TestCase):
         with self.assertRaises(TransactionError):
             plan.apply()
         self.assertEqual(self.runtime.compute_settings.read_bytes(), before_settings)
+        self.assertEqual(heavy_path.read_bytes(), before_heavy)
         for name, content in before_workers.items():
             if name == "investigator.toml":
                 continue
@@ -337,7 +357,7 @@ class ComputeProfileTests(unittest.TestCase):
         user_agents = incoming_root / "operate" / "user_AGENTS.md"
         user_agents.write_text(
             user_agents.read_text(encoding="utf-8").replace(
-                "1.1.17-private.8", next_version
+                "1.1.17-private.9", next_version
             ),
             encoding="utf-8",
         )

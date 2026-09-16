@@ -86,17 +86,17 @@ def _test_private_version_and_user_marker_are_synchronized(
     self: unittest.TestCase,
 ) -> None:
     version = (PACKAGE / "operate" / "VERSION").read_text(encoding="utf-8").strip()
-    self.assertEqual(version, "1.1.17-private.8")
+    self.assertEqual(version, "1.1.17-private.9")
     user_agents = (PACKAGE / "operate" / "user_AGENTS.md").read_text(
         encoding="utf-8"
     )
     marker = f"<!-- codex-workflow-version: {version} -->"
     self.assertEqual(user_agents.count(marker), 1)
     self.assertGreater(
-        base.parse_semver("1.1.17-private.8"),
+        base.parse_semver("1.1.17-private.9"),
         base.parse_semver("1.1.17-private.7"),
     )
-    self.assertEqual(base.NEXT_PACKAGE_VERSION, "1.1.17-private.9")
+    self.assertEqual(base.NEXT_PACKAGE_VERSION, "1.1.17-private.10")
 
 
 def _test_worker_models_and_reasoning(self: unittest.TestCase) -> None:
@@ -278,12 +278,12 @@ def _test_operational_policies_are_compact_and_knowledge_aware(
         "delegable research",
     ):
         self.assertIn(non_takeover_task, heavy)
-    self.assertIn("## Silent Orchestration", heavy)
-    self.assertIn("Perform orchestration through tool calls only", heavy_flat)
-    self.assertIn("If work can continue safely without user input, remain silent", heavy_flat)
-    self.assertIn("When the task completes, send one normal final response", heavy_flat)
+    self.assertIn("## Orchestration Communication", heavy)
+    self.assertIn("restrained and outcome-oriented", heavy_flat)
+    self.assertIn("instruction-conflict resolution", heavy_flat)
+    self.assertIn("At completion, send one normal final response", heavy_flat)
     self.assertNotIn("at most one brief line", heavy_flat)
-    self.assertIn("Silence limits narration only", heavy_flat)
+    self.assertIn("meaningful user-relevant milestone", heavy_flat)
     self.assertIn("## Agents You Can Use", heavy)
     for role in (
         "Companion",

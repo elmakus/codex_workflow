@@ -8,6 +8,7 @@ from pathlib import Path
 from .compute_profiles import (
     read_compute_profile,
     render_compute_settings,
+    render_heavy_route_for_profile,
     render_worker_for_profile,
 )
 from .platform_settings import (
@@ -61,6 +62,16 @@ def plan_runtime_files(
         target = runtime.runtime / relative
         mutations.append(Mutation(target, source.read_bytes()))
         owned.add(relative.as_posix())
+    heavy_source = package.root / "heavy_route.md"
+    mutations.append(
+        text_mutation(
+            runtime.runtime / "heavy_route.md",
+            render_heavy_route_for_profile(
+                heavy_source.read_text(encoding="utf-8"),
+                read_compute_profile(runtime),
+            ),
+        )
+    )
     template_targets = [(package.project_template, runtime.runtime / "templates" / "AGENTS.md")]
     template_targets.extend(
         (source, runtime.runtime / "templates" / "agents" / source.name)

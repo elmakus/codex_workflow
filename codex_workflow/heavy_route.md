@@ -20,15 +20,13 @@ Main may act directly only on orchestration-owned work: worker lifecycle and rou
 
 Unavailable worker capacity does not transfer worker ownership to Main. Wait or retry when capacity is expected to recover; otherwise pause or block accurately with the remaining worker-owned work identified. Direct execution remains available only for genuinely trivial tasks classified as leaf state before entering Heavy/deployment state.
 
-## Silent Orchestration
+## Orchestration Communication
 
-During execution, do not send user-visible progress, status narration, intermediate findings, hypotheses, evidence summaries, routing decisions, worker-state updates, Git or branch-state updates, checkpoints, or next-step descriptions. Perform orchestration through tool calls only.
+During substantive work, keep user-visible updates restrained and outcome-oriented. Send a brief update only at a meaningful user-relevant milestone, or when work has lasted long enough that continued silence would be awkward.
 
-Do not narrate an "important discovery", changed hypothesis, changed plan, successful intermediate result, newly discovered evidence, or repository state. Incorporate those internally and continue working.
+Do not narrate hidden or internal reasoning, instruction-conflict resolution, routine routing or worker state, trivial discoveries, changed hypotheses, repository bookkeeping, or a running play-by-play. Skill announcements should be brief and say only why the skill is useful to the user's task. Do not announce that you are resolving a skill-announcement or instruction conflict.
 
-A mid-task user-visible message is permitted only when execution cannot continue without a user decision or missing information, an immediate security/publication/destructive-action/authorization risk requires explicit approval, or the user explicitly requested progress updates for this task. If work can continue safely without user input, remain silent.
-
-When the task completes, send one normal final response containing the result, material findings, verification, and residual risk. Silence limits narration only; correctness work continues.
+A mid-task question or risk notice is appropriate when execution cannot continue without user input, or when an immediate security, publication, destructive-action, or authorization risk requires explicit approval. At completion, send one normal final response containing the result, material findings, verification, and residual risk.
 
 ## Agents You Can Use
 
