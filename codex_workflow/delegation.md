@@ -63,7 +63,7 @@ For Codex-backed profiles, the standing worker-side material-event policy is def
 
 `muse-max` one-shot workers have no `send_message` path. Their normal process output is the completion/blocker boundary; do not build a polling or background-message shim for the live-test profile.
 
-Do not use Main follow-ups to poll worker status. Send a follow-up only when Main has new evidence, a changed decision, or changed capsule information that the existing worker needs. For Codex-backed profiles, a `wait_agent` timeout without new evidence is not a reason to request an update. Prefer worker-to-Main material-event routing when the active runtime supports it; do not instruct sibling messaging unless the sibling's active task is materially affected and Main routing would create unnecessary delay or wasted work.
+Do not use Main follow-ups to poll worker status. Send a follow-up only when Main has new evidence, a changed decision, or changed capsule information that the existing worker needs. For Codex-backed profiles only: A `wait_agent` timeout without new evidence is not a reason to request an update. Prefer worker-to-Main material-event routing when the active runtime supports it; do not instruct sibling messaging unless the sibling's active task is materially affected and Main routing would create unnecessary delay or wasted work.
 
 ## Micro Execution
 
