@@ -44,9 +44,9 @@ Prepare the bootstrap assignment from the user request and already-known context
 
 When the active profile is `muse-max`, write that capsule to a temporary Markdown file and invoke `python3 ~/.codex/codex_workflow/runtime/muse_worker.py --role companion --workspace <project-root> --task-file <capsule-file>`. Do not create an internal Codex Companion. This live-test profile uses a bounded one-shot Muse Companion rather than persistent subagent context; later context assignments use fresh Muse Companion invocations with the same logical Task ID and only the durable references and changed capsule information they need.
 
-For all Codex-backed profiles, immediately create one persistent Companion with `agent_type="companion"`, `task_name="companion"`, and `fork_turns="none"`, or reuse the existing Companion. If creation is temporarily unavailable, continue with proportionate Main reads and create the single Companion later only if the capability becomes available.
+For all Codex-backed profiles, immediately create one persistent Companion with `agent_type="companion"`, `task_name="companion"`, and `fork_turns="none"`, or reuse the existing Companion. Reuse the same Companion for later context assignments and later deployments in the same workflow session. If Companion creation is temporarily unavailable, continue with proportionate Main reads and create the single Companion later only if the capability becomes available.
 
-After bootstrapping Companion, continue independent Heavy intake and orchestration immediately when the active worker runtime supports it. Do not wait solely for a persistent Companion unless its result is needed for a decision. Under `muse-max`, the initial one-shot invocation is the bootstrap boundary; use its completed brief before relying on it because the live-test runner is intentionally sequential.
+After bootstrapping Companion, continue independent Heavy intake and orchestration immediately when the active worker runtime supports it. Do not wait solely for Companion unless its result is needed for a decision. Under `muse-max`, the initial one-shot invocation is the bootstrap boundary; use its completed brief before relying on it because the live-test runner is intentionally sequential.
 
 ## Worker Material Event Push
 
