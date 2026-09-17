@@ -45,8 +45,8 @@ owner-specific orchestration, model, update-channel, and safety choices.
 - Companion is bootstrapped at the first deployment-state entry while Main's
   context is still small. Codex-backed profiles keep one persistent Companion;
   `muse-max` uses a bounded one-shot Muse Companion and fresh later invocations.
-  Bootstrap remains scoped to the current goal and does not trigger a full
-  `agent_docs/` or unrelated-module intake.
+  Bootstrap remains scoped to the current goal and does not trigger a full `agent_docs/`
+  or unrelated-module intake.
 - Main owns deployment updates to `project_progress.md`, `project_diary.md`, and
   `latest_session_work.md`. Archivist handles other assigned documentation and
   the read-only closing handoff.
