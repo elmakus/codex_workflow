@@ -19,6 +19,7 @@ COMPUTE_SETTINGS = "settings.toml"
 class WorkerModel:
     model: str
     reasoning_effort: str
+    harness: str = "codex"
 
 
 PROFILE_COMMUNICATION_POLICIES: dict[str, str] = {
@@ -45,6 +46,14 @@ When the task completes, send one normal final response containing the result, m
 Use normal concise commentary during substantive work. Give relevant progress updates, including a brief announcement when a skill is used and why it helps, often enough that the user can follow meaningful progress without a routine play-by-play.
 
 Keep updates focused on user-relevant outcomes, assumptions, blockers, and material milestones. Do not expose hidden or internal reasoning, narrate instruction-conflict resolution, or report routine routing, worker state, trivial discoveries, and repository bookkeeping.
+
+Ask promptly when execution cannot continue without user input, or when an immediate security, publication, destructive-action, or authorization risk requires explicit approval. At completion, send one normal final response containing the result, material findings, verification, and residual risk.
+""",
+    "muse-max": """## Orchestration Communication
+
+Use normal concise commentary during substantive work. Give relevant progress updates at meaningful milestones so the user can follow the live Muse-worker experiment without a routine play-by-play.
+
+Keep updates focused on user-relevant outcomes, assumptions, blockers, worker results, and material milestones. Do not expose hidden or internal reasoning, narrate instruction-conflict resolution, or report low-value process bookkeeping.
 
 Ask promptly when execution cannot continue without user input, or when an immediate security, publication, destructive-action, or authorization risk requires explicit approval. At completion, send one normal final response containing the result, material findings, verification, and residual risk.
 """,
@@ -83,6 +92,15 @@ COMPUTE_PROFILES: dict[str, dict[str, WorkerModel]] = {
         "archivist": WorkerModel("gpt-5.6-sol", "low"),
         "companion": WorkerModel("gpt-5.6-sol", "low"),
         "investigator": WorkerModel("gpt-5.6-sol", "low"),
+    },
+    "muse-max": {
+        "micro_executor": WorkerModel("muse-spark-1.3-contributor", "max", "muse-code"),
+        "default_executor": WorkerModel("muse-spark-1.3-contributor", "max", "muse-code"),
+        "senior_executor": WorkerModel("muse-spark-1.3-contributor", "max", "muse-code"),
+        "tester": WorkerModel("muse-spark-1.3-contributor", "max", "muse-code"),
+        "archivist": WorkerModel("muse-spark-1.3-contributor", "max", "muse-code"),
+        "companion": WorkerModel("muse-spark-1.3-contributor", "max", "muse-code"),
+        "investigator": WorkerModel("muse-spark-1.3-contributor", "max", "muse-code"),
     },
 }
 
@@ -144,6 +162,7 @@ def profile_summary(profile: str) -> dict[str, dict[str, str]]:
         worker: {
             "model": spec.model,
             "reasoning_effort": spec.reasoning_effort,
+            "harness": spec.harness,
         }
         for worker, spec in sorted(COMPUTE_PROFILES[profile].items())
     }
@@ -180,6 +199,14 @@ def render_worker_for_profile(text: str, worker: str, profile: str) -> str:
         raise ValidationError(
             f"worker must contain exactly one top-level model_reasoning_effort line: {worker}"
         )
+
+    # External harness profiles deliberately keep the installed Codex worker
+    # TOMLs valid but dormant. The active Heavy contract routes these roles to
+    # the external harness instead of asking Codex to resolve an unsupported
+    # model identifier as an internal subagent.
+    if spec.harness != "codex":
+        return text
+
     rendered = _MODEL_LINE.sub(f'model = "{spec.model}"', text, count=1)
     rendered = _REASONING_LINE.sub(
         f'model_reasoning_effort = "{spec.reasoning_effort}"', rendered, count=1
@@ -205,8 +232,9 @@ def plan_compute_profile(runtime: RuntimePaths, profile: str) -> OperationPlan:
         if not source.is_file():
             raise ValidationError(f"installed worker template is missing: {source}")
         # Validate the package template as part of the installed workflow contract,
-        # but patch the installed worker in place so a profile switch changes only
-        # the model and reasoning fields.
+        # but patch the installed worker in place so a Codex-backed profile switch
+        # changes only the model and reasoning fields. External-harness profiles
+        # leave the internal TOMLs dormant and unchanged.
         render_worker_for_profile(source.read_text(encoding="utf-8"), worker, profile)
         target = runtime.agents / f"{worker}.toml"
         if target.is_symlink() or not target.is_file():
@@ -229,6 +257,7 @@ def plan_compute_profile(runtime: RuntimePaths, profile: str) -> OperationPlan:
             ),
         )
     )
+    harnesses = sorted({spec.harness for spec in COMPUTE_PROFILES[profile].values()})
     return OperationPlan(
         "profile",
         deduplicate(mutations),
@@ -237,6 +266,7 @@ def plan_compute_profile(runtime: RuntimePaths, profile: str) -> OperationPlan:
         {
             "profile": profile,
             "workers": profile_summary(profile),
+            "worker_harnesses": harnesses,
             "communication_policy": profile,
             "main_agent": "unchanged",
         },

@@ -6,9 +6,10 @@ Use this procedure only when the user's trimmed message is exactly one of:
     codex_workflow --profile plus
     codex_workflow --profile luna-xhigh
     codex_workflow --profile pro-x5
+    codex_workflow --profile muse-max
 
 Compute profile is user-runtime state, not project personalization. It applies to
-workflow-owned worker TOMLs under `~/.codex/agents/` and does not change the Main
+workflow-owned worker routing under `~/.codex/` and does not change the Main
 agent selected by the user or Codex runtime.
 
 Do not infer the user's ChatGPT/Codex subscription and do not switch profiles
@@ -28,13 +29,13 @@ run:
 python3 ~/.codex/codex_workflow/runtime/workflow.py profile --json
 ```
 
-Report the active profile and its worker model/reasoning mapping. Do not mutate
-anything.
+Report the active profile and its worker model/reasoning/harness mapping. Do not
+mutate anything.
 
 ## Switch profile
 
-For `plus`, `luna-xhigh`, or `pro-x5`, run exactly one complete profile
-transaction:
+For `plus`, `luna-xhigh`, `pro-x5`, or `muse-max`, run exactly one complete
+profile transaction:
 
 ```text
 python3 ~/.codex/codex_workflow/runtime/workflow.py profile <profile> --json
@@ -58,12 +59,33 @@ The profiles are:
 - `pro-x5`: Micro fallback, Default, Tester, Companion, Investigator and Archivist
   use GPT-5.6 Sol / low; Senior stays GPT-5.6 Sol / medium. Main may use normal
   concise progress and skill announcements without internal meta-reasoning.
+- `muse-max`: experimental live-test profile. Main remains the user-selected
+  Codex model (normally Sol when the user selects Sol). Every workflow worker
+  role, including Micro, Default, Senior, Tester, Companion, Investigator and
+  Archivist, is routed through the native Muse Code harness using
+  `muse-spark-1.3-contributor` with `max` reasoning. User-visible orchestration
+  uses normal concise milestone updates rather than silent orchestration. The
+  initial implementation uses bounded sequential one-shot Muse invocations so
+  it does not emulate Codex subagent concurrency with unmanaged processes.
+
+`muse-max` requires the `muse` CLI on `PATH`, a completed `muse login`, and access
+to Muse Spark 1.3 Contributor Max. The profile switch itself does not install or
+authenticate Muse. Before the first production worker, a smoke test may invoke:
+
+```text
+python3 ~/.codex/codex_workflow/runtime/muse_worker.py \
+  --role investigator \
+  --workspace <project-root> \
+  --task-file <capsule-file> \
+  --dry-run
+```
 
 Micro's optional GPT-5.3-Codex-Spark / high override remains an acceleration path
 for `plus` and `pro-x5` when the current runtime exposes and accepts model
 overrides. In `luna-xhigh`, do not use the Spark override: Micro follows the
-installed GPT-5.6 Luna / xhigh profile so every non-Senior workflow worker uses
-Luna / xhigh.
+installed Luna XHigh worker. In `muse-max`, do not use the Codex Spark override:
+Micro uses Muse Spark 1.3 Contributor Max through Muse Code like every other
+workflow worker.
 
 Profile state is global to this Codex home and is preserved by workflow updates.
 A pre-profile installation with no settings file is interpreted as `plus`, and
