@@ -19,7 +19,7 @@ The runner loads the installed workflow worker TOML only as the role contract, t
 
 Under `muse-max`, do not use `spawn_agent`, `agent_type`, `fork_turns`, Codex model overrides, `resume_agent`, `wait_agent`, or `send_message` for workflow roles. Each worker call is a bounded external Muse Code invocation. A follow-up or repair launches a new invocation with the same Task ID, the changed capsule information, and any durable evidence needed to continue. A fresh independent review is a fresh `tester` invocation. The live-test profile is sequential by default; do not emulate Codex subagent concurrency with unmanaged background processes.
 
-For `plus`, `luna-xhigh`, and `pro-x5`, use the normal internal Codex worker lifecycle described below. Every later reference in this file to internal worker APIs applies only to those Codex-backed profiles unless a paragraph explicitly says otherwise.
+For `plus`, `luna-xhigh`, and `pro-x5`, use the normal internal Codex worker lifecycle described below. Every later reference in this file to internal worker APIs applies only to those Codex-backed profiles unless a paragraph explicitly says otherwise. The previous contract phrase `Senior Executor (Sol Medium in every current profile)` no longer applies globally: Senior remains Sol Medium in those three Codex-backed profiles, while `muse-max` deliberately routes Senior to Muse Spark 1.3 Contributor Max so every worker role uses Muse.
 
 ## Work Packages
 
