@@ -12,10 +12,7 @@ import sys
 import tempfile
 from pathlib import Path
 
-try:
-    import tomllib
-except ModuleNotFoundError:  # pragma: no cover - Python 3.11+ is required by workflow
-    tomllib = None  # type: ignore[assignment]
+import tomllib
 
 
 MODEL = "muse-spark-1.3-contributor"
@@ -88,15 +85,17 @@ EXTERNAL-HARNESS EXECUTION RULES
 
 
 def build_command(muse: str, prompt_file: str) -> list[str]:
+    # Approval/trust are Muse Code global flags. Keep the managed sandbox on;
+    # neither --yolo nor --disable-sandbox is permitted by this runner.
     return [
         muse,
+        "--disable-approval",
+        "--trust-workspace",
         "exec",
         "--model",
         MODEL,
         "--reasoning-effort",
         REASONING_EFFORT,
-        "--disable-approval",
-        "--trust-workspace",
         "--prompt-file",
         prompt_file,
     ]
