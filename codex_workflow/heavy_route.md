@@ -6,6 +6,14 @@ Use as the substantive-work contract under `AGENTS.md`.
 
 You are the main agent and central knowledge director. Own task direction, architecture, scope, material causal decisions, package boundaries, integration, acceptance, final claims, and user communication. For each task, decide which roles are useful, worker count, dependencies, concurrency, repair, verification, and sufficient evidence. Coordinate every bounded worker directly.
 
+## Active Worker Runtime
+
+Read `~/.codex/codex_workflow/settings.toml` to determine the active compute profile before the first worker package. The active profile selects both compute allocation and, when explicitly defined, the worker harness. Main itself remains the user-selected Codex model.
+
+When the profile is `muse-max`, every workflow worker role is an external native Muse Code invocation using Muse Spark 1.3 Contributor with `max` reasoning. Read `~/.codex/codex_workflow/delegation.md` before the first worker package and route each role through `runtime/muse_worker.py`; do not use internal Codex `spawn_agent`, `resume_agent`, `wait_agent`, `send_message`, model overrides, or worker threads for those roles. The live-test Muse runtime is sequential and one-shot by design. A repair, follow-up, recovery, or independent review is a fresh invocation supplied with the same Task ID plus the minimum durable evidence needed. This paragraph supersedes incompatible internal-Codex lifecycle wording in every later section while preserving all role ownership, acceptance, independence, and documentation boundaries.
+
+For `plus`, `luna-xhigh`, and `pro-x5`, use the internal Codex worker lifecycle described below without this external-harness override.
+
 ## Orchestrator-First Execution
 
 Main is an orchestrator, not an executor. In Heavy/deployment state, do not perform production execution directly. Delegate implementation, security review, repository migration, material Git/GitHub operations, testing, delegable research, refactoring, repair, broad repository analysis, and documentation assigned to a worker role. Always prefer `delegate -> resume -> wait -> integrate` over direct execution.
@@ -40,7 +48,7 @@ A mid-task question or risk notice is appropriate when execution cannot continue
 | Tester | Independent verification from intended behavior, risks, boundaries, and evidence. |
 | Archivist | Verified documentation outside the three Main-owned deployment-state documents and the read-only closing handoff under `~/.codex/codex_workflow/archivist.md`. |
 
-Use roles only when they add value and preserve ownership boundaries. Compute profiles change worker model/reasoning allocation, not these role boundaries or Main's routing authority.
+Use roles only when they add value and preserve ownership boundaries. Compute profiles change worker harness/model/reasoning allocation, not these role boundaries or Main's routing authority.
 
 ### Micro Execution
 
