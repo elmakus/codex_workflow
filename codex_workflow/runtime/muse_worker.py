@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import argparse
+from concurrent.futures import ThreadPoolExecutor
+from dataclasses import dataclass
 import json
 import os
 import re
@@ -40,6 +42,9 @@ TERMINATE_GRACE_SECONDS = 3.0
 RETENTION_MAX_RUNS = 50
 RETENTION_MAX_AGE_SECONDS = 14 * 24 * 60 * 60
 RETENTION_MAX_BYTES = 100 * 1024 * 1024
+MAX_CONCURRENT_INVOCATIONS = 8
+
+_RETENTION_LOCK = threading.Lock()
 
 MAX_SUMMARY_CHARS = 2000
 MAX_ITEM_CHARS = 800
@@ -60,6 +65,27 @@ _SECRET_PATTERNS = (
 
 class MuseWorkerError(RuntimeError):
     pass
+
+
+@dataclass(frozen=True, slots=True)
+class MuseWorkerInvocation:
+    """One already-authorized Muse lane invocation.
+
+    Project Workflow/Main owns dependency, parallel-safety, branch/worktree and
+    write-scope decisions. This value only describes an invocation that has
+    already been assigned an isolated workspace.
+    """
+
+    role: str
+    workspace: str
+    task_file: str
+    task_id: str | None = None
+    timeout_seconds: float = DEFAULT_TIMEOUT_SECONDS
+    cancel_event: threading.Event | None = None
+    terminate_grace_seconds: float = TERMINATE_GRACE_SECONDS
+    runtime: RuntimePaths | None = None
+    muse_path: str | None = None
+    run_id: str | None = None
 
 
 def _runtime_paths() -> RuntimePaths:
@@ -343,37 +369,48 @@ def enforce_retention(
     max_age_seconds: int = RETENTION_MAX_AGE_SECONDS,
     max_bytes: int = RETENTION_MAX_BYTES,
 ) -> None:
+    """Apply bounded retention without racing another in-process Muse lane."""
+
     preserve = {path.resolve() for path in (preserve or set())}
-    now = time.time() if now is None else now
-    runs = _eligible_run_dirs(root)
+    with _RETENTION_LOCK:
+        now = time.time() if now is None else now
+        runs = _eligible_run_dirs(root)
 
-    for run_dir in list(runs):
-        try:
-            too_old = now - run_dir.stat().st_mtime > max_age_seconds
-        except FileNotFoundError:
-            runs.remove(run_dir)
-            continue
-        if too_old and run_dir.resolve() not in preserve:
+        for run_dir in list(runs):
+            try:
+                too_old = now - run_dir.stat().st_mtime > max_age_seconds
+            except FileNotFoundError:
+                runs.remove(run_dir)
+                continue
+            if too_old and run_dir.resolve() not in preserve:
+                shutil.rmtree(run_dir, ignore_errors=True)
+                runs.remove(run_dir)
+
+        existing: list[Path] = []
+        for run_dir in runs:
+            try:
+                run_dir.stat()
+            except FileNotFoundError:
+                continue
+            existing.append(run_dir)
+        existing.sort(key=lambda path: path.stat().st_mtime, reverse=True)
+
+        kept: list[Path] = []
+        for index, run_dir in enumerate(existing):
+            if index < max_runs or run_dir.resolve() in preserve:
+                kept.append(run_dir)
+            else:
+                shutil.rmtree(run_dir, ignore_errors=True)
+
+        total = sum(_directory_size(path) for path in kept if path.exists())
+        for run_dir in reversed(kept):
+            if total <= max_bytes:
+                break
+            if run_dir.resolve() in preserve:
+                continue
+            size = _directory_size(run_dir)
             shutil.rmtree(run_dir, ignore_errors=True)
-            runs.remove(run_dir)
-
-    runs.sort(key=lambda path: path.stat().st_mtime, reverse=True)
-    kept: list[Path] = []
-    for index, run_dir in enumerate(runs):
-        if index < max_runs or run_dir.resolve() in preserve:
-            kept.append(run_dir)
-        else:
-            shutil.rmtree(run_dir, ignore_errors=True)
-
-    total = sum(_directory_size(path) for path in kept if path.exists())
-    for run_dir in reversed(kept):
-        if total <= max_bytes:
-            break
-        if run_dir.resolve() in preserve:
-            continue
-        size = _directory_size(run_dir)
-        shutil.rmtree(run_dir, ignore_errors=True)
-        total -= size
+            total -= size
 
 
 def _proc_parent_and_start(pid: int) -> tuple[int, str] | None:
@@ -956,6 +993,7 @@ def execute_worker(
     runtime: RuntimePaths | None = None,
     muse_path: str | None = None,
     run_id: str | None = None,
+    retention_preserve: set[Path] | None = None,
 ) -> dict[str, Any]:
     if timeout_seconds <= 0:
         raise MuseWorkerError("timeout_seconds must be positive")
@@ -968,7 +1006,7 @@ def execute_worker(
 
     runs_root = _runs_root(runtime)
     _ensure_private_dir(runs_root)
-    enforce_retention(runs_root)
+    enforce_retention(runs_root, preserve=retention_preserve)
     resolved_run_id = _safe_run_id(run_id)
     run_dir = runs_root / resolved_run_id
     if run_dir.exists():
@@ -994,7 +1032,10 @@ def execute_worker(
             workspace=workspace,
         )
         _persist_result(run_dir, result)
-        enforce_retention(runs_root, preserve={run_dir})
+        enforce_retention(
+            runs_root,
+            preserve={run_dir, *(retention_preserve or set())},
+        )
         return result
 
     prompt_path: Path | None = None
@@ -1176,9 +1217,107 @@ def execute_worker(
                 pass
 
     _persist_result(run_dir, result)
-    enforce_retention(runs_root, preserve={run_dir})
+    enforce_retention(
+        runs_root,
+        preserve={run_dir, *(retention_preserve or set())},
+    )
     return result
 
+
+def _validate_concurrent_workspaces(
+    invocations: tuple[MuseWorkerInvocation, ...],
+) -> tuple[Path, ...]:
+    workspaces = tuple(_workspace(invocation.workspace) for invocation in invocations)
+    for index, left in enumerate(workspaces):
+        for right in workspaces[index + 1 :]:
+            if left == right or left in right.parents or right in left.parents:
+                raise MuseWorkerError(
+                    "concurrent Muse invocations require distinct non-overlapping workspaces: "
+                    f"{left} <-> {right}"
+                )
+    return workspaces
+
+
+def execute_workers_concurrently(
+    invocations: list[MuseWorkerInvocation] | tuple[MuseWorkerInvocation, ...],
+    *,
+    max_workers: int = 2,
+) -> list[dict[str, Any]]:
+    """Await already-authorized independent Muse invocations concurrently.
+
+    This helper is intentionally not a scheduler: callers supply the complete
+    lane set and isolated workspaces after Project Workflow/Main has established
+    dependency and parallel-safety authority. Results retain input order.
+    """
+
+    items = tuple(invocations)
+    if not items:
+        return []
+    if len(items) > MAX_CONCURRENT_INVOCATIONS:
+        raise MuseWorkerError(
+            f"at most {MAX_CONCURRENT_INVOCATIONS} Muse invocations may be awaited together"
+        )
+    if max_workers <= 0 or max_workers > MAX_CONCURRENT_INVOCATIONS:
+        raise MuseWorkerError(
+            f"max_workers must be between 1 and {MAX_CONCURRENT_INVOCATIONS}"
+        )
+
+    _validate_concurrent_workspaces(items)
+
+    prepared: list[tuple[MuseWorkerInvocation, RuntimePaths, str]] = []
+    preserve_by_root: dict[Path, set[Path]] = {}
+    seen_run_dirs: set[Path] = set()
+    for invocation in items:
+        runtime = invocation.runtime or _runtime_paths()
+        resolved_run_id = _safe_run_id(invocation.run_id)
+        runs_root = _runs_root(runtime).resolve()
+        run_dir = (runs_root / resolved_run_id).resolve()
+        if run_dir in seen_run_dirs or run_dir.exists():
+            raise MuseWorkerError(f"duplicate or existing concurrent run directory: {run_dir}")
+        seen_run_dirs.add(run_dir)
+        preserve_by_root.setdefault(runs_root, set()).add(run_dir)
+        prepared.append((invocation, runtime, resolved_run_id))
+
+    results: list[dict[str, Any] | None] = [None] * len(prepared)
+    failures: list[tuple[int, BaseException]] = []
+    worker_count = min(max_workers, len(prepared))
+    with ThreadPoolExecutor(
+        max_workers=worker_count,
+        thread_name_prefix="muse-worker",
+    ) as pool:
+        futures = []
+        for invocation, runtime, resolved_run_id in prepared:
+            preserve = preserve_by_root[_runs_root(runtime).resolve()]
+            futures.append(
+                pool.submit(
+                    execute_worker,
+                    invocation.role,
+                    invocation.workspace,
+                    invocation.task_file,
+                    task_id=invocation.task_id,
+                    timeout_seconds=invocation.timeout_seconds,
+                    cancel_event=invocation.cancel_event,
+                    terminate_grace_seconds=invocation.terminate_grace_seconds,
+                    runtime=runtime,
+                    muse_path=invocation.muse_path,
+                    run_id=resolved_run_id,
+                    retention_preserve=preserve,
+                )
+            )
+
+        for index, future in enumerate(futures):
+            try:
+                results[index] = future.result()
+            except BaseException as error:
+                failures.append((index, error))
+
+    if failures:
+        indexes = ", ".join(str(index) for index, _ in failures)
+        raise MuseWorkerError(
+            f"concurrent Muse adapter invocation failed before normalized result for lane(s): {indexes}"
+        ) from failures[0][1]
+
+    return [result for result in results if result is not None]
 
 
 def run(
