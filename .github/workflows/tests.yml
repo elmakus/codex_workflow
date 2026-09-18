@@ -29,7 +29,9 @@ jobs:
         run: python3 -B scripts/test_muse_adapter.py -v
 
       - name: Python compile check
-        run: python3 -m compileall -q codex_workflow scripts
+        run: |
+          python3 -m compileall -q codex_workflow scripts
+          find codex_workflow scripts -type d -name __pycache__ -prune -exec rm -rf {} +
 
       - name: Muse Max profile regression tests
         run: python3 -B scripts/test_muse_profile.py -v
