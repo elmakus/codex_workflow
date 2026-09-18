@@ -99,7 +99,7 @@ COMPUTE_PROFILES: dict[str, dict[str, WorkerModel]] = {
         "senior_executor": WorkerModel("muse-spark-1.3-contributor", "max", "muse-code"),
         "tester": WorkerModel("muse-spark-1.3-contributor", "max", "muse-code"),
         "archivist": WorkerModel("muse-spark-1.3-contributor", "max", "muse-code"),
-        "companion": WorkerModel("muse-spark-1.3-contributor", "max", "muse-code"),
+        "companion": WorkerModel("gpt-5.6-luna", "xhigh"),
         "investigator": WorkerModel("muse-spark-1.3-contributor", "max", "muse-code"),
     },
 }
@@ -200,10 +200,9 @@ def render_worker_for_profile(text: str, worker: str, profile: str) -> str:
             f"worker must contain exactly one top-level model_reasoning_effort line: {worker}"
         )
 
-    # External harness profiles deliberately keep the installed Codex worker
-    # TOMLs valid but dormant. The active Heavy contract routes these roles to
-    # the external harness instead of asking Codex to resolve an unsupported
-    # model identifier as an internal subagent.
+    # Roles assigned to an external harness deliberately keep their installed
+    # Codex worker TOMLs valid but dormant. Internal roles in a mixed profile are
+    # still rendered normally from this same profile authority.
     if spec.harness != "codex":
         return text
 
@@ -232,9 +231,9 @@ def plan_compute_profile(runtime: RuntimePaths, profile: str) -> OperationPlan:
         if not source.is_file():
             raise ValidationError(f"installed worker template is missing: {source}")
         # Validate the package template as part of the installed workflow contract,
-        # but patch the installed worker in place so a Codex-backed profile switch
-        # changes only the model and reasoning fields. External-harness profiles
-        # leave the internal TOMLs dormant and unchanged.
+        # but patch the installed worker in place so an internal-Codex allocation
+        # changes only the model and reasoning fields. External-harness roles leave
+        # their installed Codex TOMLs dormant and unchanged.
         render_worker_for_profile(source.read_text(encoding="utf-8"), worker, profile)
         target = runtime.agents / f"{worker}.toml"
         if target.is_symlink() or not target.is_file():

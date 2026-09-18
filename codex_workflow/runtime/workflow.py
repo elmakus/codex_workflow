@@ -11,7 +11,6 @@ from __future__ import annotations
 
 import argparse
 import json
-import os
 import subprocess
 import sys
 from pathlib import Path
@@ -30,7 +29,7 @@ from runtime.compute_profiles import (
     read_compute_profile,
 )
 from runtime.errors import WorkflowError
-from runtime.layout import PROJECT_ID
+from runtime.layout import PROJECT_ID, default_codex_home
 from runtime.lifecycle import (
     OperationPlan,
     PackageLayout,
@@ -52,13 +51,8 @@ from runtime.release import (
 )
 
 
-def _default_codex_home() -> Path:
-    configured = os.environ.get("CODEX_HOME")
-    return Path(configured).expanduser() if configured else Path.home() / ".codex"
-
-
 def _add_common(parser: argparse.ArgumentParser, *, project: bool = True) -> None:
-    parser.add_argument("--codex-home", type=Path, default=_default_codex_home())
+    parser.add_argument("--codex-home", type=Path, default=default_codex_home())
     if project:
         parser.add_argument("--project", type=Path, default=Path.cwd())
     parser.add_argument("--apply", action="store_true", default=True, help=argparse.SUPPRESS)

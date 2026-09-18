@@ -6,7 +6,7 @@ Read this file only when preparing or following up on delegated work, routing a 
 
 The active compute profile owns the worker harness as well as model allocation.
 
-For `muse-max`, every workflow role (`micro_executor`, `default_executor`, `senior_executor`, `tester`, `archivist`, `companion`, and `investigator`) runs through the native Muse Code CLI with Muse Spark 1.3 Contributor / max. Main remains the user-selected Codex model and is never replaced by the profile. Materialize the role capsule in a temporary Markdown file and invoke:
+For `muse-max`, Companion remains one persistent internal Codex worker on GPT-5.6 Luna XHigh. The six roles `micro_executor`, `default_executor`, `senior_executor`, `tester`, `archivist`, and `investigator` run through the native Muse Code CLI with Muse Spark 1.3 Contributor / max. Main remains the user-selected Codex model and is never replaced by the profile. For one of those six Muse-backed roles, materialize the role capsule in a temporary Markdown file and invoke:
 
 ```text
 python3 ~/.codex/codex_workflow/runtime/muse_worker.py \
@@ -15,11 +15,11 @@ python3 ~/.codex/codex_workflow/runtime/muse_worker.py \
   --task-file <capsule-file>
 ```
 
-The runner loads the installed workflow worker TOML only as the role contract, then launches `muse exec` with `muse-spark-1.3-contributor`, `max`, sandbox enforcement on, approvals disabled, and the workspace explicitly trusted. Muse authentication and subscription accounting stay owned by the official Muse Code CLI.
+The runner resolves the active compute profile and requested role through shared profile authority, refuses roles that are not assigned to `muse-code`, loads the installed workflow worker TOML only as the semantic role contract, and takes model/reasoning from that active allocation. Muse authentication and subscription accounting stay owned by the official Muse Code CLI. Final sandbox/protocol policy belongs to the later production adapter milestone and must use the captured live Muse runtime evidence.
 
-Under `muse-max`, do not use `spawn_agent`, `agent_type`, `fork_turns`, Codex model overrides, `resume_agent`, `wait_agent`, or `send_message` for workflow roles. Each worker call is a bounded external Muse Code invocation. A follow-up or repair launches a new invocation with the same Task ID, the changed capsule information, and any durable evidence needed to continue. A fresh independent review is a fresh `tester` invocation. The live-test profile is sequential by default; do not emulate Codex subagent concurrency with unmanaged background processes.
+Under `muse-max`, do not use internal Codex worker APIs for the six Muse-backed roles. Each such worker call is a bounded external Muse Code invocation. A follow-up or repair launches a new invocation with the same Task ID, changed capsule information, and required durable evidence; a fresh independent Muse-backed review uses a fresh `tester` invocation. Companion is the exception: use the normal persistent internal Codex lifecycle, including `spawn_agent`/resume/wait semantics as available. Do not emulate Muse concurrency with unmanaged background processes.
 
-For `plus`, `luna-xhigh`, and `pro-x5`, use the normal internal Codex worker lifecycle described below. Every later reference in this file to internal worker APIs applies only to those Codex-backed profiles unless a paragraph explicitly says otherwise. The previous contract phrase `Senior Executor (Sol Medium in every current profile)` no longer applies globally: Senior remains Sol Medium in those three Codex-backed profiles, while `muse-max` deliberately routes Senior to Muse Spark 1.3 Contributor Max so every worker role uses Muse.
+For `plus`, `luna-xhigh`, and `pro-x5`, every workflow role uses the normal internal Codex lifecycle described below. Senior remains Sol Medium in those three profiles; under `muse-max`, Senior is one of the six Muse Contributor Max roles while Companion remains internal Luna XHigh.
 
 ## Work Packages
 
@@ -33,9 +33,9 @@ Start each initial package with **Task ID**, a logical identifier unique within 
 | Tester | **Verification Context**; **Verification Goal**; **Main-Agent Verification Guidance** |
 | Archivist | **Documentation Context + Audience**; **Documentation Task + Goal**; **Main-Agent Documentation Guidance** |
 
-Keep packages short and sufficient. Include only the references, boundaries, decisions, constraints, intended outcome, approach, and cautions that materially help that worker. Initial internal Codex workers normally use `fork_turns="none"`; `muse-max` uses a fresh external invocation instead.
+Keep packages short and sufficient. Include only the references, boundaries, decisions, constraints, intended outcome, approach, and cautions that materially help that worker. Initial internal Codex workers normally use `fork_turns="none"`; the six Muse-backed `muse-max` roles use fresh external invocations instead.
 
-Require Task ID in every report. A follow-up repeats Task ID and sends only the capsule parts whose information changed. Do not resend stable context unless a fresh `muse-max` invocation needs the durable reference to recover it.
+Require Task ID in every report. A follow-up repeats Task ID and sends only the capsule parts whose information changed. Do not resend stable context unless a fresh Muse-backed invocation needs the durable reference to recover it.
 
 For Companion, give the bounded project surface and context outcome that can replace multiple Main reads or preserve useful retained context.
 
@@ -49,7 +49,7 @@ Ask every worker for a concise decision-ready return containing outcome, materia
 
 ## Fresh and Independent Contexts
 
-When a controlling project/workflow requirement says `FRESH CODEX REQUIRED`, `FRESH CODEX RECOMMENDED`, fresh independent review, fresh execution context, context reset, or equivalent, satisfy freshness with a fresh worker context in the active worker runtime. Under `muse-max`, launch a new external Muse worker with only the minimal durable handoff and bounded task context. Under Codex-backed profiles, create a new internal worker/subagent by default, use the normal worker mechanism (for example `spawn_agent` when exposed), set `fork_turns="none"`, and transfer only the minimal durable handoff and bounded task context needed for the assignment.
+When a controlling project/workflow requirement says `FRESH CODEX REQUIRED`, `FRESH CODEX RECOMMENDED`, fresh independent review, fresh execution context, context reset, or equivalent, satisfy freshness with a fresh worker context in the active role harness. For the six Muse-backed `muse-max` roles, launch a new external Muse worker with only the minimal durable handoff and bounded task context. For internal Codex roles — including `muse-max` Companion and every role in `plus`, `luna-xhigh`, and `pro-x5` — create a new internal worker/subagent by default, use the normal worker mechanism (for example `spawn_agent` when exposed), set `fork_turns="none"`, and transfer only the minimal durable handoff and bounded task context needed for the assignment.
 
 Freshness means conversational/context isolation, not a new top-level Codex App thread. Do not use app-level `create_thread` solely to obtain review independence, milestone isolation, or a context reset.
 
@@ -59,11 +59,11 @@ App-level `create_thread` is allowed only when the user explicitly asks for a se
 
 ## Material Event Push
 
-For Codex-backed profiles, the standing worker-side material-event policy is defined once in project `AGENTS.md`; do not repeat it in every task capsule. Workers may use runtime `send_message` to `/root` only for `BLOCKER`, `COURSE_CHANGE`, or `CRITICAL_PARTIAL` events under that policy. Ordinary progress, ETA, heartbeats, status chatter, routine partial findings, and normal completion are not follow-up traffic.
+For internal Codex workers, the standing worker-side material-event policy is defined once in project `AGENTS.md`; do not repeat it in every task capsule. They may use runtime `send_message` to `/root` only for `BLOCKER`, `COURSE_CHANGE`, or `CRITICAL_PARTIAL` events under that policy. Ordinary progress, ETA, heartbeats, status chatter, routine partial findings, and normal completion are not follow-up traffic.
 
-`muse-max` one-shot workers have no `send_message` path. Their normal process output is the completion/blocker boundary; do not build a polling or background-message shim for the live-test profile.
+The six Muse-backed `muse-max` roles have no `send_message` path. Their normal process output is the completion/blocker boundary; do not build a polling or background-message shim. Companion remains an internal Codex worker and follows the normal event policy.
 
-Do not use Main follow-ups to poll worker status. Send a follow-up only when Main has new evidence, a changed decision, or changed capsule information that the existing worker needs. For Codex-backed profiles only: A `wait_agent` timeout without new evidence is not a reason to request an update. Prefer worker-to-Main material-event routing when the active runtime supports it; do not instruct sibling messaging unless the sibling's active task is materially affected and Main routing would create unnecessary delay or wasted work.
+Do not use Main follow-ups to poll worker status. Send a follow-up only when Main has new evidence, a changed decision, or changed capsule information that the existing worker needs. For internal Codex workers, a `wait_agent` timeout without new evidence is not a reason to request an update. Prefer worker-to-Main material-event routing when the active runtime supports it; do not instruct sibling messaging unless the sibling's active task is materially affected and Main routing would create unnecessary delay or wasted work.
 
 ## Micro Execution
 
@@ -73,7 +73,7 @@ Good fits include a mechanical rename across known files, changing explicit conf
 
 Do not use Micro Executor for broad discovery, unknown-root-cause debugging, architecture, security judgement, migration reasoning, repository-wide review, or work whose ownership is not already clear.
 
-The installed internal `micro_executor` profile is selected by the active Codex-backed compute profile: Luna High in `plus`, Luna XHigh in `luna-xhigh`, and Sol Low in `pro-x5`. Spark is an optional acceleration path only for `plus` and `pro-x5`; `luna-xhigh` intentionally keeps Micro on Luna XHigh. Under `muse-max`, Micro uses the same Muse Spark 1.3 Contributor / max external harness as every other worker role.
+The installed internal `micro_executor` profile is selected by `plus`, `luna-xhigh`, or `pro-x5`: Luna High in `plus`, Luna XHigh in `luna-xhigh`, and Sol Low in `pro-x5`. Spark is an optional acceleration path only for `plus` and `pro-x5`; `luna-xhigh` intentionally keeps Micro on Luna XHigh. Under `muse-max`, Micro is one of the six Muse Spark 1.3 Contributor / max external roles.
 
 ### Preferred route: Spark where enabled
 
@@ -90,7 +90,7 @@ When the active profile is `luna-xhigh`, skip the Spark route and spawn `micro_e
 
 ### Stable route: active compute profile
 
-For Codex-backed profiles, spawn the same package as:
+For internal-Codex Micro allocations in `plus`, `luna-xhigh`, and `pro-x5`, spawn the same package as:
 
 - `agent_type="micro_executor"`
 - `fork_turns="none"`
@@ -106,9 +106,9 @@ The compute profile changes worker harness/model allocation only. It does not ch
 
 ## Worker Follow-up and Repair
 
-Under Codex-backed profiles, resume the existing worker/thread when possible. Send only new evidence or changed capsule parts. Do not create a replacement merely because a worker is slow or a wait timed out.
+For internal Codex roles, resume the existing worker/thread when possible. Send only new evidence or changed capsule parts. Do not create a replacement merely because a worker is slow or a wait timed out.
 
-Under `muse-max`, each one-shot invocation ends at its report. A follow-up or repair is a fresh invocation with the same Task ID plus the changed capsule parts and exact durable references needed to continue; do not rely on hidden conversation continuity.
+For the six Muse-backed `muse-max` roles, each one-shot invocation ends at its report. A follow-up or repair is a fresh invocation with the same Task ID plus the changed capsule parts and exact durable references needed to continue; do not rely on hidden conversation continuity. Companion remains persistent and follows the internal Codex rule above.
 
 When Tester finds an ordinary production defect, send the focused evidence to the owning Executor role for repair, then return the repair delta to an independent Tester for recheck. Main owns acceptance, not the worker's production or verification steps.
 
@@ -116,7 +116,7 @@ Escalate to a Main-owned decision only when evidence changes scope, contract, ow
 
 ## Recovery
 
-For Codex-backed profiles, a `wait_agent` timeout without new evidence is not a recovery event. Wait again when the worker is still presumed healthy.
+For internal Codex roles, a `wait_agent` timeout without new evidence is not a recovery event. Wait again when the worker is still presumed healthy.
 
 If a worker is irrecoverably unavailable and has no complete handoff:
 
@@ -125,4 +125,4 @@ If a worker is irrecoverably unavailable and has no complete handoff:
 3. The replacement worker inspects predecessor evidence, determines completed versus remaining work, and continues from the first unfinished step.
 4. Main integrates the replacement's decision-ready result.
 
-For Codex-backed profiles, prefer `resume predecessor -> if impossible, delegate recovery + continuation -> integrate`. Under `muse-max`, prefer `durable evidence -> fresh Muse invocation -> integrate`. Main should not reconstruct the predecessor's detailed work before delegating the remainder.
+For internal Codex roles, prefer `resume predecessor -> if impossible, delegate recovery + continuation -> integrate`. For a Muse-backed `muse-max` role, prefer `durable evidence -> fresh Muse invocation -> integrate`. Main should not reconstruct the predecessor's detailed work before delegating the remainder.

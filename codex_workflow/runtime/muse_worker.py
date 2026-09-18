@@ -14,21 +14,45 @@ from pathlib import Path
 
 import tomllib
 
+PACKAGE_ROOT = Path(__file__).resolve().parent.parent
+if str(PACKAGE_ROOT) not in sys.path:
+    sys.path.insert(0, str(PACKAGE_ROOT))
 
-MODEL = "muse-spark-1.3-contributor"
-REASONING_EFFORT = "max"
+from runtime.compute_profiles import read_compute_profile, worker_model
+from runtime.errors import WorkflowError
+from runtime.layout import WORKER_MARKER, RuntimePaths, default_codex_home
+
+
 ROLE_RE = re.compile(r"^[A-Za-z0-9_-]+$")
-WORKER_MARKER = re.compile(r"^# codex-workflow-worker: ([A-Za-z0-9_-]+)$", re.MULTILINE)
 
 
 class MuseWorkerError(RuntimeError):
     pass
 
 
-def _worker_contract(role: str) -> str:
+def _runtime_paths() -> RuntimePaths:
+    return RuntimePaths(default_codex_home())
+
+
+def _muse_allocation(role: str, runtime: RuntimePaths):
     if not ROLE_RE.fullmatch(role):
         raise MuseWorkerError(f"unsafe worker role: {role!r}")
-    path = Path.home() / ".codex" / "agents" / f"{role}.toml"
+    try:
+        profile = read_compute_profile(runtime)
+        allocation = worker_model(profile, role)
+    except WorkflowError as error:
+        raise MuseWorkerError(str(error)) from error
+    if allocation.harness != "muse-code":
+        raise MuseWorkerError(
+            f"worker role {role!r} is not assigned to muse-code in active profile {profile!r}"
+        )
+    return profile, allocation
+
+
+def _worker_contract(role: str, runtime: RuntimePaths) -> str:
+    if not ROLE_RE.fullmatch(role):
+        raise MuseWorkerError(f"unsafe worker role: {role!r}")
+    path = runtime.agents / f"{role}.toml"
     if path.is_symlink() or not path.is_file():
         raise MuseWorkerError(f"workflow worker contract is missing: {path}")
     text = path.read_text(encoding="utf-8")
@@ -64,8 +88,8 @@ def _task(path: str) -> str:
     return text.strip()
 
 
-def build_prompt(role: str, task: str) -> str:
-    contract = _worker_contract(role)
+def build_prompt(role: str, task: str, runtime: RuntimePaths) -> str:
+    contract = _worker_contract(role, runtime)
     return f"""You are a codex_workflow worker running through Muse Code.
 
 ROLE CONTRACT
@@ -84,27 +108,35 @@ EXTERNAL-HARNESS EXECUTION RULES
 """
 
 
-def build_command(muse: str, prompt_file: str) -> list[str]:
-    # Approval/trust are Muse Code global flags. Keep the managed sandbox on;
-    # neither --yolo nor --disable-sandbox is permitted by this runner.
+def build_command(
+    muse: str,
+    prompt_file: str,
+    *,
+    model: str,
+    reasoning_effort: str,
+) -> list[str]:
+    # M06 keeps the existing process-policy seam. Production sandbox/protocol
+    # behavior is bound by the later adapter milestone from live M05 evidence.
     return [
         muse,
         "--disable-approval",
         "--trust-workspace",
         "exec",
         "--model",
-        MODEL,
+        model,
         "--reasoning-effort",
-        REASONING_EFFORT,
+        reasoning_effort,
         "--prompt-file",
         prompt_file,
     ]
 
 
 def run(role: str, workspace_arg: str, task_file: str, *, dry_run: bool = False) -> int:
+    runtime = _runtime_paths()
+    profile, allocation = _muse_allocation(role, runtime)
     workspace = _workspace(workspace_arg)
     task = _task(task_file)
-    prompt = build_prompt(role, task)
+    prompt = build_prompt(role, task, runtime)
     muse = shutil.which("muse")
     if muse is None:
         raise MuseWorkerError(
@@ -112,13 +144,19 @@ def run(role: str, workspace_arg: str, task_file: str, *, dry_run: bool = False)
         )
 
     if dry_run:
-        command = build_command(muse, "<temporary-prompt>")
+        command = build_command(
+            muse,
+            "<temporary-prompt>",
+            model=allocation.model,
+            reasoning_effort=allocation.reasoning_effort,
+        )
         print(
             json.dumps(
                 {
-                    "harness": "muse-code",
-                    "model": MODEL,
-                    "reasoning_effort": REASONING_EFFORT,
+                    "profile": profile,
+                    "harness": allocation.harness,
+                    "model": allocation.model,
+                    "reasoning_effort": allocation.reasoning_effort,
                     "role": role,
                     "workspace": str(workspace),
                     "command": command,
@@ -141,7 +179,12 @@ def run(role: str, workspace_arg: str, task_file: str, *, dry_run: bool = False)
             prompt_path = handle.name
         os.chmod(prompt_path, 0o600)
         completed = subprocess.run(
-            build_command(muse, prompt_path),
+            build_command(
+                muse,
+                prompt_path,
+                model=allocation.model,
+                reasoning_effort=allocation.reasoning_effort,
+            ),
             cwd=workspace,
             stdin=subprocess.DEVNULL,
             check=False,
@@ -157,7 +200,7 @@ def run(role: str, workspace_arg: str, task_file: str, *, dry_run: bool = False)
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
-        description="Run one codex_workflow role via Muse Spark 1.3 Contributor Max."
+        description="Run one codex_workflow role through its active Muse Code allocation."
     )
     parser.add_argument("--role", required=True)
     parser.add_argument("--workspace", required=True)

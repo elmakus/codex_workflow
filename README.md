@@ -19,49 +19,50 @@ owner-specific orchestration, model, update-channel, and safety choices.
 - Heavy uses progressive disclosure: standing orchestration stays in
   `heavy_route.md`; detailed work-package, Micro Execution, follow-up, and
   recovery guidance lives in `delegation.md` and is loaded only when needed.
-- Fresh/independent execution boundaries use isolated worker contexts. Codex-backed
-  profiles use new internal workers with `fork_turns="none"` by default;
-  `muse-max` uses fresh one-shot Muse Code invocations. App-level `create_thread`
-  is not used merely to obtain review independence, milestone isolation, or a
-  context reset.
+- Fresh/independent execution boundaries use isolated worker contexts. Internal
+  Codex roles use new workers with `fork_turns="none"` by default; the six
+  Muse-backed `muse-max` roles use fresh one-shot Muse Code invocations.
+  App-level `create_thread` is not used merely to obtain review independence,
+  milestone isolation, or a context reset.
 - Worker compute is selected by one global runtime profile. `plus` preserves the
   historical Luna-heavy allocation. `luna-xhigh` puts every non-Senior workflow
   worker on GPT-5.6 Luna XHigh. `pro-x5` moves ordinary worker roles to GPT-5.6
-  Sol Low. Experimental `muse-max` changes the worker harness itself: all seven
-  workflow roles run through native Muse Code on Muse Spark 1.3 Contributor with
-  `max` reasoning. Main is never changed by the profile.
-- In the three Codex-backed profiles, Senior Executor stays Sol Medium. In
-  `muse-max`, Senior is also Muse Spark 1.3 Contributor Max so the live test has
-  no non-Muse worker role.
+  Sol Low. `muse-max` is mixed-harness: Companion stays internal Codex on
+  GPT-5.6 Luna XHigh, while the six remaining roles use native Muse Code on Muse
+  Spark 1.3 Contributor with `max` reasoning. Main is never changed by the profile.
+- In `plus`, `luna-xhigh`, and `pro-x5`, Senior Executor stays Sol Medium.
+  In `muse-max`, Senior is one of the six Muse Spark 1.3 Contributor Max roles;
+  Companion remains the persistent internal Luna XHigh role.
 - Micro Executor is a distinct seventh worker below Default Executor. Its
   installed internal model follows the active Codex-backed profile: Luna High in
   `plus`, Luna XHigh in `luna-xhigh`, and Sol Low in `pro-x5`. Spark High remains
   an optional acceleration route for `plus` and `pro-x5`; `luna-xhigh`
   intentionally keeps Micro on Luna XHigh. `muse-max` routes Micro through Muse
-  Code like every other worker.
+  Code as one of its six Muse-backed roles.
 - Investigator may inspect one bounded project evidence gap, Internet sources,
   or both, while remaining read-only. Main retains causal, architecture,
   solution, integration, and acceptance decisions.
 - Companion is bootstrapped at the first deployment-state entry while Main's
-  context is still small. Codex-backed profiles keep one persistent Companion;
-  `muse-max` uses a bounded one-shot Muse Companion and fresh later invocations.
-  Bootstrap remains scoped to the current goal and does not trigger a full `agent_docs/`
-  or unrelated-module intake.
+  context is still small and remains one persistent internal Codex worker in every
+  profile. Under `muse-max` it is GPT-5.6 Luna XHigh. Bootstrap remains scoped to
+  the current goal and does not trigger a full `agent_docs/` or unrelated-module
+  intake.
 - Main owns deployment updates to `project_progress.md`, `project_diary.md`, and
   `latest_session_work.md`. Archivist handles other assigned documentation and
   the read-only closing handoff.
-- Heavy has no workflow-imposed aggregate worker limit for Codex-backed profiles.
+- Heavy has no workflow-imposed aggregate worker limit for internal Codex roles.
   The workflow does not write a fixed `max_concurrent_threads_per_session`;
-  available concurrency is left to the Codex platform/account. The initial
-  `muse-max` live-test runtime is deliberately sequential rather than emulating
-  subagent concurrency with unmanaged background processes.
-- Heavy is orchestration-only for Main. Codex-backed profiles retain long
-  event-driven waits; `muse-max` treats each bounded `muse exec` process as the
-  worker boundary. User-visible update cadence follows the active profile.
-- Running internal Codex workers may use `send_message` to `/root` only for rare
-  material mid-task `BLOCKER`, `COURSE_CHANGE`, or `CRITICAL_PARTIAL` events.
-  Routine progress and normal completion never use that channel. One-shot Muse
-  workers do not emulate `send_message` or polling.
+  available concurrency is left to the Codex platform/account. The six Muse-backed
+  `muse-max` roles remain sequential in this intermediate profile-semantics
+  checkpoint rather than emulating concurrency with unmanaged background processes.
+- Heavy is orchestration-only for Main. Internal Codex roles retain long
+  event-driven waits; each Muse-backed role treats its bounded `muse exec` process
+  as the worker boundary. User-visible update cadence follows the active profile.
+- Running internal Codex workers, including the `muse-max` Companion, may use
+  `send_message` to `/root` only for rare material mid-task `BLOCKER`,
+  `COURSE_CHANGE`, or `CRITICAL_PARTIAL` events. Routine progress and normal
+  completion never use that channel. One-shot Muse workers do not emulate
+  `send_message` or polling.
 - No token-accounting skill, deployment counting marker, usage-report table, or
   reporting obligation is included.
 - Release discovery and downloads are restricted to GitHub Releases published
@@ -85,7 +86,7 @@ Main loads `~/.codex/codex_workflow/delegation.md`.
 | Default Executor | Luna/max | Luna/xhigh | Sol/low | Muse Contributor/max | Normal bounded implementation and repair. |
 | Senior Executor | Sol/medium | Sol/medium | Sol/medium | Muse Contributor/max | Exceptionally difficult bounded production or solution work. |
 | Tester | Luna/max | Luna/xhigh | Sol/low | Muse Contributor/max | Independent verification. |
-| Companion | Luna/max | Luna/xhigh | Sol/low | Muse Contributor/max | Bounded read-only project context. Persistent for Codex-backed profiles; one-shot for the Muse live test. |
+| Companion | Luna/max | Luna/xhigh | Sol/low | Luna/xhigh | Bounded read-only project context. Persistent internal Codex worker in every profile. |
 | Investigator | Luna/max | Luna/xhigh | Sol/low | Muse Contributor/max | Disposable read-only project/Internet evidence investigation. |
 | Archivist | Luna/max | Luna/xhigh | Sol/low | Muse Contributor/max | Verified documentation outside Main-owned deployment-state docs and closing handoff. |
 
@@ -96,12 +97,13 @@ escalation ladder.
 The active selection is stored in
 `~/.codex/codex_workflow/settings.toml`. Missing settings on a pre-profile
 installation mean `plus`. Profile switches rewrite the rendered Heavy
-communication policy and settings in one compensating transaction; Codex-backed
-profiles also render internal worker model/reasoning fields. `muse-max` leaves
-those internal TOMLs valid but dormant and routes role execution through
+communication policy and settings in one compensating transaction. Every role
+assigned to the internal Codex harness is rendered from the profile allocation;
+under `muse-max`, that means Companion is rendered to Luna XHigh while the six
+Muse-assigned role TOMLs remain valid but dormant and are routed through
 `runtime/muse_worker.py`. Updates preserve the selected profile.
 
-### Muse Max live-test profile
+### Muse Max mixed-harness profile
 
 `muse-max` requires the official Muse Code CLI on `PATH`, an existing `muse login`,
 and account access to `muse-spark-1.3-contributor` at `max` reasoning. The runner
@@ -115,10 +117,13 @@ muse --disable-approval --trust-workspace exec \
   --prompt-file <generated-role-capsule>
 ```
 
-The managed Muse sandbox stays enabled. The runner does not use `--yolo` or
-`--disable-sandbox`, protects temporary prompt files with mode `0600`, and does
-not grant `.git` mutation authority to workers. Authentication and subscription
-usage remain owned by Muse Code.
+This M06 runner seam still leaves production sandbox/protocol behavior to the
+later Muse adapter milestone. Live workstation evidence for Muse Code 1.3.0 shows
+that nested bubblewrap is unavailable in the current unprivileged Docker runtime,
+so M07 must bind its final process policy from that evidence rather than from the
+old live-test assumption. Temporary prompt files remain mode `0600`, workers are
+not granted `.git` mutation authority, and authentication/subscription usage
+remain owned by Muse Code.
 
 ## Documentation locations
 
@@ -164,7 +169,7 @@ through a compensating transaction.
 | `codex_workflow --profile plus` | Use the historical Luna-heavy worker allocation. |
 | `codex_workflow --profile luna-xhigh` | Use Luna XHigh for every non-Senior workflow worker; keep Senior on Sol Medium. |
 | `codex_workflow --profile pro-x5` | Use Sol Low for ordinary workers and Sol Medium for Senior. |
-| `codex_workflow --profile muse-max` | Keep Main unchanged and run every workflow worker through Muse Code with Muse Spark 1.3 Contributor Max; normal concise orchestration, sequential live-test runtime. |
+| `codex_workflow --profile muse-max` | Keep Main unchanged; use one persistent internal GPT-5.6 Luna XHigh Companion and route the six remaining roles through Muse Spark 1.3 Contributor Max; normal concise orchestration. |
 | `codex_workflow --personal` | Change project workflow preferences. |
 | `codex_workflow --disable` / `--enable` | Disable or enable the selected project. |
 | `codex_workflow --remove` | Preview removal, then remove owned files after explicit confirmation; preserve project documents. |

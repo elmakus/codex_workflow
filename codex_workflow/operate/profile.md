@@ -59,14 +59,13 @@ The profiles are:
 - `pro-x5`: Micro fallback, Default, Tester, Companion, Investigator and Archivist
   use GPT-5.6 Sol / low; Senior stays GPT-5.6 Sol / medium. Main may use normal
   concise progress and skill announcements without internal meta-reasoning.
-- `muse-max`: experimental live-test profile. Main remains the user-selected
-  Codex model (normally Sol when the user selects Sol). Every workflow worker
-  role, including Micro, Default, Senior, Tester, Companion, Investigator and
-  Archivist, is routed through the native Muse Code harness using
-  `muse-spark-1.3-contributor` with `max` reasoning. User-visible orchestration
-  uses normal concise milestone updates rather than silent orchestration. The
-  initial implementation uses bounded sequential one-shot Muse invocations so
-  it does not emulate Codex subagent concurrency with unmanaged processes.
+- `muse-max`: mixed-harness profile. Main remains the user-selected Codex
+  model. Companion remains one persistent internal Codex worker on GPT-5.6 Luna
+  XHigh. Micro, Default, Senior, Tester, Investigator and Archivist are routed
+  through the native Muse Code harness using `muse-spark-1.3-contributor` with
+  `max` reasoning. User-visible orchestration uses normal concise milestone
+  updates rather than silent orchestration. Muse-backed roles are bounded
+  one-shot invocations; later milestones own managed lane concurrency.
 
 `muse-max` requires the `muse` CLI on `PATH`, a completed `muse login`, and access
 to Muse Spark 1.3 Contributor Max. The profile switch itself does not install or
@@ -84,8 +83,7 @@ Micro's optional GPT-5.3-Codex-Spark / high override remains an acceleration pat
 for `plus` and `pro-x5` when the current runtime exposes and accepts model
 overrides. In `luna-xhigh`, do not use the Spark override: Micro follows the
 installed Luna XHigh worker. In `muse-max`, do not use the Codex Spark override:
-Micro uses Muse Spark 1.3 Contributor Max through Muse Code like every other
-workflow worker.
+Micro is one of the six roles using Muse Spark 1.3 Contributor Max through Muse Code.
 
 Profile state is global to this Codex home and is preserved by workflow updates.
 A pre-profile installation with no settings file is interpreted as `plus`, and

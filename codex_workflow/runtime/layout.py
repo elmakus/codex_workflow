@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 import re
 from dataclasses import dataclass
 from pathlib import Path
@@ -39,6 +40,11 @@ BUILTIN_WORKERS = frozenset(
 # ownership markers so it can safely retire skills installed by older private
 # releases during an explicit local migration.
 BUILTIN_SKILLS = frozenset()
+
+
+def default_codex_home() -> Path:
+    configured = os.environ.get("CODEX_HOME")
+    return Path(configured).expanduser() if configured else Path.home() / ".codex"
 
 
 @dataclass(frozen=True)

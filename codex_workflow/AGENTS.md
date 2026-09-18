@@ -38,19 +38,17 @@ In leaf state, work directly without reading `~/.codex/codex_workflow/heavy_rout
 
 ## Early Companion
 
-On the first transition into `deployment state` in a workflow session, determine the active compute profile from `~/.codex/codex_workflow/settings.toml` before creating the Companion. Do this before broad project discovery, planning, modifying project state, or dispatching any other worker, while Main's context is still small. Never create a second Companion in the same workflow session for Codex-backed profiles.
+On the first transition into `deployment state` in a workflow session, determine the active compute profile from `~/.codex/codex_workflow/settings.toml` before creating the Companion. Do this before broad project discovery, planning, modifying project state, or dispatching any other worker, while Main's context is still small. Never create a second Companion in the same workflow session.
 
 Prepare the bootstrap assignment from the user request and already-known context only; do not perform broad discovery just to prepare it. Include **Task ID**, **Project Context Scope**, **Context Task + Goal**, and **Main-Agent Context Guidance**. Keep the scope bounded to the current deployment goal. Ask Companion to inspect only directly relevant checkpoints, documents, or project surfaces, retain useful supporting detail, and return a compact source-linked brief. Do not ask it to read the complete `agent_docs/` framework or unrelated module documents unless the current scope actually requires them.
 
-When the active profile is `muse-max`, write that capsule to a temporary Markdown file and invoke `python3 ~/.codex/codex_workflow/runtime/muse_worker.py --role companion --workspace <project-root> --task-file <capsule-file>`. Do not create an internal Codex Companion. This live-test profile uses a bounded one-shot Muse Companion rather than persistent subagent context; later context assignments use fresh Muse Companion invocations with the same logical Task ID and only the durable references and changed capsule information they need.
+For every compute profile, including `muse-max`, immediately create one persistent internal Codex Companion with `agent_type="companion"`, `task_name="companion"`, and `fork_turns="none"`, or reuse the existing Companion. Under `muse-max`, the active profile renders this Companion to GPT-5.6 Luna XHigh; never route it through `runtime/muse_worker.py`. Reuse the same Companion for later context assignments and later deployments in the same workflow session. If Companion creation is temporarily unavailable, continue with proportionate Main reads and create the single Companion later only if the capability becomes available.
 
-For all Codex-backed profiles, immediately create one persistent Companion with `agent_type="companion"`, `task_name="companion"`, and `fork_turns="none"`, or reuse the existing Companion. Reuse the same Companion for later context assignments and later deployments in the same workflow session. If Companion creation is temporarily unavailable, continue with proportionate Main reads and create the single Companion later only if the capability becomes available.
-
-After bootstrapping Companion, continue independent Heavy intake and orchestration immediately when the active worker runtime supports it. Do not wait solely for Companion unless its result is needed for a decision. Under `muse-max`, the initial one-shot invocation is the bootstrap boundary; use its completed brief before relying on it because the live-test runner is intentionally sequential.
+After bootstrapping Companion, continue independent Heavy intake and orchestration immediately when the active worker runtime supports it. Do not wait solely for Companion unless its result is needed for a decision.
 
 ## Worker Material Event Push
 
-For Codex-backed profiles, when the runtime exposes `send_message`, a running worker may send one concise message to `/root` only for a material mid-task event whose value would materially decrease if delayed until its normal final result:
+For internal Codex workers, including the `muse-max` Companion, when the runtime exposes `send_message`, a running worker may send one concise message to `/root` only for a material mid-task event whose value would materially decrease if delayed until its normal final result:
 
 - `BLOCKER` — the worker cannot make useful progress without a Main-owned decision or missing input.
 - `COURSE_CHANGE` — evidence invalidates, cancels, or materially changes work currently being performed by Main or another worker.
@@ -58,7 +56,7 @@ For Codex-backed profiles, when the runtime exposes `send_message`, a running wo
 
 Use `EVENT_TYPE | Task ID | essential fact or blocker | requested action`. Do not use `send_message` for routine progress, heartbeats, ETA, "still working", status chatter, ordinary partial findings, or normal completion. Do not resend an unchanged event. Normal completion stays on the standard worker final-result/status path. After sending, continue any independent useful work; wait only when genuinely blocked. Prefer worker-to-`/root`; direct sibling messaging is exceptional and allowed only when the event materially affects that sibling's active task and routing it through Main would create unnecessary delay or wasted work.
 
-Under `muse-max`, external one-shot workers do not have the Codex `send_message` channel. Their process completion or failure is the worker boundary; do not emulate material-event push with polling or unmanaged background processes.
+Under `muse-max`, the six Muse-backed one-shot roles do not have the Codex `send_message` channel. Their process completion or failure is the worker boundary; do not emulate material-event push with polling or unmanaged background processes. Companion remains internal and follows the policy above.
 
 ## Proportionate Documentation Read
 
