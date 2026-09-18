@@ -28,6 +28,9 @@ jobs:
       - name: Muse adapter regression tests
         run: python3 -B scripts/test_muse_adapter.py -v
 
+      - name: Python compile check
+        run: python3 -m compileall -q codex_workflow scripts
+
       - name: Muse Max profile regression tests
         run: python3 -B scripts/test_muse_profile.py -v
 
