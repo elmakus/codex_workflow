@@ -52,9 +52,10 @@ owner-specific orchestration, model, update-channel, and safety choices.
   the read-only closing handoff.
 - Heavy has no workflow-imposed aggregate worker limit for internal Codex roles.
   The workflow does not write a fixed `max_concurrent_threads_per_session`;
-  available concurrency is left to the Codex platform/account. The six Muse-backed
-  `muse-max` roles remain sequential in this intermediate profile-semantics
-  checkpoint rather than emulating concurrency with unmanaged background processes.
+  available concurrency is left to the Codex platform/account. Muse-backed
+  `muse-max` calls use the bounded single-invocation adapter; lane-level Muse
+  concurrency remains deferred to the managed concurrency milestone rather than
+  being emulated with unmanaged background processes.
 - Heavy is orchestration-only for Main. Internal Codex roles retain long
   event-driven waits; each Muse-backed role treats its bounded `muse exec` process
   as the worker boundary. User-visible update cadence follows the active profile.
@@ -114,16 +115,30 @@ this path. It launches the equivalent of:
 muse --disable-approval --trust-workspace exec \
   --model muse-spark-1.3-contributor \
   --reasoning-effort max \
-  --prompt-file <generated-role-capsule>
+  --prompt-file <private-generated-role-capsule> \
+  --workspace <assigned-workspace> \
+  --json \
+  --output-schema <private-generated-result-schema> \
+  --session-id <run-uuid> \
+  --user-input-auto-resolve \
+  --disable-sandbox
 ```
 
-This M06 runner seam still leaves production sandbox/protocol behavior to the
-later Muse adapter milestone. Live workstation evidence for Muse Code 1.3.0 shows
-that nested bubblewrap is unavailable in the current unprivileged Docker runtime,
-so M07 must bind its final process policy from that evidence rather than from the
-old live-test assumption. Temporary prompt files remain mode `0600`, workers are
-not granted `.git` mutation authority, and authentication/subscription usage
-remain owned by Muse Code.
+The adapter continuously drains JSONL stdout and diagnostic stderr into private
+per-run artifacts under `~/.codex/codex_workflow/muse_runs/`, validates exactly
+one terminal lifecycle record plus the versioned final worker report, and prints
+only one bounded normalized result on the normal path. Raw streams have per-run
+size limits and retained runs are bounded by age, count, and aggregate size.
+
+Timeout or cancellation sends graceful termination to the Muse process and the
+captured descendant tree, including children that moved into a separate process
+group/session, then escalates to hard termination after a bounded grace period.
+Live workstation evidence for Muse Code 1.3.0 established that nested bubblewrap
+cannot run in the current unprivileged Docker boundary, so this workstation path
+uses `--disable-sandbox`; Docker remains the outer isolation boundary.
+Temporary prompt/schema files and run artifacts are private, workers are not
+granted `.git` mutation authority, and Muse authentication/subscription state
+remains owned by the official CLI.
 
 ## Documentation locations
 

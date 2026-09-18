@@ -12,10 +12,11 @@ For `muse-max`, Companion remains one persistent internal Codex worker on GPT-5.
 python3 ~/.codex/codex_workflow/runtime/muse_worker.py \
   --role <role> \
   --workspace <project-root> \
-  --task-file <capsule-file>
+  --task-file <capsule-file> \
+  --task-id <logical-task-id>
 ```
 
-The runner resolves the active compute profile and requested role through shared profile authority, refuses roles that are not assigned to `muse-code`, loads the installed workflow worker TOML only as the semantic role contract, and takes model/reasoning from that active allocation. Muse authentication and subscription accounting stay owned by the official Muse Code CLI. Final sandbox/protocol policy belongs to the later production adapter milestone and must use the captured live Muse runtime evidence.
+The runner resolves the active compute profile and requested role through shared profile authority, refuses roles that are not assigned to `muse-code`, loads the installed workflow worker TOML only as the semantic role contract, and takes model/reasoning from that active allocation. It binds the Muse Code 1.3.0 machine-readable surface captured by workstation evidence, requires one versioned structured final report, and returns one compact normalized JSON result. Raw JSONL/stderr are stored privately under `~/.codex/codex_workflow/muse_runs/` with bounded retention instead of being copied into Main context. The adapter owns outer timeout/cancellation and process-tree cleanup. Muse authentication and subscription accounting stay owned by the official Muse Code CLI; the current workstation path disables nested Muse sandboxing because the unprivileged Docker boundary cannot provide the required user namespace.
 
 Under `muse-max`, do not use internal Codex worker APIs for the six Muse-backed roles. Each such worker call is a bounded external Muse Code invocation. A follow-up or repair launches a new invocation with the same Task ID, changed capsule information, and required durable evidence; a fresh independent Muse-backed review uses a fresh `tester` invocation. Companion is the exception: use the normal persistent internal Codex lifecycle, including `spawn_agent`/resume/wait semantics as available. Do not emulate Muse concurrency with unmanaged background processes.
 
@@ -61,7 +62,7 @@ App-level `create_thread` is allowed only when the user explicitly asks for a se
 
 For internal Codex workers, the standing worker-side material-event policy is defined once in project `AGENTS.md`; do not repeat it in every task capsule. They may use runtime `send_message` to `/root` only for `BLOCKER`, `COURSE_CHANGE`, or `CRITICAL_PARTIAL` events under that policy. Ordinary progress, ETA, heartbeats, status chatter, routine partial findings, and normal completion are not follow-up traffic.
 
-The six Muse-backed `muse-max` roles have no `send_message` path. Their normal process output is the completion/blocker boundary; do not build a polling or background-message shim. Companion remains an internal Codex worker and follows the normal event policy.
+The six Muse-backed `muse-max` roles have no `send_message` path. Their normal completion/blocker boundary is the adapter's single compact normalized result; raw Muse trajectories remain in private run artifacts. Do not build a polling or background-message shim. Companion remains an internal Codex worker and follows the normal event policy.
 
 Do not use Main follow-ups to poll worker status. Send a follow-up only when Main has new evidence, a changed decision, or changed capsule information that the existing worker needs. For internal Codex workers, a `wait_agent` timeout without new evidence is not a reason to request an update. Prefer worker-to-Main material-event routing when the active runtime supports it; do not instruct sibling messaging unless the sibling's active task is materially affected and Main routing would create unnecessary delay or wasted work.
 
