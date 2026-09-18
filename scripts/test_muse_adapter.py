@@ -25,10 +25,12 @@ from runtime.layout import PackageLayout, ProjectPaths, RuntimePaths  # noqa: E4
 from runtime.lifecycle import plan_bootstrap  # noqa: E402
 from runtime.muse_worker import (  # noqa: E402
     MuseWorkerError,
+    MuseWorkerInvocation,
     _failure_kind,
     build_command,
     enforce_retention,
     execute_worker,
+    execute_workers_concurrently,
 )
 
 
@@ -51,6 +53,9 @@ role = schema["properties"]["role"]["enum"][0]
 task_id = schema["properties"]["task_id"]["enum"][0]
 workspace = Path(value("--workspace"))
 mode = os.environ.get("FAKE_MUSE_MODE", "success")
+mode_file = workspace / ".fake-muse-mode"
+if mode_file.is_file():
+    mode = mode_file.read_text(encoding="utf-8").strip()
 
 report = {
     "schema_version": "1",
@@ -72,7 +77,17 @@ configured = {
 }
 print(json.dumps(configured), flush=True)
 
-if mode == "success":
+if mode in {"success", "barrier"}:
+    if mode == "barrier":
+        barrier = Path(os.environ["FAKE_MUSE_BARRIER_DIR"])
+        barrier.mkdir(parents=True, exist_ok=True)
+        (barrier / ("ready-" + workspace.name)).write_text("ready", encoding="utf-8")
+        deadline = time.monotonic() + 3.0
+        while len(list(barrier.glob("ready-*"))) < 2:
+            if time.monotonic() >= deadline:
+                print("barrier peer did not start", file=sys.stderr, flush=True)
+                raise SystemExit(4)
+            time.sleep(0.02)
     terminal = {
         "payload_type": "run.terminal.completed",
         "payload": {
@@ -359,6 +374,174 @@ class MuseAdapterTests(unittest.TestCase):
             self.assertEqual(result["failure_kind"], "cancelled")
             child_pid = int((fixture.workspace / "child.pid").read_text())
             self.assertTrue(_wait_dead(child_pid), f"child {child_pid} survived cancellation")
+
+    def _batch_invocation(
+        self,
+        fixture: AdapterFixture,
+        workspace: Path,
+        task_id: str,
+        *,
+        cancel_event: threading.Event | None = None,
+        run_id: str | None = None,
+    ) -> MuseWorkerInvocation:
+        workspace.mkdir(exist_ok=True)
+        task = workspace / f"{task_id}.md"
+        task.write_text("Perform the bounded concurrent fixture task.\n", encoding="utf-8")
+        return MuseWorkerInvocation(
+            role="default_executor",
+            workspace=str(workspace),
+            task_file=str(task),
+            task_id=task_id,
+            timeout_seconds=5.0,
+            cancel_event=cancel_event,
+            terminate_grace_seconds=0.1,
+            runtime=fixture.runtime,
+            muse_path=str(fixture.fake_muse),
+            run_id=run_id,
+        )
+
+    def test_managed_concurrency_starts_two_isolated_lanes(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            fixture = AdapterFixture(root)
+            barrier = root / "barrier"
+            invocations = [
+                self._batch_invocation(fixture, root / "lane-a", "M09-A"),
+                self._batch_invocation(fixture, root / "lane-b", "M09-B"),
+            ]
+            with patch.dict(
+                os.environ,
+                {"FAKE_MUSE_MODE": "barrier", "FAKE_MUSE_BARRIER_DIR": str(barrier)},
+                clear=False,
+            ):
+                results = execute_workers_concurrently(invocations, max_workers=2)
+
+            self.assertEqual(
+                [result["terminal_status"] for result in results],
+                ["completed", "completed"],
+            )
+            self.assertEqual([result["task_id"] for result in results], ["M09-A", "M09-B"])
+            event_refs = [result["artifacts"]["events"] for result in results]
+            self.assertEqual(len(set(event_refs)), 2)
+
+    def test_managed_concurrency_rejects_overlapping_workspaces_before_launch(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            fixture = AdapterFixture(root)
+            parent = root / "lane-parent"
+            child = parent / "nested"
+            parent.mkdir()
+            child.mkdir()
+            parent_task = parent / "parent.md"
+            child_task = child / "child.md"
+            parent_task.write_text("parent\n", encoding="utf-8")
+            child_task.write_text("child\n", encoding="utf-8")
+            invocations = [
+                MuseWorkerInvocation(
+                    role="default_executor",
+                    workspace=str(parent),
+                    task_file=str(parent_task),
+                    task_id="M09-parent",
+                    runtime=fixture.runtime,
+                    muse_path=str(fixture.fake_muse),
+                ),
+                MuseWorkerInvocation(
+                    role="default_executor",
+                    workspace=str(child),
+                    task_file=str(child_task),
+                    task_id="M09-child",
+                    runtime=fixture.runtime,
+                    muse_path=str(fixture.fake_muse),
+                ),
+            ]
+            with self.assertRaisesRegex(MuseWorkerError, "non-overlapping workspaces"):
+                execute_workers_concurrently(invocations, max_workers=2)
+
+    def test_concurrent_lane_failure_does_not_cancel_healthy_lane(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            fixture = AdapterFixture(root)
+            failing = root / "lane-fail"
+            healthy = root / "lane-healthy"
+            invocations = [
+                self._batch_invocation(fixture, failing, "M09-fail"),
+                self._batch_invocation(fixture, healthy, "M09-healthy"),
+            ]
+            (failing / ".fake-muse-mode").write_text("model_failure", encoding="utf-8")
+            results = execute_workers_concurrently(invocations, max_workers=2)
+            self.assertEqual(results[0]["terminal_status"], "failed")
+            self.assertEqual(results[0]["failure_kind"], "muse_model")
+            self.assertEqual(results[1]["terminal_status"], "completed")
+            self.assertTrue(fixture.artifact(results[1], "result").is_file())
+
+    def test_concurrent_lane_cancel_does_not_cancel_healthy_lane(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            fixture = AdapterFixture(root)
+            cancelled = root / "lane-cancel"
+            healthy = root / "lane-healthy"
+            cancel_event = threading.Event()
+            invocations = [
+                self._batch_invocation(
+                    fixture,
+                    cancelled,
+                    "M09-cancel",
+                    cancel_event=cancel_event,
+                ),
+                self._batch_invocation(fixture, healthy, "M09-healthy"),
+            ]
+            (cancelled / ".fake-muse-mode").write_text("child", encoding="utf-8")
+            timer = threading.Timer(0.25, cancel_event.set)
+            timer.start()
+            try:
+                results = execute_workers_concurrently(invocations, max_workers=2)
+            finally:
+                timer.cancel()
+            self.assertEqual(results[0]["failure_kind"], "cancelled")
+            self.assertEqual(results[1]["terminal_status"], "completed")
+            child_pid = int((cancelled / "child.pid").read_text())
+            self.assertTrue(_wait_dead(child_pid), f"child {child_pid} survived cancellation")
+
+    def test_concurrent_active_runs_are_retention_protected(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            fixture = AdapterFixture(root)
+            runs_root = fixture.runtime.runtime / "muse_runs"
+            runs_root.mkdir(parents=True, exist_ok=True)
+            for index in range(50):
+                run_dir = runs_root / str(uuid.UUID(int=index + 1))
+                run_dir.mkdir()
+                (run_dir / "events.jsonl").write_text("old", encoding="utf-8")
+
+            run_ids = [str(uuid.uuid4()), str(uuid.uuid4())]
+            invocations = [
+                self._batch_invocation(
+                    fixture,
+                    root / "lane-a",
+                    "M09-A",
+                    run_id=run_ids[0],
+                ),
+                self._batch_invocation(
+                    fixture,
+                    root / "lane-b",
+                    "M09-B",
+                    run_id=run_ids[1],
+                ),
+            ]
+            barrier = root / "barrier"
+            with patch.dict(
+                os.environ,
+                {"FAKE_MUSE_MODE": "barrier", "FAKE_MUSE_BARRIER_DIR": str(barrier)},
+                clear=False,
+            ):
+                results = execute_workers_concurrently(invocations, max_workers=2)
+
+            self.assertEqual(
+                [result["terminal_status"] for result in results],
+                ["completed", "completed"],
+            )
+            self.assertTrue(all((runs_root / run_id).is_dir() for run_id in run_ids))
+            self.assertLessEqual(len(list(runs_root.iterdir())), 50)
 
     def test_retention_is_bounded_by_age_count_and_size(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
