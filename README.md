@@ -53,9 +53,12 @@ owner-specific orchestration, model, update-channel, and safety choices.
 - Heavy has no workflow-imposed aggregate worker limit for internal Codex roles.
   The workflow does not write a fixed `max_concurrent_threads_per_session`;
   available concurrency is left to the Codex platform/account. Muse-backed
-  `muse-max` calls use the bounded single-invocation adapter; lane-level Muse
-  concurrency remains deferred to the managed concurrency milestone rather than
-  being emulated with unmanaged background processes.
+  `muse-max` calls keep the bounded single-invocation adapter as the process
+  primitive. Already-authorized independent lanes may be concurrently awaited
+  through its managed batch helper against caller-assigned non-overlapping
+  workspaces; Project Workflow/Main still owns dependencies, `parallel_safe`,
+  lane/worktree assignment, and per-lane ordering. Unmanaged background shell
+  orchestration remains forbidden.
 - Heavy is orchestration-only for Main. Internal Codex roles retain long
   event-driven waits; each Muse-backed role treats its bounded `muse exec` process
   as the worker boundary. User-visible update cadence follows the active profile.
