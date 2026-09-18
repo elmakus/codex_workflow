@@ -11,18 +11,21 @@ commit `414a5d301ff17ca6e655330474c8346863d0d5d0`. Keep
 `codex_workflow/operate/VERSION`, the marker in
 `codex_workflow/operate/user_AGENTS.md`, README, and this document synchronized.
 
-This release adds the experimental `muse-max` compute profile for workstation
-live testing. Main remains the user-selected Codex model. Every workflow worker
-role is routed through native Muse Code with `muse-spark-1.3-contributor` and
-`max` reasoning. The profile uses normal concise orchestration communication,
-not silent orchestration, and the initial Muse worker runtime is sequential and
-one-shot by design.
+This release line contains the experimental mixed-harness `muse-max` profile.
+Main remains the user-selected Codex model. Companion remains one persistent
+internal Codex GPT-5.6 Luna XHigh worker; the six other workflow roles route
+through native Muse Code with `muse-spark-1.3-contributor` and `max` reasoning.
+Each Muse role is still a fresh bounded one-shot process. Project Workflow/Main
+may concurrently await already-authorized independent lanes through the managed
+adapter helper, while executor/tester/repair order remains sequential inside a
+lane.
 
 The existing `plus`, `luna-xhigh`, and `pro-x5` Codex-backed profiles remain
-available and retain their existing allocations. `muse-max` leaves internal
-Codex worker TOMLs valid but dormant and uses `runtime/muse_worker.py` to launch
-Muse Code. The managed Muse sandbox remains enabled; the runner does not use
-`--yolo` or `--disable-sandbox`.
+available and retain their existing allocations. The six Muse-assigned role
+TOMLs remain canonical semantic contracts and `runtime/muse_worker.py` supplies
+the external harness. On the current unprivileged workstation Docker boundary,
+the nested Muse bubblewrap sandbox is disabled with `--disable-sandbox`; Docker
+remains the outer isolation boundary. The runner does not use `--yolo`.
 
 Only publish a release from a reviewed commit intended for this fork's `main`.
 Do not publish a candidate branch merely to make the updater see it.
