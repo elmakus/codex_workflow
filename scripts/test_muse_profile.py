@@ -164,9 +164,9 @@ class MuseMaxProfileTests(unittest.TestCase):
             command,
             [
                 "/usr/local/bin/muse",
+                "exec",
                 "--disable-approval",
                 "--trust-workspace",
-                "exec",
                 "--model",
                 "profile-model",
                 "--reasoning-effort",

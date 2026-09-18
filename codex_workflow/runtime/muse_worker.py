@@ -231,9 +231,9 @@ def build_command(
 ) -> list[str]:
     command = [
         muse,
+        "exec",
         "--disable-approval",
         "--trust-workspace",
-        "exec",
         "--model",
         model,
         "--reasoning-effort",
@@ -773,6 +773,12 @@ def _read_diagnostic(path: Path, limit: int = 32768) -> str:
 
 def _failure_kind(text: str, *, default: str) -> str:
     lowered = text.lower()
+    if (
+        "invalid tui options" in lowered
+        or "unexpected argument" in lowered
+        or ("usage: muse" in lowered and "error:" in lowered)
+    ):
+        return "adapter_internal"
     if any(word in lowered for word in ("auth", "login", "credential", "unauthorized", "forbidden")):
         return "auth_runtime"
     if any(word in lowered for word in ("model", "provider", "rate limit", "quota")):

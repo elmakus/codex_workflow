@@ -25,6 +25,7 @@ from runtime.layout import PackageLayout, ProjectPaths, RuntimePaths  # noqa: E4
 from runtime.lifecycle import plan_bootstrap  # noqa: E402
 from runtime.muse_worker import (  # noqa: E402
     MuseWorkerError,
+    _failure_kind,
     build_command,
     enforce_retention,
     execute_worker,
@@ -231,7 +232,7 @@ class MuseAdapterTests(unittest.TestCase):
             schema_file="/tmp/schema.json",
             session_id="00000000-0000-0000-0000-000000000001",
         )
-        self.assertEqual(command[0], "/usr/local/bin/muse")
+        self.assertEqual(command[:2], ["/usr/local/bin/muse", "exec"])
         self.assertIn("--json", command)
         self.assertIn("--output-schema", command)
         self.assertIn("--session-id", command)
@@ -243,6 +244,17 @@ class MuseAdapterTests(unittest.TestCase):
             "profile-effort",
         )
         self.assertEqual(command[command.index("--workspace") + 1], "/repo")
+
+    def test_cli_usage_failure_is_adapter_internal_even_if_help_mentions_login(self) -> None:
+        diagnostic = (
+            "invalid TUI options: error: unexpected argument '--prompt-file' found\n"
+            "Usage: muse [OPTIONS] <COMMAND>\n"
+            "Commands: login logout auth"
+        )
+        self.assertEqual(
+            _failure_kind(diagnostic, default="protocol"),
+            "adapter_internal",
+        )
 
     def test_success_returns_one_bounded_result_and_private_raw_artifacts(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:

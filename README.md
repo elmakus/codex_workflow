@@ -112,7 +112,7 @@ uses the native harness directly; there is no OpenRouter or provider proxy in
 this path. It launches the equivalent of:
 
 ```text
-muse --disable-approval --trust-workspace exec \
+muse exec --disable-approval --trust-workspace \
   --model muse-spark-1.3-contributor \
   --reasoning-effort max \
   --prompt-file <private-generated-role-capsule> \
