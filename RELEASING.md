@@ -6,7 +6,7 @@ reviewed change is merged to `main`.
 
 ## Source and version
 
-The current version is `1.1.17-private.10`, based directly on upstream `v1.1.17`
+The current version is `1.1.17-private.11`, based directly on upstream `v1.1.17`
 commit `414a5d301ff17ca6e655330474c8346863d0d5d0`. Keep
 `codex_workflow/operate/VERSION`, the marker in
 `codex_workflow/operate/user_AGENTS.md`, README, and this document synchronized.
@@ -42,12 +42,12 @@ python3 -B scripts/test_workflow_runtime.py -v
 python3 -B scripts/test_muse_profile.py -v
 python3 -B codex_workflow/runtime/workflow.py validate --package-root codex_workflow --json
 python3 -B scripts/package_release.py --output-dir /absolute/path/to/fresh-output
-python3 -B scripts/package_release.py --verify /absolute/path/to/fresh-output/codex_workflow-1.1.17-private.10.zip
+python3 -B scripts/package_release.py --verify /absolute/path/to/fresh-output/codex_workflow-1.1.17-private.11.zip
 ```
 
 Expected release assets:
 
-- `codex_workflow-1.1.17-private.10.zip`
+- `codex_workflow-1.1.17-private.11.zip`
 - `SHA256SUMS`
 
 Record the exact source commit and completed verification in the release notes or
@@ -58,7 +58,7 @@ other durable provenance record.
 The repository release workflow is triggered by a `main` push that changes
 `codex_workflow/operate/VERSION`. It re-runs the runtime regression suite,
 validates and builds the package, verifies the archive and `SHA256SUMS`, then
-publishes a prerelease for tag `v1.1.17-private.10` with exactly the expected ZIP
+publishes a prerelease for tag `v1.1.17-private.11` with exactly the expected ZIP
 and checksum assets. The workflow finally verifies the published release.
 
 The installed updater ignores drafts and releases lacking either expected asset.

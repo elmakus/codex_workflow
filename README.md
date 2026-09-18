@@ -1,6 +1,6 @@
 # elmakus codex_workflow fork
 
-Version **1.1.17-private.10**, based directly on upstream prerelease `v1.1.17`
+Version **1.1.17-private.11**, based directly on upstream prerelease `v1.1.17`
 commit `414a5d301ff17ca6e655330474c8346863d0d5d0`.
 
 This public fork keeps upstream's lifecycle/runtime foundation while applying
