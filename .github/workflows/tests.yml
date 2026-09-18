@@ -25,6 +25,9 @@ jobs:
       - name: Runtime regression tests
         run: python3 -B scripts/test_workflow_runtime.py -v
 
+      - name: Muse adapter regression tests
+        run: python3 -B scripts/test_muse_adapter.py -v
+
       - name: Muse Max profile regression tests
         run: python3 -B scripts/test_muse_profile.py -v
 
