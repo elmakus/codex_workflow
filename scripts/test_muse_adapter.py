@@ -24,6 +24,7 @@ if str(PACKAGE) not in sys.path:
 from runtime.compute_profiles import plan_compute_profile  # noqa: E402
 from runtime.layout import PackageLayout, ProjectPaths, RuntimePaths  # noqa: E402
 from runtime.lifecycle import plan_bootstrap  # noqa: E402
+import runtime.muse_sessions as muse_sessions  # noqa: E402
 from runtime.muse_worker import (  # noqa: E402
     MuseWorkerError,
     MuseWorkerInvocation,
@@ -947,6 +948,88 @@ else:
             self.assertEqual(replacement["terminal_status"], "failed")
             self.assertEqual(replacement["failure_kind"], "session_busy")
             self.assertIn("unreconciled active", replacement["summary"])
+
+    def test_inflight_reservation_blocks_parallel_adoption(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            fixture = AdapterFixture(Path(temporary))
+            creator_at_session_lock = threading.Event()
+            let_creator_continue = threading.Event()
+            creator_result: list[dict] = []
+            creator_error: list[BaseException] = []
+            real_open_private_lock = muse_sessions._open_private_lock
+
+            def gated_open_private_lock(path: Path, *, nonblocking: bool) -> int:
+                if (
+                    path.name != "registry.lock"
+                    and threading.current_thread().name == "reservation-creator"
+                ):
+                    creator_at_session_lock.set()
+                    if not let_creator_continue.wait(3.0):
+                        raise RuntimeError("creator reservation gate timed out")
+                return real_open_private_lock(path, nonblocking=nonblocking)
+
+            def run_creator() -> None:
+                try:
+                    creator_result.append(
+                        fixture.execute(
+                            logical_worker_id="A1",
+                            caller_scope="M10:lane-a",
+                        )
+                    )
+                except BaseException as error:  # pragma: no cover - thread guard
+                    creator_error.append(error)
+
+            with patch(
+                "runtime.muse_sessions._open_private_lock",
+                side_effect=gated_open_private_lock,
+            ):
+                creator = threading.Thread(
+                    target=run_creator,
+                    name="reservation-creator",
+                )
+                creator.start()
+                self.assertTrue(
+                    creator_at_session_lock.wait(2.0),
+                    "creator never reached the pre-lock reservation window",
+                )
+
+                resumed = fixture.execute(
+                    logical_worker_id="A1",
+                    caller_scope="M10:lane-a",
+                    resume=True,
+                )
+                replacement = fixture.execute(
+                    logical_worker_id="A2",
+                    caller_scope="M10:lane-a",
+                )
+
+                self.assertEqual(resumed["terminal_status"], "failed")
+                self.assertEqual(resumed["failure_kind"], "session_busy")
+                self.assertIn("in-flight session reservation", resumed["summary"])
+                self.assertEqual(replacement["terminal_status"], "failed")
+                self.assertEqual(replacement["failure_kind"], "session_busy")
+                self.assertIn("in-flight session reservation", replacement["summary"])
+
+                let_creator_continue.set()
+                creator.join(timeout=3.0)
+
+            self.assertFalse(creator.is_alive())
+            self.assertFalse(creator_error, creator_error)
+            self.assertEqual(len(creator_result), 1)
+            self.assertEqual(creator_result[0]["terminal_status"], "completed")
+            self.assertEqual(creator_result[0]["runtime"]["session_state"], "ready")
+
+            resumed_after = fixture.execute(
+                logical_worker_id="A1",
+                caller_scope="M10:lane-a",
+                resume=True,
+            )
+            self.assertEqual(resumed_after["terminal_status"], "completed")
+            self.assertTrue(resumed_after["runtime"]["resumed"])
+            self.assertEqual(
+                resumed_after["runtime"]["session_id"],
+                creator_result[0]["runtime"]["session_id"],
+            )
 
     def test_session_registry_and_leases_are_private(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
