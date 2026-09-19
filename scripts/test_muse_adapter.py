@@ -817,6 +817,41 @@ class MuseAdapterTests(unittest.TestCase):
             )
             self.assertEqual(resumed["runtime"]["session_state"], "ready")
 
+    def test_unconfirmed_cleanup_quarantines_workspace_fail_closed(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            fixture = AdapterFixture(Path(temporary))
+            with patch(
+                "runtime.muse_worker._run_process",
+                return_value=(None, "timeout", [], False),
+            ):
+                interrupted = fixture.execute(
+                    logical_worker_id="A1",
+                    caller_scope="M10:lane-a",
+                )
+
+            self.assertEqual(interrupted["terminal_status"], "failed")
+            self.assertEqual(interrupted["failure_kind"], "adapter_internal")
+            self.assertEqual(
+                interrupted["runtime"]["session_state"],
+                "cleanup_unconfirmed",
+            )
+
+            resumed = fixture.execute(
+                logical_worker_id="A1",
+                caller_scope="M10:lane-a",
+                resume=True,
+            )
+            self.assertEqual(resumed["terminal_status"], "failed")
+            self.assertEqual(resumed["failure_kind"], "session_busy")
+
+            replacement = fixture.execute(
+                logical_worker_id="A2",
+                caller_scope="M10:lane-a",
+            )
+            self.assertEqual(replacement["terminal_status"], "failed")
+            self.assertEqual(replacement["failure_kind"], "session_busy")
+            self.assertIn("quarantined", replacement["summary"])
+
     def test_session_registry_and_leases_are_private(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             fixture = AdapterFixture(Path(temporary))
