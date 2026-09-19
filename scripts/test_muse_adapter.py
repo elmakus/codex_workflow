@@ -852,6 +852,101 @@ class MuseAdapterTests(unittest.TestCase):
             self.assertEqual(replacement["failure_kind"], "session_busy")
             self.assertIn("quarantined", replacement["summary"])
 
+    def test_persistence_failure_stale_active_blocks_later_process_reuse(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            env = os.environ.copy()
+            pythonpath = [str(PACKAGE), str(ROOT / "scripts")]
+            if env.get("PYTHONPATH"):
+                pythonpath.append(env["PYTHONPATH"])
+            env["PYTHONPATH"] = os.pathsep.join(pythonpath)
+            child = r"""
+import sys
+from pathlib import Path
+from unittest.mock import patch
+
+import test_muse_adapter as fixture_module
+import runtime.muse_sessions as muse_sessions
+
+root = Path(sys.argv[1])
+fixture = fixture_module.AdapterFixture(root)
+real_save = muse_sessions._save_registry
+
+def fail_quarantine(runtime, registry):
+    if any(
+        isinstance(record, dict)
+        and record.get("state") == "cleanup_unconfirmed"
+        for record in registry["workers"].values()
+    ):
+        raise OSError("simulated registry persistence failure")
+    return real_save(runtime, registry)
+
+try:
+    with patch(
+        "runtime.muse_worker._run_process",
+        return_value=(None, "timeout", [], False),
+    ), patch(
+        "runtime.muse_sessions._save_registry",
+        side_effect=fail_quarantine,
+    ):
+        fixture.execute(logical_worker_id="A1", caller_scope="M10:lane-a")
+except OSError:
+    pass
+else:
+    raise SystemExit("expected quarantine persistence failure")
+"""
+            completed = subprocess.run(
+                [sys.executable, "-c", child, str(root)],
+                cwd=ROOT,
+                env=env,
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+            self.assertEqual(
+                completed.returncode,
+                0,
+                completed.stdout + completed.stderr,
+            )
+
+            runtime = RuntimePaths(root / "codex-home")
+            registry = json.loads(
+                (runtime.runtime / "muse_sessions" / "registry.json").read_text(
+                    encoding="utf-8"
+                )
+            )
+            record = next(iter(registry["workers"].values()))
+            self.assertEqual(record["state"], "active")
+
+            resumed = execute_worker(
+                "default_executor",
+                str(root / "workspace"),
+                str(root / "workspace" / "M07-T01.md"),
+                task_id="M07-T01",
+                runtime=runtime,
+                muse_path=str(root / "fake-muse"),
+                logical_worker_id="A1",
+                caller_scope="M10:lane-a",
+                resume=True,
+            )
+            self.assertEqual(resumed["terminal_status"], "failed")
+            self.assertEqual(resumed["failure_kind"], "session_busy")
+            self.assertIn("unreconciled active", resumed["summary"])
+
+            replacement = execute_worker(
+                "default_executor",
+                str(root / "workspace"),
+                str(root / "workspace" / "M07-T01.md"),
+                task_id="M07-T01",
+                runtime=runtime,
+                muse_path=str(root / "fake-muse"),
+                logical_worker_id="A2",
+                caller_scope="M10:lane-a",
+            )
+            self.assertEqual(replacement["terminal_status"], "failed")
+            self.assertEqual(replacement["failure_kind"], "session_busy")
+            self.assertIn("unreconciled active", replacement["summary"])
+
     def test_session_registry_and_leases_are_private(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             fixture = AdapterFixture(Path(temporary))
