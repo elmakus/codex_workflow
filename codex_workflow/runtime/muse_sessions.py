@@ -21,7 +21,7 @@ from runtime.layout import RuntimePaths
 SESSION_REGISTRY_VERSION = "1"
 MAX_SESSION_RECORDS = 256
 LOGICAL_WORKER_ID_RE = re.compile(r"^[A-Za-z0-9_.:-]{1,128}$")
-_SESSION_STATES = {"reserved", "active", "ready", "needs_probe"}
+_SESSION_STATES = {"reserved", "active", "ready", "needs_probe", "cleanup_unconfirmed"}
 
 
 class SessionStateError(RuntimeError):
@@ -295,6 +295,24 @@ def acquire_worker_session(
     with _registry_guard(runtime):
         registry = _load_registry(runtime)
         workers = registry["workers"]
+        quarantined = next(
+            (
+                candidate
+                for candidate in workers.values()
+                if isinstance(candidate, dict)
+                and candidate.get("state") == "cleanup_unconfirmed"
+                and candidate.get("workspace") == workspace
+            ),
+            None,
+        )
+        if quarantined is not None:
+            raise SessionStateError(
+                "session_busy",
+                "Muse workspace is quarantined because prior process-tree cleanup was not confirmed",
+                logical_worker_id=worker_id,
+                session_id=quarantined.get("session_id"),
+                resumed=resume,
+            )
         record = workers.get(registry_key)
         expected = _binding_record(
             logical_worker_id=worker_id,
@@ -416,10 +434,11 @@ def finish_worker_session(
 ) -> None:
     """Persist terminal resumability state, then release the per-session lease."""
 
-    try:
-        _update_state(runtime, lease.logical_worker_id, lease.session_id, state)
-    finally:
-        lease.release()
+    # Persist terminal/quarantine state before releasing the process-local
+    # flock. If persistence fails, keep the flock held fail-closed for the
+    # lifetime of this adapter process rather than exposing an unknown session.
+    _update_state(runtime, lease.logical_worker_id, lease.session_id, state)
+    lease.release()
 
 
 def read_worker_session(
