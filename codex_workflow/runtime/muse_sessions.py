@@ -289,10 +289,14 @@ def acquire_worker_session(
     worker_id = _safe_worker_id(logical_worker_id, resume=resume)
     scope = _safe_scope(caller_scope)
     registry_key = _registry_key(worker_id, scope)
-    created = False
-    reserved_from_state: str | None = None
     session_id: str
+    prior_state: str | None = None
 
+    # Keep the registry guard until the per-session flock is acquired and the
+    # active state is durable. Session flocks are acquired non-blocking, so this
+    # does not introduce a registry/session-lock deadlock. It also avoids a
+    # durable ownerless "reserved" window between registry validation and the
+    # session lock.
     with _registry_guard(runtime):
         registry = _load_registry(runtime)
         workers = registry["workers"]
@@ -311,7 +315,7 @@ def acquire_worker_session(
             if state == "cleanup_unconfirmed":
                 summary = "Muse workspace is quarantined because prior process-tree cleanup was not confirmed"
             elif state == "reserved":
-                summary = "Muse workspace has an in-flight session reservation; wait for it to resolve"
+                summary = "Muse workspace has an unreconciled session reservation; explicit reconciliation is required"
             else:
                 summary = "Muse workspace has an unreconciled active session; explicit reconciliation is required"
             raise SessionStateError(
@@ -321,6 +325,7 @@ def acquire_worker_session(
                 session_id=unreconciled.get("session_id"),
                 resumed=resume,
             )
+
         record = workers.get(registry_key)
         expected = _binding_record(
             logical_worker_id=worker_id,
@@ -333,7 +338,7 @@ def acquire_worker_session(
             workspace=workspace,
             task_id=task_id,
             caller_scope=scope,
-            state="reserved",
+            state="active",
         )
 
         if resume:
@@ -371,6 +376,7 @@ def acquire_worker_session(
                     session_id=record.get("session_id"),
                     resumed=True,
                 )
+            prior_state = state
             session_id = record.get("session_id")
             try:
                 if str(uuid.UUID(session_id)) != str(session_id).lower():
@@ -382,15 +388,6 @@ def acquire_worker_session(
                     logical_worker_id=worker_id,
                     resumed=True,
                 ) from error
-
-            # Reserve the canonical workspace while still holding the registry
-            # guard. Without this transition, two different retained sessions
-            # for one workspace can both pass validation before either acquires
-            # its distinct per-session flock.
-            reserved_from_state = state
-            record["state"] = "reserved"
-            record["updated_at"] = time.time()
-            _save_registry(runtime, registry)
         else:
             if record is not None:
                 raise SessionStateError(
@@ -406,7 +403,27 @@ def acquire_worker_session(
                     logical_worker_id=worker_id,
                 )
             session_id = str(uuid.uuid4())
-            record = _binding_record(
+
+        locks_root = _session_locks_root(runtime)
+        _ensure_private_dir(locks_root)
+        lock_path = locks_root / f"{session_id}.lock"
+        try:
+            lock_fd = _open_private_lock(lock_path, nonblocking=True)
+        except BlockingIOError as error:
+            raise SessionStateError(
+                "session_busy",
+                "logical Muse session already has an active invocation",
+                logical_worker_id=worker_id,
+                session_id=session_id,
+                resumed=resume,
+            ) from error
+
+        if resume:
+            assert isinstance(record, dict)
+            record["state"] = "active"
+            record["updated_at"] = time.time()
+        else:
+            workers[registry_key] = _binding_record(
                 logical_worker_id=worker_id,
                 session_id=session_id,
                 role=role,
@@ -417,56 +434,80 @@ def acquire_worker_session(
                 workspace=workspace,
                 task_id=task_id,
                 caller_scope=scope,
-                state="reserved",
+                state="active",
             )
-            workers[registry_key] = record
+
+        try:
             _save_registry(runtime, registry)
-            created = True
-    locks_root = _session_locks_root(runtime)
-    _ensure_private_dir(locks_root)
-    lock_path = locks_root / f"{session_id}.lock"
-    try:
-        lock_fd = _open_private_lock(lock_path, nonblocking=True)
-    except BlockingIOError as error:
-        if created:
-            with _registry_guard(runtime):
-                registry = _load_registry(runtime)
-                current = registry["workers"].get(registry_key)
-                if (
-                    isinstance(current, dict)
-                    and current.get("session_id") == session_id
-                    and current.get("state") == "reserved"
-                ):
-                    del registry["workers"][registry_key]
-                    _save_registry(runtime, registry)
-        elif reserved_from_state is not None:
-            with _registry_guard(runtime):
-                registry = _load_registry(runtime)
-                current = registry["workers"].get(registry_key)
-                if (
-                    isinstance(current, dict)
-                    and current.get("session_id") == session_id
-                    and current.get("state") == "reserved"
-                ):
-                    current["state"] = reserved_from_state
-                    current["updated_at"] = time.time()
-                    _save_registry(runtime, registry)
-        raise SessionStateError(
-            "session_busy",
-            "logical Muse session already has an active invocation",
-            logical_worker_id=worker_id,
-            session_id=session_id,
-            resumed=resume,
-        ) from error
+        except Exception as error:
+            # The atomic save normally leaves the previous durable registry
+            # untouched on failure. If failure happened after replacement,
+            # reconcile any just-persisted active record back to the exact
+            # pre-acquisition state while the session flock is still held.
+            reconciled = False
+            try:
+                durable = _load_registry(runtime)
+                current = durable["workers"].get(registry_key)
+                if resume:
+                    if (
+                        isinstance(current, dict)
+                        and current.get("session_id") == session_id
+                        and current.get("state") == "active"
+                    ):
+                        current["state"] = prior_state
+                        current["updated_at"] = time.time()
+                        _save_registry(runtime, durable)
+                    elif not (
+                        isinstance(current, dict)
+                        and current.get("session_id") == session_id
+                        and current.get("state") == prior_state
+                    ):
+                        raise SessionStateError(
+                            "adapter_internal",
+                            "Muse session activation failed with an unexpected durable state",
+                            logical_worker_id=worker_id,
+                            session_id=session_id,
+                            resumed=True,
+                        )
+                else:
+                    if (
+                        isinstance(current, dict)
+                        and current.get("session_id") == session_id
+                        and current.get("state") == "active"
+                    ):
+                        del durable["workers"][registry_key]
+                        _save_registry(runtime, durable)
+                    elif current is not None:
+                        raise SessionStateError(
+                            "adapter_internal",
+                            "Muse session activation failed with an unexpected durable state",
+                            logical_worker_id=worker_id,
+                            session_id=session_id,
+                        )
+                reconciled = True
+            except Exception:
+                # Keep the flock open fail-closed for this adapter process when
+                # durable reconciliation itself cannot be confirmed.
+                pass
 
-    lease = SessionLease(worker_id, session_id, resume, lock_fd)
-    try:
-        _update_state(runtime, worker_id, session_id, "active")
-    except Exception:
-        lease.release()
-        raise
-    return lease
+            if reconciled:
+                try:
+                    fcntl.flock(lock_fd, fcntl.LOCK_UN)
+                finally:
+                    os.close(lock_fd)
 
+            raise SessionStateError(
+                "adapter_internal",
+                (
+                    "Muse session activation could not be persisted and durable state "
+                    + ("was reconciled." if reconciled else "could not be reconciled.")
+                ),
+                logical_worker_id=worker_id,
+                session_id=session_id,
+                resumed=resume,
+            ) from error
+
+    return SessionLease(worker_id, session_id, resume, lock_fd)
 
 def finish_worker_session(
     runtime: RuntimePaths,
