@@ -1099,6 +1099,90 @@ else:
             self.assertTrue(resumer_result[0]["runtime"]["resumed"])
             self.assertEqual(resumer_result[0]["runtime"]["session_state"], "ready")
 
+    def test_resume_lock_conflict_restores_prior_resumable_state(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            fixture = AdapterFixture(Path(temporary))
+            terminal_state_persisted = threading.Event()
+            let_terminal_owner_release = threading.Event()
+            owner_result: list[dict] = []
+            owner_error: list[BaseException] = []
+            real_update_state = muse_sessions._update_state
+
+            def gated_update_state(
+                runtime: RuntimePaths,
+                logical_worker_id: str,
+                session_id: str,
+                state: str,
+            ) -> None:
+                real_update_state(runtime, logical_worker_id, session_id, state)
+                if (
+                    state == "ready"
+                    and threading.current_thread().name == "terminal-owner"
+                ):
+                    terminal_state_persisted.set()
+                    if not let_terminal_owner_release.wait(3.0):
+                        raise RuntimeError("terminal owner release gate timed out")
+
+            def run_owner() -> None:
+                try:
+                    owner_result.append(
+                        fixture.execute(
+                            logical_worker_id="A1",
+                            caller_scope="M10:lane-a",
+                        )
+                    )
+                except BaseException as error:  # pragma: no cover - thread guard
+                    owner_error.append(error)
+
+            with patch(
+                "runtime.muse_sessions._update_state",
+                side_effect=gated_update_state,
+            ):
+                owner = threading.Thread(target=run_owner, name="terminal-owner")
+                owner.start()
+                try:
+                    self.assertTrue(
+                        terminal_state_persisted.wait(2.0),
+                        "owner never persisted terminal state before releasing its flock",
+                    )
+
+                    overlapping = fixture.execute(
+                        logical_worker_id="A1",
+                        caller_scope="M10:lane-a",
+                        resume=True,
+                    )
+                    self.assertEqual(overlapping["terminal_status"], "failed")
+                    self.assertEqual(overlapping["failure_kind"], "session_busy")
+
+                    retained = muse_sessions.read_worker_session(
+                        fixture.runtime,
+                        "A1",
+                        "M10:lane-a",
+                    )
+                    self.assertIsNotNone(retained)
+                    self.assertEqual(retained["state"], "ready")
+                finally:
+                    let_terminal_owner_release.set()
+                    owner.join(timeout=3.0)
+
+            self.assertFalse(owner.is_alive())
+            self.assertFalse(owner_error, owner_error)
+            self.assertEqual(len(owner_result), 1)
+            self.assertEqual(owner_result[0]["terminal_status"], "completed")
+            self.assertEqual(owner_result[0]["runtime"]["session_state"], "ready")
+
+            resumed_after = fixture.execute(
+                logical_worker_id="A1",
+                caller_scope="M10:lane-a",
+                resume=True,
+            )
+            self.assertEqual(resumed_after["terminal_status"], "completed")
+            self.assertTrue(resumed_after["runtime"]["resumed"])
+            self.assertEqual(
+                resumed_after["runtime"]["session_id"],
+                owner_result[0]["runtime"]["session_id"],
+            )
+
     def test_session_registry_and_leases_are_private(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             fixture = AdapterFixture(Path(temporary))
