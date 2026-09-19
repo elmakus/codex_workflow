@@ -242,6 +242,16 @@ def _binding_mismatches(record: dict[str, Any], expected: dict[str, Any]) -> lis
     return [field for field in fields if record.get(field) != expected.get(field)]
 
 
+def _workspaces_overlap(left: str, right: str) -> bool:
+    left_path = Path(left)
+    right_path = Path(right)
+    return (
+        left_path == right_path
+        or left_path in right_path.parents
+        or right_path in left_path.parents
+    )
+
+
 def _update_state(
     runtime: RuntimePaths,
     logical_worker_id: str,
@@ -306,7 +316,8 @@ def acquire_worker_session(
                 for candidate in workers.values()
                 if isinstance(candidate, dict)
                 and candidate.get("state") in {"reserved", "active", "cleanup_unconfirmed"}
-                and candidate.get("workspace") == workspace
+                and isinstance(candidate.get("workspace"), str)
+                and _workspaces_overlap(candidate["workspace"], workspace)
             ),
             None,
         )
