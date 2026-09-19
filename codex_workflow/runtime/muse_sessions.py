@@ -361,6 +361,15 @@ def acquire_worker_session(
                     session_id=record.get("session_id"),
                     resumed=True,
                 )
+            state = record.get("state")
+            if state not in {"ready", "needs_probe"}:
+                raise SessionStateError(
+                    "resume_rejected",
+                    "logical Muse session is not in a resumable state",
+                    logical_worker_id=worker_id,
+                    session_id=record.get("session_id"),
+                    resumed=True,
+                )
             session_id = record.get("session_id")
             try:
                 if str(uuid.UUID(session_id)) != str(session_id).lower():
@@ -372,6 +381,14 @@ def acquire_worker_session(
                     logical_worker_id=worker_id,
                     resumed=True,
                 ) from error
+
+            # Reserve the canonical workspace while still holding the registry
+            # guard. Without this transition, two different retained sessions
+            # for one workspace can both pass validation before either acquires
+            # its distinct per-session flock.
+            record["state"] = "reserved"
+            record["updated_at"] = time.time()
+            _save_registry(runtime, registry)
         else:
             if record is not None:
                 raise SessionStateError(
