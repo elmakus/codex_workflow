@@ -505,7 +505,9 @@ def _tree_is_gone(snapshot: dict[int, str]) -> bool:
     return not any(_same_process(pid, start) for pid, start in snapshot.items())
 
 
-def _terminate_process_tree(process: subprocess.Popen[bytes], grace_seconds: float) -> None:
+def _terminate_process_tree(process: subprocess.Popen[bytes], grace_seconds: float) -> bool:
+    """Terminate the captured process tree and positively confirm its absence."""
+
     snapshot = _snapshot_process_tree(process.pid)
     try:
         os.killpg(process.pid, signal.SIGTERM)
@@ -519,9 +521,11 @@ def _terminate_process_tree(process: subprocess.Popen[bytes], grace_seconds: flo
     deadline = time.monotonic() + max(0.0, grace_seconds)
     while time.monotonic() < deadline:
         if process.poll() is not None and _tree_is_gone(snapshot):
-            return
+            return True
         time.sleep(0.05)
 
+    # Capture descendants that appeared during graceful shutdown before escalation.
+    snapshot.update(_snapshot_process_tree(process.pid))
     try:
         os.killpg(process.pid, signal.SIGKILL)
     except (ProcessLookupError, PermissionError):
@@ -534,6 +538,13 @@ def _terminate_process_tree(process: subprocess.Popen[bytes], grace_seconds: flo
         process.wait(timeout=1.0)
     except subprocess.TimeoutExpired:
         pass
+
+    confirm_deadline = time.monotonic() + 1.0
+    while time.monotonic() < confirm_deadline:
+        if process.poll() is not None and _tree_is_gone(snapshot):
+            return True
+        time.sleep(0.05)
+    return process.poll() is not None and _tree_is_gone(snapshot)
 
 
 def _copy_stream(stream, destination: Path, errors: list[str]) -> None:
@@ -571,7 +582,7 @@ def _run_process(
     timeout_seconds: float,
     cancel_event: threading.Event | None,
     terminate_grace_seconds: float,
-) -> tuple[int | None, str | None, list[str]]:
+) -> tuple[int | None, str | None, list[str], bool]:
     drain_errors: list[str] = []
     try:
         process = subprocess.Popen(
@@ -583,7 +594,7 @@ def _run_process(
             start_new_session=True,
         )
     except OSError as error:
-        return None, f"spawn:{type(error).__name__}", [str(error)]
+        return None, f"spawn:{type(error).__name__}", [str(error)], True
 
     assert process.stdout is not None
     assert process.stderr is not None
@@ -613,22 +624,23 @@ def _run_process(
             break
         time.sleep(0.05)
 
+    cleanup_confirmed = True
     if stop_reason is not None:
-        _terminate_process_tree(process, terminate_grace_seconds)
+        cleanup_confirmed = _terminate_process_tree(process, terminate_grace_seconds)
 
     return_code = process.poll()
     if return_code is None:
         try:
             return_code = process.wait(timeout=1.0)
         except subprocess.TimeoutExpired:
-            _terminate_process_tree(process, 0.0)
+            cleanup_confirmed = _terminate_process_tree(process, 0.0)
             return_code = process.poll()
 
     for thread in threads:
         thread.join(timeout=2.0)
     if any(thread.is_alive() for thread in threads):
         drain_errors.append("stream drain thread did not terminate")
-    return return_code, stop_reason, drain_errors
+    return return_code, stop_reason, drain_errors, cleanup_confirmed
 
 
 def _parse_terminal(events_path: Path) -> tuple[dict[str, Any] | None, str | None]:
@@ -1190,6 +1202,7 @@ def execute_worker(
     prompt_path: Path | None = None
     schema_path: Path | None = None
     return_code: int | None = None
+    cleanup_confirmed = True
     try:
         prompt_fd, prompt_name = tempfile.mkstemp(
             prefix="prompt-", suffix=".md", dir=run_dir
@@ -1222,7 +1235,7 @@ def execute_worker(
             schema_file=str(schema_path),
             session_id=lease.session_id,
         )
-        return_code, stop_reason, drain_errors = _run_process(
+        return_code, stop_reason, drain_errors, cleanup_confirmed = _run_process(
             command,
             workspace=workspace,
             events_path=events_path,
@@ -1232,7 +1245,13 @@ def execute_worker(
             terminate_grace_seconds=terminate_grace_seconds,
         )
 
-        if stop_reason == "timeout":
+        if stop_reason in {"timeout", "cancelled"} and not cleanup_confirmed:
+            result = failure(
+                "adapter_internal",
+                "Muse process-tree cleanup could not be confirmed; the affected workspace is quarantined.",
+                return_code,
+            )
+        elif stop_reason == "timeout":
             result = failure(
                 "timeout",
                 "Muse worker exceeded the adapter timeout and its process tree was terminated.",
@@ -1333,8 +1352,13 @@ def execute_worker(
             except FileNotFoundError:
                 pass
 
-    next_state = "ready" if result["terminal_status"] == "completed" else "needs_probe"
+    next_state = (
+        "cleanup_unconfirmed"
+        if not cleanup_confirmed
+        else ("ready" if result["terminal_status"] == "completed" else "needs_probe")
+    )
     try:
+        # Persist the durable quarantine before releasing the process-local flock.
         finish_worker_session(runtime, lease, state=next_state)
         runtime_metadata["session_state"] = next_state
     except SessionStateError:
