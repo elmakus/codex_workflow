@@ -28,11 +28,11 @@ PACKAGE = owner.PACKAGE
 
 def _test_private_version_and_user_marker_are_synchronized(self: unittest.TestCase) -> None:
     version = (PACKAGE / "operate" / "VERSION").read_text(encoding="utf-8").strip()
-    self.assertEqual(version, "1.1.17-private.11")
+    self.assertEqual(version, "1.1.17-private.12")
     user_agents = (PACKAGE / "operate" / "user_AGENTS.md").read_text(encoding="utf-8")
     self.assertEqual(user_agents.count(f"<!-- codex-workflow-version: {version} -->"), 1)
-    self.assertGreater(base.parse_semver("1.1.17-private.11"), base.parse_semver("1.1.17-private.10"))
-    self.assertEqual(base.NEXT_PACKAGE_VERSION, "1.1.17-private.12")
+    self.assertGreater(base.parse_semver("1.1.17-private.12"), base.parse_semver("1.1.17-private.11"))
+    self.assertEqual(base.NEXT_PACKAGE_VERSION, "1.1.17-private.13")
 
 
 def _test_worker_models_and_reasoning(self: unittest.TestCase) -> None:
@@ -357,7 +357,7 @@ class ComputeProfileTests(unittest.TestCase):
         user_agents = incoming_root / "operate" / "user_AGENTS.md"
         user_agents.write_text(
             user_agents.read_text(encoding="utf-8").replace(
-                "1.1.17-private.11", next_version
+                "1.1.17-private.12", next_version
             ),
             encoding="utf-8",
         )
