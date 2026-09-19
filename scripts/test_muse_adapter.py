@@ -954,8 +954,9 @@ else:
             fixture = AdapterFixture(Path(temporary))
             creator_at_session_lock = threading.Event()
             let_creator_continue = threading.Event()
-            creator_result: list[dict] = []
+            creator_lease: list[muse_sessions.SessionLease] = []
             creator_error: list[BaseException] = []
+            competitor_errors: list[BaseException] = []
             real_open_private_lock = muse_sessions._open_private_lock
 
             def gated_open_private_lock(path: Path, *, nonblocking: bool) -> int:
@@ -965,19 +966,38 @@ else:
                 ):
                     creator_at_session_lock.set()
                     if not let_creator_continue.wait(3.0):
-                        raise RuntimeError("creator reservation gate timed out")
+                        raise RuntimeError("creator acquisition gate timed out")
                 return real_open_private_lock(path, nonblocking=nonblocking)
+
+            def acquire(worker: str, *, resume: bool = False):
+                return muse_sessions.acquire_worker_session(
+                    fixture.runtime,
+                    logical_worker_id=worker,
+                    role="default_executor",
+                    profile="muse-max",
+                    model="muse-spark-1.3-contributor",
+                    reasoning_effort="max",
+                    harness="muse-code",
+                    workspace=str(fixture.workspace),
+                    task_id="M07-T01",
+                    caller_scope="M10:lane-a",
+                    resume=resume,
+                )
 
             def run_creator() -> None:
                 try:
-                    creator_result.append(
-                        fixture.execute(
-                            logical_worker_id="A1",
-                            caller_scope="M10:lane-a",
-                        )
-                    )
+                    creator_lease.append(acquire("A1"))
                 except BaseException as error:  # pragma: no cover - thread guard
                     creator_error.append(error)
+
+            def run_competitor(worker: str, *, resume: bool) -> None:
+                try:
+                    lease = acquire(worker, resume=resume)
+                except BaseException as error:
+                    competitor_errors.append(error)
+                else:  # pragma: no cover - fail loudly if isolation breaks
+                    lease.release()
+                    competitor_errors.append(AssertionError("competitor unexpectedly acquired"))
 
             with patch(
                 "runtime.muse_sessions._open_private_lock",
@@ -990,61 +1010,63 @@ else:
                 creator.start()
                 self.assertTrue(
                     creator_at_session_lock.wait(2.0),
-                    "creator never reached the pre-lock reservation window",
+                    "creator never reached the guarded session-lock acquisition",
                 )
 
-                resumed = fixture.execute(
-                    logical_worker_id="A1",
-                    caller_scope="M10:lane-a",
-                    resume=True,
+                same_worker = threading.Thread(
+                    target=run_competitor,
+                    args=("A1",),
+                    kwargs={"resume": True},
                 )
-                replacement = fixture.execute(
-                    logical_worker_id="A2",
-                    caller_scope="M10:lane-a",
+                replacement = threading.Thread(
+                    target=run_competitor,
+                    args=("A2",),
+                    kwargs={"resume": False},
                 )
-
-                self.assertEqual(resumed["terminal_status"], "failed")
-                self.assertEqual(resumed["failure_kind"], "session_busy")
-                self.assertIn("in-flight session reservation", resumed["summary"])
-                self.assertEqual(replacement["terminal_status"], "failed")
-                self.assertEqual(replacement["failure_kind"], "session_busy")
-                self.assertIn("in-flight session reservation", replacement["summary"])
+                same_worker.start()
+                replacement.start()
+                time.sleep(0.1)
+                self.assertTrue(same_worker.is_alive())
+                self.assertTrue(replacement.is_alive())
 
                 let_creator_continue.set()
                 creator.join(timeout=3.0)
+                same_worker.join(timeout=3.0)
+                replacement.join(timeout=3.0)
 
             self.assertFalse(creator.is_alive())
+            self.assertFalse(same_worker.is_alive())
+            self.assertFalse(replacement.is_alive())
             self.assertFalse(creator_error, creator_error)
-            self.assertEqual(len(creator_result), 1)
-            self.assertEqual(creator_result[0]["terminal_status"], "completed")
-            self.assertEqual(creator_result[0]["runtime"]["session_state"], "ready")
+            self.assertEqual(len(creator_lease), 1)
+            self.assertEqual(len(competitor_errors), 2)
+            for error in competitor_errors:
+                self.assertIsInstance(error, muse_sessions.SessionStateError)
+                self.assertEqual(error.kind, "session_busy")
 
-            resumed_after = fixture.execute(
-                logical_worker_id="A1",
-                caller_scope="M10:lane-a",
-                resume=True,
-            )
-            self.assertEqual(resumed_after["terminal_status"], "completed")
-            self.assertTrue(resumed_after["runtime"]["resumed"])
-            self.assertEqual(
-                resumed_after["runtime"]["session_id"],
-                creator_result[0]["runtime"]["session_id"],
+            muse_sessions.finish_worker_session(
+                fixture.runtime,
+                creator_lease[0],
+                state="ready",
             )
 
     def test_resume_reservation_blocks_parallel_retained_session_adoption(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             fixture = AdapterFixture(Path(temporary))
+            created = {}
             for worker in ("A1", "A2"):
-                created = fixture.execute(
+                result = fixture.execute(
                     logical_worker_id=worker,
                     caller_scope="M10:lane-a",
                 )
-                self.assertEqual(created["terminal_status"], "completed")
+                self.assertEqual(result["terminal_status"], "completed")
+                created[worker] = result
 
             resumer_at_session_lock = threading.Event()
             let_resumer_continue = threading.Event()
-            resumer_result: list[dict] = []
+            resumer_lease: list[muse_sessions.SessionLease] = []
             resumer_error: list[BaseException] = []
+            competitor_error: list[BaseException] = []
             real_open_private_lock = muse_sessions._open_private_lock
 
             def gated_open_private_lock(path: Path, *, nonblocking: bool) -> int:
@@ -1054,20 +1076,38 @@ else:
                 ):
                     resumer_at_session_lock.set()
                     if not let_resumer_continue.wait(3.0):
-                        raise RuntimeError("resume reservation gate timed out")
+                        raise RuntimeError("resume acquisition gate timed out")
                 return real_open_private_lock(path, nonblocking=nonblocking)
+
+            def acquire(worker: str):
+                return muse_sessions.acquire_worker_session(
+                    fixture.runtime,
+                    logical_worker_id=worker,
+                    role="default_executor",
+                    profile="muse-max",
+                    model="muse-spark-1.3-contributor",
+                    reasoning_effort="max",
+                    harness="muse-code",
+                    workspace=str(fixture.workspace),
+                    task_id="M07-T01",
+                    caller_scope="M10:lane-a",
+                    resume=True,
+                )
 
             def run_resumer() -> None:
                 try:
-                    resumer_result.append(
-                        fixture.execute(
-                            logical_worker_id="A1",
-                            caller_scope="M10:lane-a",
-                            resume=True,
-                        )
-                    )
+                    resumer_lease.append(acquire("A1"))
                 except BaseException as error:  # pragma: no cover - thread guard
                     resumer_error.append(error)
+
+            def run_competitor() -> None:
+                try:
+                    lease = acquire("A2")
+                except BaseException as error:
+                    competitor_error.append(error)
+                else:  # pragma: no cover - fail loudly if isolation breaks
+                    lease.release()
+                    competitor_error.append(AssertionError("competitor unexpectedly acquired"))
 
             with patch(
                 "runtime.muse_sessions._open_private_lock",
@@ -1077,27 +1117,38 @@ else:
                 resumer.start()
                 self.assertTrue(
                     resumer_at_session_lock.wait(2.0),
-                    "resumer never reached the pre-lock reservation window",
+                    "resumer never reached the guarded session-lock acquisition",
                 )
 
-                competing = fixture.execute(
-                    logical_worker_id="A2",
-                    caller_scope="M10:lane-a",
-                    resume=True,
-                )
-                self.assertEqual(competing["terminal_status"], "failed")
-                self.assertEqual(competing["failure_kind"], "session_busy")
-                self.assertIn("in-flight session reservation", competing["summary"])
+                competing = threading.Thread(target=run_competitor)
+                competing.start()
+                time.sleep(0.1)
+                self.assertTrue(competing.is_alive())
 
                 let_resumer_continue.set()
                 resumer.join(timeout=3.0)
+                competing.join(timeout=3.0)
 
             self.assertFalse(resumer.is_alive())
+            self.assertFalse(competing.is_alive())
             self.assertFalse(resumer_error, resumer_error)
-            self.assertEqual(len(resumer_result), 1)
-            self.assertEqual(resumer_result[0]["terminal_status"], "completed")
-            self.assertTrue(resumer_result[0]["runtime"]["resumed"])
-            self.assertEqual(resumer_result[0]["runtime"]["session_state"], "ready")
+            self.assertEqual(len(resumer_lease), 1)
+            self.assertEqual(len(competitor_error), 1)
+            self.assertIsInstance(
+                competitor_error[0],
+                muse_sessions.SessionStateError,
+            )
+            self.assertEqual(competitor_error[0].kind, "session_busy")
+            self.assertEqual(
+                resumer_lease[0].session_id,
+                created["A1"]["runtime"]["session_id"],
+            )
+
+            muse_sessions.finish_worker_session(
+                fixture.runtime,
+                resumer_lease[0],
+                state="ready",
+            )
 
     def test_resume_lock_conflict_restores_prior_resumable_state(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
@@ -1181,6 +1232,108 @@ else:
             self.assertEqual(
                 resumed_after["runtime"]["session_id"],
                 owner_result[0]["runtime"]["session_id"],
+            )
+
+    def test_new_worker_activation_persistence_failure_is_reconciled(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            fixture = AdapterFixture(Path(temporary))
+            real_save = muse_sessions._save_registry
+            failed = False
+
+            def fail_first_active(runtime: RuntimePaths, registry: dict) -> None:
+                nonlocal failed
+                if not failed and any(
+                    isinstance(record, dict)
+                    and record.get("logical_worker_id") == "A1"
+                    and record.get("state") == "active"
+                    for record in registry["workers"].values()
+                ):
+                    failed = True
+                    raise OSError("simulated active-state persistence failure")
+                real_save(runtime, registry)
+
+            with patch(
+                "runtime.muse_sessions._save_registry",
+                side_effect=fail_first_active,
+            ):
+                failed_create = fixture.execute(
+                    logical_worker_id="A1",
+                    caller_scope="M10:lane-a",
+                )
+
+            self.assertEqual(failed_create["terminal_status"], "failed")
+            self.assertEqual(failed_create["failure_kind"], "adapter_internal")
+            self.assertTrue(failed)
+            self.assertIsNone(
+                muse_sessions.read_worker_session(
+                    fixture.runtime,
+                    "A1",
+                    "M10:lane-a",
+                )
+            )
+
+            replacement = fixture.execute(
+                logical_worker_id="A2",
+                caller_scope="M10:lane-a",
+            )
+            self.assertEqual(replacement["terminal_status"], "completed")
+
+    def test_resumed_worker_activation_persistence_failure_restores_ready(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            fixture = AdapterFixture(Path(temporary))
+            first = fixture.execute(
+                logical_worker_id="A1",
+                caller_scope="M10:lane-a",
+            )
+            self.assertEqual(first["terminal_status"], "completed")
+            real_save = muse_sessions._save_registry
+            failed = False
+
+            def fail_first_active(runtime: RuntimePaths, registry: dict) -> None:
+                nonlocal failed
+                record = next(iter(registry["workers"].values()))
+                if (
+                    not failed
+                    and record.get("logical_worker_id") == "A1"
+                    and record.get("state") == "active"
+                ):
+                    failed = True
+                    raise OSError("simulated resume activation persistence failure")
+                real_save(runtime, registry)
+
+            with patch(
+                "runtime.muse_sessions._save_registry",
+                side_effect=fail_first_active,
+            ):
+                failed_resume = fixture.execute(
+                    logical_worker_id="A1",
+                    caller_scope="M10:lane-a",
+                    resume=True,
+                )
+
+            self.assertEqual(failed_resume["terminal_status"], "failed")
+            self.assertEqual(failed_resume["failure_kind"], "adapter_internal")
+            retained = muse_sessions.read_worker_session(
+                fixture.runtime,
+                "A1",
+                "M10:lane-a",
+            )
+            self.assertIsNotNone(retained)
+            self.assertEqual(retained["state"], "ready")
+            self.assertEqual(
+                retained["session_id"],
+                first["runtime"]["session_id"],
+            )
+
+            retry = fixture.execute(
+                logical_worker_id="A1",
+                caller_scope="M10:lane-a",
+                resume=True,
+            )
+            self.assertEqual(retry["terminal_status"], "completed")
+            self.assertEqual(
+                retry["runtime"]["session_id"],
+                first["runtime"]["session_id"],
             )
 
     def test_session_registry_and_leases_are_private(self) -> None:
