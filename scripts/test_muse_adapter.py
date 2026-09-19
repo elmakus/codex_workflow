@@ -788,6 +788,83 @@ class MuseAdapterTests(unittest.TestCase):
             self.assertEqual(overlapping["terminal_status"], "failed")
             self.assertEqual(overlapping["failure_kind"], "session_busy")
 
+    def test_session_registry_rejects_nested_workspace_acquisition(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            fixture = AdapterFixture(Path(temporary))
+            parent = (Path(temporary) / "parent").resolve()
+            child = (parent / "nested").resolve()
+            parent.mkdir()
+            child.mkdir()
+
+            def acquire(worker: str, workspace: Path, scope: str):
+                return muse_sessions.acquire_worker_session(
+                    fixture.runtime,
+                    logical_worker_id=worker,
+                    role="default_executor",
+                    profile="muse-max",
+                    model="muse-spark-1.3-contributor",
+                    reasoning_effort="max",
+                    harness="muse-code",
+                    workspace=str(workspace),
+                    task_id=f"M10-{worker}",
+                    caller_scope=scope,
+                    resume=False,
+                )
+
+            parent_lease = acquire("A1", parent, "lane-parent")
+            try:
+                with self.assertRaises(muse_sessions.SessionStateError) as error:
+                    acquire("A2", child, "lane-child")
+                self.assertEqual(error.exception.kind, "session_busy")
+            finally:
+                muse_sessions.finish_worker_session(
+                    fixture.runtime, parent_lease, state="ready"
+                )
+
+            muse_sessions.retire_worker_session(
+                fixture.runtime, "A1", "lane-parent"
+            )
+            child_lease = acquire("A2", child, "lane-child")
+            try:
+                with self.assertRaises(muse_sessions.SessionStateError) as error:
+                    acquire("A3", parent, "lane-parent-2")
+                self.assertEqual(error.exception.kind, "session_busy")
+            finally:
+                muse_sessions.finish_worker_session(
+                    fixture.runtime, child_lease, state="ready"
+                )
+
+    def test_session_registry_allows_nonoverlapping_workspace_acquisition(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            fixture = AdapterFixture(Path(temporary))
+            lane_a = (Path(temporary) / "lane-a").resolve()
+            lane_b = (Path(temporary) / "lane-b").resolve()
+            lane_a.mkdir()
+            lane_b.mkdir()
+
+            def acquire(worker: str, workspace: Path):
+                return muse_sessions.acquire_worker_session(
+                    fixture.runtime,
+                    logical_worker_id=worker,
+                    role="default_executor",
+                    profile="muse-max",
+                    model="muse-spark-1.3-contributor",
+                    reasoning_effort="max",
+                    harness="muse-code",
+                    workspace=str(workspace),
+                    task_id=f"M10-{worker}",
+                    caller_scope=f"scope-{worker}",
+                    resume=False,
+                )
+
+            first = acquire("A1", lane_a)
+            second = acquire("A2", lane_b)
+            try:
+                self.assertNotEqual(first.session_id, second.session_id)
+            finally:
+                muse_sessions.finish_worker_session(fixture.runtime, second, state="ready")
+                muse_sessions.finish_worker_session(fixture.runtime, first, state="ready")
+
     def test_interrupted_turn_can_resume_same_session_after_probe(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             fixture = AdapterFixture(Path(temporary))
