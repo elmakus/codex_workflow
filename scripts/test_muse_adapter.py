@@ -1031,6 +1031,74 @@ else:
                 creator_result[0]["runtime"]["session_id"],
             )
 
+    def test_resume_reservation_blocks_parallel_retained_session_adoption(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            fixture = AdapterFixture(Path(temporary))
+            for worker in ("A1", "A2"):
+                created = fixture.execute(
+                    logical_worker_id=worker,
+                    caller_scope="M10:lane-a",
+                )
+                self.assertEqual(created["terminal_status"], "completed")
+
+            resumer_at_session_lock = threading.Event()
+            let_resumer_continue = threading.Event()
+            resumer_result: list[dict] = []
+            resumer_error: list[BaseException] = []
+            real_open_private_lock = muse_sessions._open_private_lock
+
+            def gated_open_private_lock(path: Path, *, nonblocking: bool) -> int:
+                if (
+                    path.name != "registry.lock"
+                    and threading.current_thread().name == "resume-owner"
+                ):
+                    resumer_at_session_lock.set()
+                    if not let_resumer_continue.wait(3.0):
+                        raise RuntimeError("resume reservation gate timed out")
+                return real_open_private_lock(path, nonblocking=nonblocking)
+
+            def run_resumer() -> None:
+                try:
+                    resumer_result.append(
+                        fixture.execute(
+                            logical_worker_id="A1",
+                            caller_scope="M10:lane-a",
+                            resume=True,
+                        )
+                    )
+                except BaseException as error:  # pragma: no cover - thread guard
+                    resumer_error.append(error)
+
+            with patch(
+                "runtime.muse_sessions._open_private_lock",
+                side_effect=gated_open_private_lock,
+            ):
+                resumer = threading.Thread(target=run_resumer, name="resume-owner")
+                resumer.start()
+                self.assertTrue(
+                    resumer_at_session_lock.wait(2.0),
+                    "resumer never reached the pre-lock reservation window",
+                )
+
+                competing = fixture.execute(
+                    logical_worker_id="A2",
+                    caller_scope="M10:lane-a",
+                    resume=True,
+                )
+                self.assertEqual(competing["terminal_status"], "failed")
+                self.assertEqual(competing["failure_kind"], "session_busy")
+                self.assertIn("in-flight session reservation", competing["summary"])
+
+                let_resumer_continue.set()
+                resumer.join(timeout=3.0)
+
+            self.assertFalse(resumer.is_alive())
+            self.assertFalse(resumer_error, resumer_error)
+            self.assertEqual(len(resumer_result), 1)
+            self.assertEqual(resumer_result[0]["terminal_status"], "completed")
+            self.assertTrue(resumer_result[0]["runtime"]["resumed"])
+            self.assertEqual(resumer_result[0]["runtime"]["session_state"], "ready")
+
     def test_session_registry_and_leases_are_private(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             fixture = AdapterFixture(Path(temporary))
