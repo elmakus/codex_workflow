@@ -28,6 +28,11 @@ if str(PACKAGE_ROOT) not in sys.path:
 from runtime.compute_profiles import read_compute_profile, worker_model
 from runtime.errors import WorkflowError
 from runtime.layout import WORKER_MARKER, RuntimePaths, default_codex_home
+from runtime.muse_sessions import (
+    SessionStateError,
+    acquire_worker_session,
+    finish_worker_session,
+)
 
 
 ROLE_RE = re.compile(r"^[A-Za-z0-9_-]+$")
@@ -69,11 +74,10 @@ class MuseWorkerError(RuntimeError):
 
 @dataclass(frozen=True, slots=True)
 class MuseWorkerInvocation:
-    """One already-authorized Muse lane invocation.
+    """One already-authorized Muse invocation against an assigned workspace.
 
-    Project Workflow/Main owns dependency, parallel-safety, branch/worktree and
-    write-scope decisions. This value only describes an invocation that has
-    already been assigned an isolated workspace.
+    The caller owns dependency, parallel-safety, branch/worktree and write-scope
+    decisions. codex_workflow owns only the bounded worker/session runtime.
     """
 
     role: str
@@ -85,6 +89,10 @@ class MuseWorkerInvocation:
     terminate_grace_seconds: float = TERMINATE_GRACE_SECONDS
     runtime: RuntimePaths | None = None
     muse_path: str | None = None
+    logical_worker_id: str | None = None
+    caller_scope: str | None = None
+    resume: bool = False
+    invocation_id: str | None = None
     run_id: str | None = None
 
 
@@ -293,16 +301,25 @@ def _runs_root(runtime: RuntimePaths) -> Path:
     return runtime.runtime / "muse_runs"
 
 
-def _safe_run_id(value: str | None = None) -> str:
+def _safe_invocation_id(value: str | None = None) -> str:
     if value is None:
         return str(uuid.uuid4())
     try:
         parsed = uuid.UUID(value)
     except ValueError as error:
-        raise MuseWorkerError(f"invalid run id: {value!r}") from error
+        raise MuseWorkerError(f"invalid invocation id: {value!r}") from error
     if str(parsed) != value.lower():
-        raise MuseWorkerError(f"run id is not canonical UUID text: {value!r}")
+        raise MuseWorkerError(f"invocation id is not canonical UUID text: {value!r}")
     return str(parsed)
+
+
+def _resolve_invocation_id(
+    invocation_id: str | None,
+    run_id: str | None,
+) -> str:
+    if invocation_id is not None and run_id is not None and invocation_id != run_id:
+        raise MuseWorkerError("invocation_id and legacy run_id disagree")
+    return _safe_invocation_id(invocation_id or run_id)
 
 
 def _ensure_private_dir(path: Path) -> None:
@@ -818,10 +835,51 @@ def _failure_kind(text: str, *, default: str) -> str:
         return "adapter_internal"
     if any(word in lowered for word in ("auth", "login", "credential", "unauthorized", "forbidden")):
         return "auth_runtime"
+    if (
+        "no retained session log found" in lowered
+        or "session not found" in lowered
+        or "unknown session" in lowered
+        or "session does not exist" in lowered
+    ):
+        return "session_unavailable"
+    if "session" in lowered and any(word in lowered for word in ("busy", "locked", "in use")):
+        return "session_busy"
+    if "session" in lowered and any(word in lowered for word in ("resume", "rejected", "invalid")):
+        return "resume_rejected"
     if any(word in lowered for word in ("model", "provider", "rate limit", "quota")):
         return "muse_model"
     return default
 
+
+def _probe_retained_session(
+    muse: str,
+    session_id: str,
+    *,
+    timeout_seconds: float = 15.0,
+) -> tuple[bool, str | None]:
+    """Check exact retained-session existence without exposing exported trajectory."""
+
+    try:
+        completed = subprocess.run(
+            [muse, "export", "--session", session_id, "--redacted"],
+            stdin=subprocess.DEVNULL,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.PIPE,
+            check=False,
+            timeout=timeout_seconds,
+        )
+    except FileNotFoundError:
+        return False, "auth_runtime"
+    except subprocess.TimeoutExpired:
+        return False, "session_unavailable"
+    except OSError:
+        return False, "adapter_internal"
+
+    if completed.returncode == 0:
+        return True, None
+    diagnostic = completed.stderr[-32768:].decode("utf-8", errors="replace")
+    kind = _failure_kind(diagnostic, default="session_unavailable")
+    return False, kind
 
 
 def _git_repository_evidence(workspace: Path) -> dict[str, Any]:
@@ -913,13 +971,31 @@ def _git_repository_evidence(workspace: Path) -> dict[str, Any]:
     }
 
 
-def _artifact_refs(runtime: RuntimePaths, run_id: str) -> dict[str, str]:
-    base = Path("codex_workflow") / "muse_runs" / run_id
+def _artifact_refs(runtime: RuntimePaths, invocation_id: str) -> dict[str, str]:
+    base = Path("codex_workflow") / "muse_runs" / invocation_id
     return {
-        "run_id": run_id,
+        "invocation_id": invocation_id,
+        "run_id": invocation_id,
         "events": str(base / "events.jsonl"),
         "stderr": str(base / "stderr.log"),
         "result": str(base / "result.json"),
+    }
+
+
+def _runtime_metadata(
+    *,
+    logical_worker_id: str | None,
+    session_id: str | None,
+    invocation_id: str,
+    resumed: bool,
+    session_state: str,
+) -> dict[str, Any]:
+    return {
+        "logical_worker_id": logical_worker_id,
+        "session_id": session_id,
+        "invocation_id": invocation_id,
+        "resumed": resumed,
+        "session_state": session_state,
     }
 
 
@@ -932,6 +1008,7 @@ def _failure_result(
     artifacts: dict[str, str],
     process_exit_code: int | None,
     workspace: Path,
+    runtime_metadata: dict[str, Any],
 ) -> dict[str, Any]:
     return {
         "schema_version": RESULT_SCHEMA_VERSION,
@@ -947,6 +1024,7 @@ def _failure_result(
         "verdict": "INCONCLUSIVE" if role == "tester" else None,
         "repository": _git_repository_evidence(workspace),
         "artifacts": artifacts,
+        "runtime": runtime_metadata,
         "process_exit_code": process_exit_code,
     }
 
@@ -959,6 +1037,7 @@ def _success_result(
     artifacts: dict[str, str],
     process_exit_code: int,
     workspace: Path,
+    runtime_metadata: dict[str, Any],
 ) -> dict[str, Any]:
     safe = _sanitize_report(report)
     return {
@@ -970,6 +1049,7 @@ def _success_result(
         **safe,
         "repository": _git_repository_evidence(workspace),
         "artifacts": artifacts,
+        "runtime": runtime_metadata,
         "process_exit_code": process_exit_code,
     }
 
@@ -992,13 +1072,17 @@ def execute_worker(
     terminate_grace_seconds: float = TERMINATE_GRACE_SECONDS,
     runtime: RuntimePaths | None = None,
     muse_path: str | None = None,
+    logical_worker_id: str | None = None,
+    caller_scope: str | None = None,
+    resume: bool = False,
+    invocation_id: str | None = None,
     run_id: str | None = None,
     retention_preserve: set[Path] | None = None,
 ) -> dict[str, Any]:
     if timeout_seconds <= 0:
         raise MuseWorkerError("timeout_seconds must be positive")
     runtime = runtime or _runtime_paths()
-    _, allocation = _muse_allocation(role, runtime)
+    profile, allocation = _muse_allocation(role, runtime)
     workspace = _workspace(workspace_arg)
     task_path, task = _task(task_file)
     logical_task_id = _logical_task_id(task_id, task_path)
@@ -1007,8 +1091,8 @@ def execute_worker(
     runs_root = _runs_root(runtime)
     _ensure_private_dir(runs_root)
     enforce_retention(runs_root, preserve=retention_preserve)
-    resolved_run_id = _safe_run_id(run_id)
-    run_dir = runs_root / resolved_run_id
+    resolved_invocation_id = _resolve_invocation_id(invocation_id, run_id)
+    run_dir = runs_root / resolved_invocation_id
     if run_dir.exists():
         raise MuseWorkerError(f"run artifact directory already exists: {run_dir}")
     run_dir.mkdir(mode=0o700)
@@ -1018,28 +1102,94 @@ def execute_worker(
     stderr_path = run_dir / "stderr.log"
     _touch_private(events_path)
     _touch_private(stderr_path)
-    artifacts = _artifact_refs(runtime, resolved_run_id)
+    artifacts = _artifact_refs(runtime, resolved_invocation_id)
+    runtime_metadata = _runtime_metadata(
+        logical_worker_id=logical_worker_id,
+        session_id=None,
+        invocation_id=resolved_invocation_id,
+        resumed=resume,
+        session_state="unassigned",
+    )
+
+    def failure(kind: str, summary: str, process_exit_code: int | None = None) -> dict[str, Any]:
+        return _failure_result(
+            task_id=logical_task_id,
+            role=role,
+            failure_kind=kind,
+            summary=summary,
+            artifacts=artifacts,
+            process_exit_code=process_exit_code,
+            workspace=workspace,
+            runtime_metadata=runtime_metadata,
+        )
 
     muse = muse_path or shutil.which("muse")
     if muse is None:
-        result = _failure_result(
-            task_id=logical_task_id,
-            role=role,
-            failure_kind="auth_runtime",
-            summary="Muse runtime is unavailable on PATH.",
-            artifacts=artifacts,
-            process_exit_code=None,
-            workspace=workspace,
-        )
+        result = failure("auth_runtime", "Muse runtime is unavailable on PATH.")
         _persist_result(run_dir, result)
-        enforce_retention(
-            runs_root,
-            preserve={run_dir, *(retention_preserve or set())},
-        )
+        enforce_retention(runs_root, preserve={run_dir, *(retention_preserve or set())})
         return result
+
+    try:
+        lease = acquire_worker_session(
+            runtime,
+            logical_worker_id=logical_worker_id,
+            role=role,
+            profile=profile,
+            model=allocation.model,
+            reasoning_effort=allocation.reasoning_effort,
+            harness=allocation.harness,
+            workspace=str(workspace),
+            task_id=logical_task_id,
+            caller_scope=caller_scope,
+            resume=resume,
+        )
+    except SessionStateError as error:
+        runtime_metadata.update(
+            {
+                "logical_worker_id": error.logical_worker_id or logical_worker_id,
+                "session_id": error.session_id,
+                "resumed": error.resumed or resume,
+                "session_state": error.kind,
+            }
+        )
+        result = failure(error.kind, str(error))
+        _persist_result(run_dir, result)
+        enforce_retention(runs_root, preserve={run_dir, *(retention_preserve or set())})
+        return result
+
+    runtime_metadata.update(
+        {
+            "logical_worker_id": lease.logical_worker_id,
+            "session_id": lease.session_id,
+            "resumed": lease.resumed,
+            "session_state": "active",
+        }
+    )
+
+    if lease.resumed:
+        retained, probe_kind = _probe_retained_session(muse, lease.session_id)
+        if not retained:
+            result = failure(
+                probe_kind or "session_unavailable",
+                "Retained Muse session failed the fail-closed resume precondition.",
+            )
+            try:
+                finish_worker_session(runtime, lease, state="needs_probe")
+                runtime_metadata["session_state"] = "needs_probe"
+            except SessionStateError:
+                runtime_metadata["session_state"] = "unknown"
+                result = failure(
+                    "adapter_internal",
+                    "Muse resume probe failed and durable session state could not be reconciled.",
+                )
+            _persist_result(run_dir, result)
+            enforce_retention(runs_root, preserve={run_dir, *(retention_preserve or set())})
+            return result
 
     prompt_path: Path | None = None
     schema_path: Path | None = None
+    return_code: int | None = None
     try:
         prompt_fd, prompt_name = tempfile.mkstemp(
             prefix="prompt-", suffix=".md", dir=run_dir
@@ -1070,7 +1220,7 @@ def execute_worker(
             reasoning_effort=allocation.reasoning_effort,
             workspace=str(workspace),
             schema_file=str(schema_path),
-            session_id=resolved_run_id,
+            session_id=lease.session_id,
         )
         return_code, stop_reason, drain_errors = _run_process(
             command,
@@ -1083,58 +1233,38 @@ def execute_worker(
         )
 
         if stop_reason == "timeout":
-            result = _failure_result(
-                task_id=logical_task_id,
-                role=role,
-                failure_kind="timeout",
-                summary="Muse worker exceeded the adapter timeout and was terminated.",
-                artifacts=artifacts,
-                process_exit_code=return_code,
-                workspace=workspace,
+            result = failure(
+                "timeout",
+                "Muse worker exceeded the adapter timeout and its process tree was terminated.",
+                return_code,
             )
         elif stop_reason == "cancelled":
-            result = _failure_result(
-                task_id=logical_task_id,
-                role=role,
-                failure_kind="cancelled",
-                summary="Muse worker was cancelled and its process tree was terminated.",
-                artifacts=artifacts,
-                process_exit_code=return_code,
-                workspace=workspace,
+            result = failure(
+                "cancelled",
+                "Muse worker was cancelled and its process tree was terminated.",
+                return_code,
             )
         elif stop_reason is not None and stop_reason.startswith("spawn:"):
-            result = _failure_result(
-                task_id=logical_task_id,
-                role=role,
-                failure_kind="auth_runtime",
-                summary="Muse runtime could not be started by the adapter.",
-                artifacts=artifacts,
-                process_exit_code=return_code,
-                workspace=workspace,
+            result = failure(
+                "auth_runtime",
+                "Muse runtime could not be started by the adapter.",
+                return_code,
             )
         elif drain_errors:
-            result = _failure_result(
-                task_id=logical_task_id,
-                role=role,
-                failure_kind="adapter_internal",
-                summary="Muse output draining failed; raw artifacts may be incomplete.",
-                artifacts=artifacts,
-                process_exit_code=return_code,
-                workspace=workspace,
+            result = failure(
+                "adapter_internal",
+                "Muse output draining failed; raw artifacts may be incomplete.",
+                return_code,
             )
         else:
             terminal, protocol_error = _parse_terminal(events_path)
             diagnostic = _read_diagnostic(stderr_path)
             if protocol_error is not None:
                 kind = _failure_kind(diagnostic, default="protocol")
-                result = _failure_result(
-                    task_id=logical_task_id,
-                    role=role,
-                    failure_kind=kind,
-                    summary=f"Muse terminal protocol failed validation: {protocol_error}.",
-                    artifacts=artifacts,
-                    process_exit_code=return_code,
-                    workspace=workspace,
+                result = failure(
+                    kind,
+                    f"Muse terminal protocol failed validation: {protocol_error}.",
+                    return_code,
                 )
             else:
                 assert terminal is not None
@@ -1147,24 +1277,16 @@ def execute_worker(
                         reason_text + "\n" + diagnostic,
                         default="muse_model",
                     )
-                    result = _failure_result(
-                        task_id=logical_task_id,
-                        role=role,
-                        failure_kind=kind,
-                        summary="Muse reported a structured terminal failure.",
-                        artifacts=artifacts,
-                        process_exit_code=return_code,
-                        workspace=workspace,
+                    result = failure(
+                        kind,
+                        "Muse reported a structured terminal failure.",
+                        return_code,
                     )
                 elif return_code != 0:
-                    result = _failure_result(
-                        task_id=logical_task_id,
-                        role=role,
-                        failure_kind="protocol",
-                        summary="Muse reported terminal completion with a non-zero process exit.",
-                        artifacts=artifacts,
-                        process_exit_code=return_code,
-                        workspace=workspace,
+                    result = failure(
+                        "protocol",
+                        "Muse reported terminal completion with a non-zero process exit.",
+                        return_code,
                     )
                 else:
                     try:
@@ -1174,14 +1296,10 @@ def execute_worker(
                             task_id=logical_task_id,
                         )
                     except MuseWorkerError:
-                        result = _failure_result(
-                            task_id=logical_task_id,
-                            role=role,
-                            failure_kind="normalized_report",
-                            summary="Muse completed but its final worker report failed validation.",
-                            artifacts=artifacts,
-                            process_exit_code=return_code,
-                            workspace=workspace,
+                        result = failure(
+                            "normalized_report",
+                            "Muse completed but its final worker report failed validation.",
+                            return_code,
                         )
                     else:
                         result = _success_result(
@@ -1191,36 +1309,44 @@ def execute_worker(
                             artifacts=artifacts,
                             process_exit_code=return_code,
                             workspace=workspace,
+                            runtime_metadata=runtime_metadata,
                         )
     except OSError as error:
-        kind = (
-            "auth_runtime"
-            if isinstance(error, FileNotFoundError)
-            else "adapter_internal"
+        kind = "auth_runtime" if isinstance(error, FileNotFoundError) else "adapter_internal"
+        result = failure(
+            kind,
+            "Muse process could not be started by the adapter.",
+            return_code,
         )
-        result = _failure_result(
-            task_id=logical_task_id,
-            role=role,
-            failure_kind=kind,
-            summary="Muse process could not be started by the adapter.",
-            artifacts=artifacts,
-            process_exit_code=None,
-            workspace=workspace,
+    except Exception:
+        result = failure(
+            "adapter_internal",
+            "Muse adapter failed unexpectedly while owning the logical-session lease.",
+            return_code,
         )
     finally:
-        for path in (prompt_path, schema_path):
-            if path is None:
+        for temporary_path in (prompt_path, schema_path):
+            if temporary_path is None:
                 continue
             try:
-                path.unlink()
+                temporary_path.unlink()
             except FileNotFoundError:
                 pass
 
+    next_state = "ready" if result["terminal_status"] == "completed" else "needs_probe"
+    try:
+        finish_worker_session(runtime, lease, state=next_state)
+        runtime_metadata["session_state"] = next_state
+    except SessionStateError:
+        runtime_metadata["session_state"] = "unknown"
+        result = failure(
+            "adapter_internal",
+            "Muse invocation finished but durable logical-session state could not be reconciled.",
+            return_code,
+        )
+
     _persist_result(run_dir, result)
-    enforce_retention(
-        runs_root,
-        preserve={run_dir, *(retention_preserve or set())},
-    )
+    enforce_retention(runs_root, preserve={run_dir, *(retention_preserve or set())})
     return result
 
 
@@ -1246,8 +1372,8 @@ def execute_workers_concurrently(
     """Await already-authorized independent Muse invocations concurrently.
 
     This helper is intentionally not a scheduler: callers supply the complete
-    lane set and isolated workspaces after Project Workflow/Main has established
-    dependency and parallel-safety authority. Results retain input order.
+    lane set and isolated workspaces after establishing dependency and
+    parallel-safety authority. Results retain input order.
     """
 
     items = tuple(invocations)
@@ -1269,14 +1395,17 @@ def execute_workers_concurrently(
     seen_run_dirs: set[Path] = set()
     for invocation in items:
         runtime = invocation.runtime or _runtime_paths()
-        resolved_run_id = _safe_run_id(invocation.run_id)
+        resolved_invocation_id = _resolve_invocation_id(
+            invocation.invocation_id,
+            invocation.run_id,
+        )
         runs_root = _runs_root(runtime).resolve()
-        run_dir = (runs_root / resolved_run_id).resolve()
+        run_dir = (runs_root / resolved_invocation_id).resolve()
         if run_dir in seen_run_dirs or run_dir.exists():
             raise MuseWorkerError(f"duplicate or existing concurrent run directory: {run_dir}")
         seen_run_dirs.add(run_dir)
         preserve_by_root.setdefault(runs_root, set()).add(run_dir)
-        prepared.append((invocation, runtime, resolved_run_id))
+        prepared.append((invocation, runtime, resolved_invocation_id))
 
     results: list[dict[str, Any] | None] = [None] * len(prepared)
     failures: list[tuple[int, BaseException]] = []
@@ -1286,7 +1415,7 @@ def execute_workers_concurrently(
         thread_name_prefix="muse-worker",
     ) as pool:
         futures = []
-        for invocation, runtime, resolved_run_id in prepared:
+        for invocation, runtime, resolved_invocation_id in prepared:
             preserve = preserve_by_root[_runs_root(runtime).resolve()]
             futures.append(
                 pool.submit(
@@ -1300,7 +1429,10 @@ def execute_workers_concurrently(
                     terminate_grace_seconds=invocation.terminate_grace_seconds,
                     runtime=runtime,
                     muse_path=invocation.muse_path,
-                    run_id=resolved_run_id,
+                    logical_worker_id=invocation.logical_worker_id,
+                    caller_scope=invocation.caller_scope,
+                    resume=invocation.resume,
+                    invocation_id=resolved_invocation_id,
                     retention_preserve=preserve,
                 )
             )
@@ -1328,6 +1460,10 @@ def run(
     task_id: str | None = None,
     timeout_seconds: float = DEFAULT_TIMEOUT_SECONDS,
     dry_run: bool = False,
+    logical_worker_id: str | None = None,
+    caller_scope: str | None = None,
+    resume: bool = False,
+    invocation_id: str | None = None,
 ) -> int:
     runtime = _runtime_paths()
     profile, allocation = _muse_allocation(role, runtime)
@@ -1339,8 +1475,10 @@ def run(
     if dry_run:
         if muse is None:
             raise MuseWorkerError(
-                "Muse Code CLI is not installed or is not on PATH; install it and run `muse login` first"
+                "Muse Code CLI is not installed or is not on PATH; install it and run muse login first"
             )
+        if resume and logical_worker_id is None:
+            raise MuseWorkerError("--resume requires --logical-worker-id")
         command = build_command(
             muse,
             "<temporary-prompt>",
@@ -1348,7 +1486,7 @@ def run(
             reasoning_effort=allocation.reasoning_effort,
             workspace=str(workspace),
             schema_file="<temporary-schema>",
-            session_id="<run-id>",
+            session_id="<retained-session-id>" if resume else "<new-session-id>",
         )
         print(
             json.dumps(
@@ -1360,6 +1498,10 @@ def run(
                     "role": role,
                     "task_id": logical_task_id,
                     "workspace": str(workspace),
+                    "logical_worker_id": logical_worker_id,
+                    "caller_scope": caller_scope,
+                    "session_mode": "resume" if resume else "create",
+                    "invocation_id": invocation_id,
                     "command": command,
                 },
                 sort_keys=True,
@@ -1375,6 +1517,10 @@ def run(
         timeout_seconds=timeout_seconds,
         runtime=runtime,
         muse_path=muse,
+        logical_worker_id=logical_worker_id,
+        caller_scope=caller_scope,
+        resume=resume,
+        invocation_id=invocation_id,
     )
     print(json.dumps(result, sort_keys=True, separators=(",", ":")))
     return 0 if result["terminal_status"] == "completed" else 1
@@ -1388,6 +1534,10 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--workspace", required=True)
     parser.add_argument("--task-file", required=True)
     parser.add_argument("--task-id")
+    parser.add_argument("--logical-worker-id")
+    parser.add_argument("--caller-scope")
+    parser.add_argument("--resume", action="store_true")
+    parser.add_argument("--invocation-id")
     parser.add_argument(
         "--timeout-seconds",
         type=float,
@@ -1403,6 +1553,10 @@ def main(argv: list[str] | None = None) -> int:
             task_id=args.task_id,
             timeout_seconds=args.timeout_seconds,
             dry_run=args.dry_run,
+            logical_worker_id=args.logical_worker_id,
+            caller_scope=args.caller_scope,
+            resume=args.resume,
+            invocation_id=args.invocation_id,
         )
     except MuseWorkerError as error:
         print(f"muse worker error: {error}", file=sys.stderr)

@@ -263,6 +263,11 @@ class MuseMaxProfileTests(unittest.TestCase):
         )
         self.assertIn("GPT-5.6 Luna XHigh", combined)
         self.assertIn("six", combined.lower())
+        self.assertIn("logical worker/session", combined)
+        self.assertIn("--logical-worker-id", combined)
+        self.assertIn("--resume", combined)
+        self.assertNotIn("one-shot", combined)
+        self.assertNotIn("Project Workflow/Main", combined)
 
 
 if __name__ == "__main__":

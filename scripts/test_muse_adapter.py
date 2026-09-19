@@ -48,6 +48,13 @@ def value(flag):
     return sys.argv[index + 1]
 
 
+if len(sys.argv) > 1 and sys.argv[1] == "export":
+    if os.environ.get("FAKE_MUSE_EXPORT_MODE", "success") == "missing":
+        print("no retained session log found", file=sys.stderr, flush=True)
+        raise SystemExit(1)
+    print("{}", flush=True)
+    raise SystemExit(0)
+
 schema = json.loads(Path(value("--output-schema")).read_text(encoding="utf-8"))
 role = schema["properties"]["role"]["enum"][0]
 task_id = schema["properties"]["task_id"]["enum"][0]
@@ -77,7 +84,7 @@ configured = {
 }
 print(json.dumps(configured), flush=True)
 
-if mode in {"success", "barrier"}:
+if mode in {"success", "barrier", "hold"}:
     if mode == "barrier":
         barrier = Path(os.environ["FAKE_MUSE_BARRIER_DIR"])
         barrier.mkdir(parents=True, exist_ok=True)
@@ -88,6 +95,9 @@ if mode in {"success", "barrier"}:
                 print("barrier peer did not start", file=sys.stderr, flush=True)
                 raise SystemExit(4)
             time.sleep(0.02)
+    if mode == "hold":
+        (workspace / "hold.started").write_text("started", encoding="utf-8")
+        time.sleep(0.75)
     terminal = {
         "payload_type": "run.terminal.completed",
         "payload": {
@@ -218,6 +228,10 @@ class AdapterFixture:
         timeout: float = 3.0,
         cancel_event: threading.Event | None = None,
         grace: float = 0.15,
+        logical_worker_id: str | None = None,
+        caller_scope: str | None = None,
+        resume: bool = False,
+        invocation_id: str | None = None,
     ):
         with patch.dict(os.environ, {"FAKE_MUSE_MODE": mode}, clear=False):
             return execute_worker(
@@ -230,6 +244,10 @@ class AdapterFixture:
                 terminate_grace_seconds=grace,
                 runtime=self.runtime,
                 muse_path=str(self.fake_muse),
+                logical_worker_id=logical_worker_id,
+                caller_scope=caller_scope,
+                resume=resume,
+                invocation_id=invocation_id,
             )
 
     def artifact(self, result, key: str) -> Path:
@@ -582,6 +600,240 @@ class MuseAdapterTests(unittest.TestCase):
                 max_bytes=10_000,
             )
             self.assertFalse(old.exists())
+
+
+    def test_stateful_resume_reuses_session_with_unique_invocations(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            fixture = AdapterFixture(Path(temporary))
+            first = fixture.execute(
+                logical_worker_id="A1",
+                caller_scope="M10:lane-a",
+            )
+            second = fixture.execute(
+                logical_worker_id="A1",
+                caller_scope="M10:lane-a",
+                resume=True,
+            )
+
+            self.assertEqual(first["terminal_status"], "completed")
+            self.assertEqual(second["terminal_status"], "completed")
+            self.assertFalse(first["runtime"]["resumed"])
+            self.assertTrue(second["runtime"]["resumed"])
+            self.assertEqual(
+                first["runtime"]["session_id"],
+                second["runtime"]["session_id"],
+            )
+            self.assertNotEqual(
+                first["runtime"]["invocation_id"],
+                second["runtime"]["invocation_id"],
+            )
+            self.assertEqual(first["runtime"]["session_state"], "ready")
+            self.assertEqual(second["runtime"]["session_state"], "ready")
+            self.assertNotEqual(
+                first["runtime"]["session_id"],
+                first["runtime"]["invocation_id"],
+            )
+
+    def test_executor_and_tester_logical_sessions_are_distinct(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            fixture = AdapterFixture(Path(temporary))
+            executor = fixture.execute(
+                logical_worker_id="A1",
+                caller_scope="M10:lane-a",
+            )
+            tester = fixture.execute(
+                "tester",
+                logical_worker_id="B1",
+                caller_scope="M10:lane-a",
+            )
+
+            self.assertEqual(executor["terminal_status"], "completed")
+            self.assertEqual(tester["terminal_status"], "completed")
+            self.assertNotEqual(
+                executor["runtime"]["logical_worker_id"],
+                tester["runtime"]["logical_worker_id"],
+            )
+            self.assertNotEqual(
+                executor["runtime"]["session_id"],
+                tester["runtime"]["session_id"],
+            )
+
+    def test_resume_binding_rejects_scope_role_and_workspace_drift(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            fixture = AdapterFixture(root)
+            first = fixture.execute(
+                logical_worker_id="A1",
+                caller_scope="M10:lane-a",
+            )
+            session_id = first["runtime"]["session_id"]
+
+            scope_mismatch = fixture.execute(
+                logical_worker_id="A1",
+                caller_scope="M10:lane-b",
+                resume=True,
+            )
+            self.assertEqual(
+                scope_mismatch["failure_kind"],
+                "session_binding_mismatch",
+            )
+            self.assertIsNone(scope_mismatch["runtime"]["session_id"])
+
+            other_lane = fixture.execute(
+                logical_worker_id="A1",
+                caller_scope="M10:lane-b",
+            )
+            self.assertEqual(other_lane["terminal_status"], "completed")
+            self.assertNotEqual(other_lane["runtime"]["session_id"], session_id)
+
+            role_mismatch = fixture.execute(
+                "tester",
+                logical_worker_id="A1",
+                caller_scope="M10:lane-a",
+                resume=True,
+            )
+            self.assertEqual(
+                role_mismatch["failure_kind"],
+                "session_binding_mismatch",
+            )
+
+            other_workspace = root / "other-workspace"
+            other_workspace.mkdir()
+            other_task = other_workspace / "M07-T01.md"
+            other_task.write_text("Perform the bounded fixture task.\n", encoding="utf-8")
+            workspace_mismatch = execute_worker(
+                "default_executor",
+                str(other_workspace),
+                str(other_task),
+                task_id="M07-T01",
+                runtime=fixture.runtime,
+                muse_path=str(fixture.fake_muse),
+                logical_worker_id="A1",
+                caller_scope="M10:lane-a",
+                resume=True,
+            )
+            self.assertEqual(
+                workspace_mismatch["failure_kind"],
+                "session_binding_mismatch",
+            )
+
+    def test_unavailable_resume_fails_closed_and_replacement_is_explicit(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            fixture = AdapterFixture(Path(temporary))
+            first = fixture.execute(
+                logical_worker_id="A1",
+                caller_scope="M10:lane-a",
+            )
+            with patch.dict(
+                os.environ,
+                {"FAKE_MUSE_EXPORT_MODE": "missing"},
+                clear=False,
+            ):
+                failed_resume = fixture.execute(
+                    logical_worker_id="A1",
+                    caller_scope="M10:lane-a",
+                    resume=True,
+                )
+
+            self.assertEqual(failed_resume["terminal_status"], "failed")
+            self.assertEqual(failed_resume["failure_kind"], "session_unavailable")
+            self.assertEqual(
+                failed_resume["runtime"]["session_id"],
+                first["runtime"]["session_id"],
+            )
+
+            replacement = fixture.execute(
+                logical_worker_id="A2",
+                caller_scope="M10:lane-a",
+            )
+            self.assertEqual(replacement["terminal_status"], "completed")
+            self.assertNotEqual(
+                replacement["runtime"]["session_id"],
+                first["runtime"]["session_id"],
+            )
+            self.assertEqual(replacement["runtime"]["logical_worker_id"], "A2")
+
+    def test_session_lease_rejects_overlapping_turn_for_same_worker(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            fixture = AdapterFixture(Path(temporary))
+            first_result: list[dict] = []
+
+            def run_first() -> None:
+                first_result.append(
+                    fixture.execute(
+                        mode="hold",
+                        logical_worker_id="A1",
+                        caller_scope="M10:lane-a",
+                    )
+                )
+
+            thread = threading.Thread(target=run_first)
+            thread.start()
+            marker = fixture.workspace / "hold.started"
+            deadline = time.monotonic() + 2.0
+            while not marker.exists() and time.monotonic() < deadline:
+                time.sleep(0.02)
+            self.assertTrue(marker.exists(), "first Muse turn never acquired the session")
+
+            overlapping = fixture.execute(
+                logical_worker_id="A1",
+                caller_scope="M10:lane-a",
+                resume=True,
+            )
+            thread.join(timeout=3.0)
+            self.assertFalse(thread.is_alive())
+            self.assertEqual(first_result[0]["terminal_status"], "completed")
+            self.assertEqual(overlapping["terminal_status"], "failed")
+            self.assertEqual(overlapping["failure_kind"], "session_busy")
+
+    def test_interrupted_turn_can_resume_same_session_after_probe(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            fixture = AdapterFixture(Path(temporary))
+            interrupted = fixture.execute(
+                mode="child",
+                timeout=0.35,
+                grace=0.1,
+                logical_worker_id="A1",
+                caller_scope="M10:lane-a",
+            )
+            self.assertEqual(interrupted["failure_kind"], "timeout")
+            self.assertEqual(
+                interrupted["runtime"]["session_state"],
+                "needs_probe",
+            )
+            child_pid = int((fixture.workspace / "child.pid").read_text())
+            self.assertTrue(_wait_dead(child_pid), f"child {child_pid} survived timeout")
+
+            resumed = fixture.execute(
+                logical_worker_id="A1",
+                caller_scope="M10:lane-a",
+                resume=True,
+            )
+            self.assertEqual(resumed["terminal_status"], "completed")
+            self.assertTrue(resumed["runtime"]["resumed"])
+            self.assertEqual(
+                resumed["runtime"]["session_id"],
+                interrupted["runtime"]["session_id"],
+            )
+            self.assertEqual(resumed["runtime"]["session_state"], "ready")
+
+    def test_session_registry_and_leases_are_private(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            fixture = AdapterFixture(Path(temporary))
+            result = fixture.execute(
+                logical_worker_id="A1",
+                caller_scope="M10:lane-a",
+            )
+            self.assertEqual(result["terminal_status"], "completed")
+            root = fixture.runtime.runtime / "muse_sessions"
+            registry = root / "registry.json"
+            lock = root / "locks" / f"{result['runtime']['session_id']}.lock"
+            self.assertEqual(stat.S_IMODE(root.stat().st_mode), 0o700)
+            self.assertEqual(stat.S_IMODE(registry.stat().st_mode), 0o600)
+            self.assertEqual(stat.S_IMODE(lock.stat().st_mode), 0o600)
+            stored = json.loads(registry.read_text(encoding="utf-8"))
+            self.assertEqual(stored["schema_version"], "1")
+            self.assertLessEqual(len(stored["workers"]), 256)
 
 
 if __name__ == "__main__":

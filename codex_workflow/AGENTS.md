@@ -56,7 +56,7 @@ For internal Codex workers, including the `muse-max` Companion, when the runtime
 
 Use `EVENT_TYPE | Task ID | essential fact or blocker | requested action`. Do not use `send_message` for routine progress, heartbeats, ETA, "still working", status chatter, ordinary partial findings, or normal completion. Do not resend an unchanged event. Normal completion stays on the standard worker final-result/status path. After sending, continue any independent useful work; wait only when genuinely blocked. Prefer worker-to-`/root`; direct sibling messaging is exceptional and allowed only when the event materially affects that sibling's active task and routing it through Main would create unnecessary delay or wasted work.
 
-Under `muse-max`, the six Muse-backed one-shot roles do not have the Codex `send_message` channel. Their process completion or failure is the worker boundary; do not emulate material-event push with polling or unmanaged background processes. Companion remains internal and follows the policy above.
+Under `muse-max`, the six Muse-backed roles do not have the Codex `send_message` channel. Each bounded Muse turn ends at process completion or failure even when its logical session remains reusable; do not emulate material-event push with polling or unmanaged background processes. Companion remains internal and follows the policy above.
 
 ## Proportionate Documentation Read
 

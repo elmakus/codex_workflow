@@ -64,8 +64,9 @@ The profiles are:
   XHigh. Micro, Default, Senior, Tester, Investigator and Archivist are routed
   through the native Muse Code harness using `muse-spark-1.3-contributor` with
   `max` reasoning. User-visible orchestration uses normal concise milestone
-  updates rather than silent orchestration. Muse-backed roles are bounded
-  one-shot invocations; later milestones own managed lane concurrency.
+  updates rather than silent orchestration. Muse-backed roles use stable bound
+  logical sessions with bounded per-turn invocations; the caller owns lane and
+  higher-level workflow policy.
 
 `muse-max` requires the `muse` CLI on `PATH`, a completed `muse login`, and access
 to Muse Spark 1.3 Contributor Max. The profile switch itself does not install or

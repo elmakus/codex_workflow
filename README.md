@@ -21,7 +21,9 @@ owner-specific orchestration, model, update-channel, and safety choices.
   recovery guidance lives in `delegation.md` and is loaded only when needed.
 - Fresh/independent execution boundaries use isolated worker contexts. Internal
   Codex roles use new workers with `fork_turns="none"` by default; the six
-  Muse-backed `muse-max` roles use fresh one-shot Muse Code invocations.
+  Muse-backed `muse-max` roles use new logical Muse worker/session identities
+  when freshness is required. Ordinary follow-up and repair may resume the same
+  bound Muse session through a new bounded invocation when that session is safe.
   App-level `create_thread` is not used merely to obtain review independence,
   milestone isolation, or a context reset.
 - Worker compute is selected by one global runtime profile. `plus` preserves the
@@ -53,20 +55,21 @@ owner-specific orchestration, model, update-channel, and safety choices.
 - Heavy has no workflow-imposed aggregate worker limit for internal Codex roles.
   The workflow does not write a fixed `max_concurrent_threads_per_session`;
   available concurrency is left to the Codex platform/account. Muse-backed
-  `muse-max` calls keep the bounded single-invocation adapter as the process
-  primitive. Already-authorized independent lanes may be concurrently awaited
-  through its managed batch helper against caller-assigned non-overlapping
-  workspaces; Project Workflow/Main still owns dependencies, `parallel_safe`,
-  lane/worktree assignment, and per-lane ordering. Unmanaged background shell
-  orchestration remains forbidden.
+  `muse-max` calls keep a bounded per-turn adapter invocation as the process
+  primitive while logical worker sessions may persist across turns. Already-
+  authorized independent lanes may be concurrently awaited through its managed
+  batch helper against caller-assigned non-overlapping workspaces; the caller
+  still owns dependencies, parallel-safety, lane/worktree assignment, and
+  per-lane ordering. Unmanaged background shell orchestration remains forbidden.
 - Heavy is orchestration-only for Main. Internal Codex roles retain long
-  event-driven waits; each Muse-backed role treats its bounded `muse exec` process
-  as the worker boundary. User-visible update cadence follows the active profile.
+  event-driven waits; each Muse-backed turn uses one bounded `muse exec` process
+  while the logical worker/session may be reused by later turns. User-visible
+  update cadence follows the active profile.
 - Running internal Codex workers, including the `muse-max` Companion, may use
   `send_message` to `/root` only for rare material mid-task `BLOCKER`,
   `COURSE_CHANGE`, or `CRITICAL_PARTIAL` events. Routine progress and normal
-  completion never use that channel. One-shot Muse workers do not emulate
-  `send_message` or polling.
+  completion never use that channel. Muse-backed workers do not emulate
+  `send_message` or polling between their bounded turns.
 - No token-accounting skill, deployment counting marker, usage-report table, or
   reporting obligation is included.
 - Release discovery and downloads are restricted to GitHub Releases published
@@ -122,16 +125,22 @@ muse exec --disable-approval --trust-workspace \
   --workspace <assigned-workspace> \
   --json \
   --output-schema <private-generated-result-schema> \
-  --session-id <run-uuid> \
+  --session-id <logical-session-uuid> \
   --user-input-auto-resolve \
   --disable-sandbox
 ```
 
-The adapter continuously drains JSONL stdout and diagnostic stderr into private
-per-run artifacts under `~/.codex/codex_workflow/muse_runs/`, validates exactly
-one terminal lifecycle record plus the versioned final worker report, and prints
-only one bounded normalized result on the normal path. Raw streams have per-run
-size limits and retained runs are bounded by age, count, and aggregate size.
+The adapter separates a stable logical Muse `session_id` from a unique
+per-turn `invocation_id`. Session bindings are kept in a private bounded
+`~/.codex/codex_workflow/muse_sessions/` registry and bind logical worker,
+role, active allocation, canonical workspace, Task ID, and any opaque caller
+scope. A process-safe per-session lease allows at most one active turn and
+fail-closed resume first probes the exact retained Muse session. JSONL stdout
+and diagnostic stderr are drained into private per-invocation artifacts under
+`~/.codex/codex_workflow/muse_runs/`; exactly one terminal lifecycle record
+plus the versioned final worker report is normalized for Main. Raw streams have
+per-invocation size limits and retained artifacts are bounded by age, count, and
+aggregate size.
 
 Timeout or cancellation sends graceful termination to the Muse process and the
 captured descendant tree, including children that moved into a separate process
