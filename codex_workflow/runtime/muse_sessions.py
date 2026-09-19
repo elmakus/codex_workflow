@@ -295,22 +295,28 @@ def acquire_worker_session(
     with _registry_guard(runtime):
         registry = _load_registry(runtime)
         workers = registry["workers"]
-        quarantined = next(
+        unreconciled = next(
             (
                 candidate
                 for candidate in workers.values()
                 if isinstance(candidate, dict)
-                and candidate.get("state") == "cleanup_unconfirmed"
+                and candidate.get("state") in {"active", "cleanup_unconfirmed"}
                 and candidate.get("workspace") == workspace
             ),
             None,
         )
-        if quarantined is not None:
+        if unreconciled is not None:
+            state = unreconciled.get("state")
+            summary = (
+                "Muse workspace is quarantined because prior process-tree cleanup was not confirmed"
+                if state == "cleanup_unconfirmed"
+                else "Muse workspace has an unreconciled active session; explicit reconciliation is required"
+            )
             raise SessionStateError(
                 "session_busy",
-                "Muse workspace is quarantined because prior process-tree cleanup was not confirmed",
+                summary,
                 logical_worker_id=worker_id,
-                session_id=quarantined.get("session_id"),
+                session_id=unreconciled.get("session_id"),
                 resumed=resume,
             )
         record = workers.get(registry_key)
