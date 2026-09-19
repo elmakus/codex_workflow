@@ -290,6 +290,7 @@ def acquire_worker_session(
     scope = _safe_scope(caller_scope)
     registry_key = _registry_key(worker_id, scope)
     created = False
+    reserved_from_state: str | None = None
     session_id: str
 
     with _registry_guard(runtime):
@@ -386,6 +387,7 @@ def acquire_worker_session(
             # guard. Without this transition, two different retained sessions
             # for one workspace can both pass validation before either acquires
             # its distinct per-session flock.
+            reserved_from_state = state
             record["state"] = "reserved"
             record["updated_at"] = time.time()
             _save_registry(runtime, registry)
@@ -436,6 +438,18 @@ def acquire_worker_session(
                     and current.get("state") == "reserved"
                 ):
                     del registry["workers"][registry_key]
+                    _save_registry(runtime, registry)
+        elif reserved_from_state is not None:
+            with _registry_guard(runtime):
+                registry = _load_registry(runtime)
+                current = registry["workers"].get(registry_key)
+                if (
+                    isinstance(current, dict)
+                    and current.get("session_id") == session_id
+                    and current.get("state") == "reserved"
+                ):
+                    current["state"] = reserved_from_state
+                    current["updated_at"] = time.time()
                     _save_registry(runtime, registry)
         raise SessionStateError(
             "session_busy",
