@@ -60,18 +60,28 @@ def _add_common(parser: argparse.ArgumentParser, *, project: bool = True) -> Non
     parser.add_argument("--json", action="store_true", help="emit compact JSON")
 
 
+def _add_local_review_option(parser: argparse.ArgumentParser) -> None:
+    parser.add_argument(
+        "--legacy-local-instructions",
+        type=Path,
+        help="reviewed project-local instructions to import or replace",
+    )
+
+
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     commands = parser.add_subparsers(dest="command", required=True)
 
     install = commands.add_parser("install")
     _add_common(install)
+    _add_local_review_option(install)
     # Retained for callers that have an extracted package available. This is
     # a read-only project-install source; install never bootstraps user files.
     install.add_argument("--package-root", type=Path, help=argparse.SUPPRESS)
 
     bootstrap = commands.add_parser("bootstrap", help=argparse.SUPPRESS)
     _add_common(bootstrap)
+    _add_local_review_option(bootstrap)
     bootstrap.add_argument(
         "--package-root", type=Path, default=PACKAGE_ROOT
     )
@@ -81,11 +91,7 @@ def parse_args() -> argparse.Namespace:
     # Internal/recovery hand-off for an already verified extracted package.
     update.add_argument("--source", type=Path, help=argparse.SUPPRESS)
     update.add_argument("--allow-downgrade", action="store_true")
-    update.add_argument(
-        "--legacy-local-instructions",
-        type=Path,
-        help="reviewed local instructions extracted from a legacy merged entry point",
-    )
+    _add_local_review_option(update)
 
     remove = commands.add_parser("remove")
     _add_common(remove)
@@ -330,9 +336,27 @@ def main() -> int:
         if args.command == "bootstrap":
             assert project is not None
             package = PackageLayout.resolve(args.package_root)
-            return _finish(plan_bootstrap(package, runtime, project), args)
+            legacy_local = (
+                args.legacy_local_instructions.read_text(encoding="utf-8")
+                if args.legacy_local_instructions
+                else None
+            )
+            return _finish(
+                plan_bootstrap(
+                    package,
+                    runtime,
+                    project,
+                    legacy_local_instructions=legacy_local,
+                ),
+                args,
+            )
         if args.command == "install":
             assert project is not None
+            legacy_local = (
+                args.legacy_local_instructions.read_text(encoding="utf-8")
+                if args.legacy_local_instructions
+                else None
+            )
             if project.active.exists() and project.disabled.exists():
                 raise WorkflowError("both active and disabled project entry points exist")
             if _has_package_version(runtime.runtime):
@@ -350,7 +374,11 @@ def main() -> int:
                 # turns stale, malformed, or personalization-drifted installs
                 # into actionable errors instead of misreporting them as merely
                 # disabled.
-                existing_plan = plan_project_install(package, project)
+                existing_plan = plan_project_install(
+                    package,
+                    project,
+                    legacy_local_instructions=legacy_local,
+                )
                 documentation_action_required = any(
                     action.get("files") for action in existing_plan.agent_actions
                 )
@@ -374,7 +402,14 @@ def main() -> int:
                     compact=args.json,
                 )
                 return 0
-            return _finish(plan_project_install(package, project), args)
+            return _finish(
+                plan_project_install(
+                    package,
+                    project,
+                    legacy_local_instructions=legacy_local,
+                ),
+                args,
+            )
         if args.command == "update":
             assert project is not None
             if args.source is not None:
