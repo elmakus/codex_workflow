@@ -6,7 +6,7 @@ current_milestone: "M02"
 execution_ref:
   branch: "feat/upstream-1.1.18-alignment"
   pr: 7
-  head: "7cfe5d6738c6fd67602cf0f873133a4ff010ec73"
+  head: "9af8e4460715224e9b68b5715e21811074772b96"
 
 research_obligation: null
 
@@ -24,7 +24,7 @@ milestones:
     review_evidence: "implementation/workstreams/upstream-1-1-18-alignment/evidence/M01-acceptance.md"
   M02:
     decision_state: "accepted"
-    execution_status: "planned"
+    execution_status: "in_progress"
     contract: "planning/MASTER_PLAN.md#M02--six-role-worker-topology-and-investigation-contract"
     checkpoint: null
     implementation_head: null
@@ -71,7 +71,7 @@ cards:
     title: "Six-role worker/package baseline"
     milestone: "M02"
     decision_state: "accepted"
-    execution_status: "ready"
+    execution_status: "in_progress"
     executor: "chatgpt"
     depends_on: []
     openspec_change: null
