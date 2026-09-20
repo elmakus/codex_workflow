@@ -178,6 +178,8 @@ def _test_current_private_contract(self: unittest.TestCase) -> None:
     self.assertNotIn("Companion", active_contracts)
     self.assertNotIn("Micro Executor", active_contracts)
     self.assertNotIn("micro_executor", active_contracts)
+    self.assertNotIn("Micro Execution", active_contracts)
+    self.assertEqual(heavy.count("## Role-Specific Work Packages"), 1)
     self.assertNotRegex(active_contracts, r"(?i)at most\s+\d+\s+words")
     self.assertNotIn("direct sibling messaging is exceptional", active_contracts)
     self.assertNotIn("sibling's active task", active_contracts)

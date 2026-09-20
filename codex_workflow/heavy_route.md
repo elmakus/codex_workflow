@@ -71,12 +71,6 @@ Read the workflow-owned delegation contract at `~/.codex/codex_workflow/delegati
 
 Initial packages use **Task ID** and the role-specific capsule defined there. Investigator packages also carry the shared **Problem ID** for their exact three-lane problem. Main retains topology, dependencies, acceptance, and lifecycle. Inspect only controlling evidence for high-risk or final claims. Do not repeat the worker's substantive task.
 
-## Role-Specific Work Packages
-
-Read the workflow-owned delegation contract at `~/.codex/codex_workflow/delegation.md` only when preparing or following up a worker package, using Micro Execution, or recovering a worker. Do not load it merely to enter Heavy.
-
-Initial packages use **Task ID** and the role-specific capsule defined there. Main retains topology, dependencies, acceptance, and lifecycle. Inspect only controlling evidence for high-risk or final claims. Do not repeat the worker's substantive task.
-
 ## Fresh and Independent Context Routing
 
 Treat project/workflow phrases such as `FRESH CODEX REQUIRED`, `FRESH CODEX RECOMMENDED`, fresh independent review, fresh execution context, or context reset as requirements for an isolated execution context, not for a new top-level Codex App conversation. Create a fresh worker in the active role harness with only the minimal durable handoff and bounded task context required: a new internal worker with `fork_turns="none"` for internal Codex roles, or a new logical Muse worker/session for a Muse-backed `muse-max` role. A merely new Muse OS process does not satisfy a freshness requirement when it resumes an old logical session.
