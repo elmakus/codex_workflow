@@ -132,7 +132,7 @@ cards:
     title: "Plus-only Material Event Push and two-profile communication contract"
     milestone: "M03"
     decision_state: "accepted"
-    execution_status: "in_progress"
+    execution_status: "done"
     executor: "chatgpt"
     depends_on:
       - "M03-T01"
