@@ -27,10 +27,10 @@ authority:
 
 review:
   requirement: "RECOMMENDED"
-  state: null
-  subject: null
-  evidence: null
-  covered_by: null
+  state: "green"
+  subject: "9a0761f8b0159e63d8c12a95660d5874007b790a"
+  evidence: "implementation/workstreams/upstream-1-1-18-alignment/evidence/final-integration-review-coverage.md"
+  covered_by: "implementation/workstreams/upstream-1-1-18-alignment/evidence/M04-T02-review.md"
 
 branch_cleanup:
   state: null
