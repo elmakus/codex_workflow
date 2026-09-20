@@ -60,9 +60,9 @@ def _test_heavy_only_workflow_keeps_leaf_direct_path(self: unittest.TestCase) ->
     self.assertIn("Use `leaf state` only for questions and genuinely trivial bounded actions", agents)
     self.assertIn("Do not classify nontrivial work as leaf merely because it is bounded or short", agents)
     self.assertNotIn("small bounded operations", agents)
-    self.assertIn("enter `deployment state`, bootstrap the session Companion below", agents)
-    self.assertIn("read that Heavy contract", agents)
-    self.assertIn("## Early Companion", agents)
+    self.assertIn("enter `deployment state`, read that Heavy contract", agents)
+    self.assertIn("Use Explorer for bounded project-context discovery", agents)
+    self.assertIn("## Bounded Context Discovery", agents)
     self.assertNotIn("## Route Selection", agents)
     self.assertNotIn("**Light**", agents)
     self.assertNotIn("**Medium**", agents)
@@ -70,7 +70,8 @@ def _test_heavy_only_workflow_keeps_leaf_direct_path(self: unittest.TestCase) ->
 
     heavy = (PACKAGE / "heavy_route.md").read_text(encoding="utf-8")
     self.assertIn("Use as the substantive-work contract under `AGENTS.md`.", heavy)
-    self.assertIn("## Companion Lifecycle", heavy)
+    self.assertIn("## Explorer Discovery", heavy)
+    self.assertIn("## Investigator Lanes", heavy)
     self.assertNotIn("## Fast Path", heavy)
     self.assertIn("## Closure", heavy)
 
