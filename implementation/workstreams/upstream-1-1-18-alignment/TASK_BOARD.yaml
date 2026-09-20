@@ -1,7 +1,7 @@
 project: "codex_workflow"
 workstream_id: "upstream-1-1-18-alignment"
 plan_revision: "R2"
-current_milestone: "M02"
+current_milestone: "M03"
 
 execution_ref:
   branch: "feat/upstream-1.1.18-alignment"
@@ -33,6 +33,18 @@ milestones:
     review_state: "green"
     review_subject: "19d27ec9dce2f6e6a452d09799ec0871c6efff01"
     review_evidence: "implementation/workstreams/upstream-1-1-18-alignment/evidence/M02-acceptance.md"
+
+  M03:
+    decision_state: "accepted"
+    execution_status: "ready"
+    contract: "planning/MASTER_PLAN.md#M03--two-profile-execution-and-communication-semantics"
+    checkpoint: null
+    implementation_head: null
+    handoff: null
+    acceptance_evidence: null
+    review_state: null
+    review_subject: null
+    review_evidence: null
 
 cards:
   - id: "M01-T01"
@@ -100,3 +112,36 @@ cards:
     result_pr: 7
     evidence: "implementation/workstreams/upstream-1-1-18-alignment/evidence/M02-T02.md"
     tests_summary: "GREEN: PR #7 Tests run #109 on exact corrected subject; local runtime 97/97; GitHub runtime/Muse/compile/Muse Max/package validate/build/archive steps GREEN; stale Micro Execution removed; duplicate package-section guard added; VERSION unchanged; whitespace/static scan clean"
+  - id: "M03-T01"
+    title: "Two-profile runtime and profile command surface"
+    milestone: "M03"
+    decision_state: "accepted"
+    execution_status: "ready"
+    executor: null
+    depends_on: []
+    openspec_change: null
+    contract: "implementation/workstreams/upstream-1-1-18-alignment/cards/M03-T01.md"
+    review_state: null
+    review_subject: null
+    review_evidence: null
+    result_commit: null
+    result_pr: null
+    evidence: null
+    tests_summary: null
+  - id: "M03-T02"
+    title: "Plus-only Material Event Push and two-profile communication contract"
+    milestone: "M03"
+    decision_state: "accepted"
+    execution_status: "planned"
+    executor: null
+    depends_on:
+      - "M03-T01"
+    openspec_change: null
+    contract: "implementation/workstreams/upstream-1-1-18-alignment/cards/M03-T02.md"
+    review_state: null
+    review_subject: null
+    review_evidence: null
+    result_commit: null
+    result_pr: null
+    evidence: null
+    tests_summary: null
