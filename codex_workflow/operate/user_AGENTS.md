@@ -25,11 +25,6 @@ exactly.
 - codex_workflow --profile plus
   Guide: ~/.codex/codex_workflow/operate/profile.md.
 
-- codex_workflow --profile luna-xhigh
-  Guide: ~/.codex/codex_workflow/operate/profile.md.
-
-- codex_workflow --profile pro-x5
-  Guide: ~/.codex/codex_workflow/operate/profile.md.
 
 - codex_workflow --profile muse-max
   Guide: ~/.codex/codex_workflow/operate/profile.md.
