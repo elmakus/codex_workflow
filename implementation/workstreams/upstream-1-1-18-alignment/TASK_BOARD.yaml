@@ -183,7 +183,7 @@ cards:
       - "M04-T01"
     openspec_change: null
     contract: "implementation/workstreams/upstream-1-1-18-alignment/cards/M04-T02.md"
-    review_state: "pending"
+    review_state: "in_progress"
     review_subject: "9a0761f8b0159e63d8c12a95660d5874007b790a"
     review_evidence: null
     result_commit: "9a0761f8b0159e63d8c12a95660d5874007b790a"
