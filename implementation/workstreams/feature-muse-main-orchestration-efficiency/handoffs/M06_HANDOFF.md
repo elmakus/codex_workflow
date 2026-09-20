@@ -34,8 +34,8 @@ The refreshed published branch also passes `test_muse_profile.py` 9/9, `test_mus
 
 Repository-local feature implementation and its final review/refresh gates are complete. Release/version/tag/GitHub Release and external deployment remain outside this feature workstream's authority.
 
-The final PR/merge result is necessarily pending until GitHub performs the integration; those result-dependent fields are reconciled target-side after merge.
+Final integration PR #17 is open against `main`. Its initial closure-ready source package head is `5094c503e5388eba02818d17f46fe12d33e1bb7b`; only subsequent PR-pointer/bookkeeping commits may follow before merge. The actual merge result remains necessarily pending and is reconciled target-side after integration.
 
 ## Next durable start
 
-Open/verify the final workstream PR to `main`, re-read the target immediately before merge, integrate only if the refresh-preservation gate remains GREEN, then perform target-side terminal reconciliation/readback.
+Verify final integration PR #17, re-read `main` immediately before merge, integrate only if the refresh-preservation gate remains GREEN, then perform target-side terminal reconciliation/readback.
