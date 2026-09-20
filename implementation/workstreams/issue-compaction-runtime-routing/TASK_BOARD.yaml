@@ -6,7 +6,7 @@ current_milestone: "micro-fix"
 execution_ref:
   branch: "fix/compaction-runtime-routing"
   pr: null
-  head: "47cb0eb7a081c4c276366e130417012e3adb1f7a"
+  head: "e8b553403fc4af36c9fc9da9fbca00d31ea7868c"
 
 research_obligation: null
 
@@ -22,10 +22,10 @@ cards:
     depends_on: []
     openspec_change: null
     contract: "implementation/workstreams/issue-compaction-runtime-routing/cards/MF-T01.md"
-    review_state: red
-    review_subject: "408dec625109d923938dc3e77ee22ac251a65ad0"
-    review_evidence: "implementation/workstreams/issue-compaction-runtime-routing/evidence/MF-T01-review.md"
-    result_commit: "408dec625109d923938dc3e77ee22ac251a65ad0"
+    review_state: pending
+    review_subject: "e8b553403fc4af36c9fc9da9fbca00d31ea7868c"
+    review_evidence: null
+    result_commit: "e8b553403fc4af36c9fc9da9fbca00d31ea7868c"
     result_pr: null
     evidence: "implementation/workstreams/issue-compaction-runtime-routing/evidence/MF-T01-implementation.md"
-    tests_summary: "GREEN on exact subject 408dec625109d923938dc3e77ee22ac251a65ad0: workflow runtime 98/98; muse profile 7/7; muse adapter 39/39; package validate/build/archive verify; Python compile probe; git diff --check. muse-max sets agents.enabled=false while preserving features.multi_agent=true; plus restores agents.enabled=true; external features.multi_agent_v2=true fails closed; compact global pre-dispatch settings.toml revalidation invariant covers compaction/stale tool exposure."
+    tests_summary: "GREEN on exact corrected subject e8b553403fc4af36c9fc9da9fbca00d31ea7868c: workflow runtime 99/99; muse profile 7/7; muse adapter 39/39; package validate; Python compile probe; git diff --check. muse-max rejects both flat features.multi_agent_v2=true and documented [features.multi_agent_v2] enabled=true before mutation; agents.enabled remains profile-aware; compact global pre-dispatch settings.toml revalidation invariant remains unchanged."
