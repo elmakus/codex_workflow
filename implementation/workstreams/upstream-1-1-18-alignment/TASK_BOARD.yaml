@@ -47,15 +47,15 @@ milestones:
     review_evidence: "implementation/workstreams/upstream-1-1-18-alignment/evidence/M03-acceptance.md"
   M04:
     decision_state: "accepted"
-    execution_status: "in_progress"
+    execution_status: "done"
     contract: "planning/MASTER_PLAN.md#M04--documentation-packaging-and-integrated-regression-closure"
-    checkpoint: null
+    checkpoint: "9a0761f8b0159e63d8c12a95660d5874007b790a"
     implementation_head: "9a0761f8b0159e63d8c12a95660d5874007b790a"
-    handoff: null
-    acceptance_evidence: null
-    review_state: null
-    review_subject: null
-    review_evidence: null
+    handoff: "implementation/workstreams/upstream-1-1-18-alignment/handoffs/M04_HANDOFF.md"
+    acceptance_evidence: "implementation/workstreams/upstream-1-1-18-alignment/evidence/M04-acceptance.md"
+    review_state: "green"
+    review_subject: "9a0761f8b0159e63d8c12a95660d5874007b790a"
+    review_evidence: "implementation/workstreams/upstream-1-1-18-alignment/evidence/M04-acceptance.md"
 
 cards:
   - id: "M01-T01"
