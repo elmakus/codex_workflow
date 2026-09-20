@@ -1,0 +1,58 @@
+project: "codex_workflow"
+workstream_id: "upstream-1-1-18-alignment"
+plan_revision: "R2"
+current_milestone: "M01"
+
+execution_ref:
+  branch: "feat/upstream-1.1.18-alignment"
+  pr: null
+  head: "a4754147e436784972538bad664dde6e866e52a2"
+
+research_obligation: null
+
+milestones:
+  M01:
+    decision_state: "accepted"
+    execution_status: "ready"
+    contract: "planning/MASTER_PLAN.md#M01--project-only-update-and-legacy-migration-hardening"
+    checkpoint: null
+    implementation_head: null
+    handoff: null
+    acceptance_evidence: null
+    review_state: null
+    review_subject: null
+    review_evidence: null
+
+cards:
+  - id: "M01-T01"
+    title: "Same-version project-only update path"
+    milestone: "M01"
+    decision_state: "accepted"
+    execution_status: "ready"
+    executor: null
+    depends_on: []
+    openspec_change: null
+    contract: "implementation/workstreams/upstream-1-1-18-alignment/cards/M01-T01.md"
+    review_state: null
+    review_subject: null
+    review_evidence: null
+    result_commit: null
+    result_pr: null
+    evidence: null
+    tests_summary: null
+  - id: "M01-T02"
+    title: "Fail-closed legacy local-instruction migration"
+    milestone: "M01"
+    decision_state: "accepted"
+    execution_status: "planned"
+    executor: null
+    depends_on: []
+    openspec_change: null
+    contract: "implementation/workstreams/upstream-1-1-18-alignment/cards/M01-T02.md"
+    review_state: null
+    review_subject: null
+    review_evidence: null
+    result_commit: null
+    result_pr: null
+    evidence: null
+    tests_summary: null
