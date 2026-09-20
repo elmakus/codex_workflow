@@ -1,0 +1,42 @@
+project: "codex_workflow"
+workstream_id: "change-release-1-1-18-private-3"
+plan_revision: "R2"
+current_milestone: "M04"
+
+execution_ref:
+  branch: "work/release-1-1-18-private-3"
+  pr: 15
+  head: "1d63028c7e1afca58fb1f0d432b5c0a40d8c03d5"
+
+research_obligation: null
+
+milestones:
+  M04:
+    decision_state: accepted
+    execution_status: in_progress
+    contract: "planning/MASTER_PLAN.md#4-milestones"
+    checkpoint: "6ce308a6dd7c92136ed01037800b61ba974d22b3"
+    implementation_head: "1d63028c7e1afca58fb1f0d432b5c0a40d8c03d5"
+    handoff: "implementation/workstreams/change-release-1-1-18-private-3/handoffs/M04_HANDOFF.md"
+    acceptance_evidence: "implementation/workstreams/change-release-1-1-18-private-3/evidence/M04-acceptance.md"
+    review_state: null
+    review_subject: null
+    review_evidence: null
+
+cards:
+  - id: "M04-T01"
+    title: "Prepare owner release 1.1.18-private.3"
+    milestone: "M04"
+    decision_state: accepted
+    execution_status: done
+    executor: chatgpt
+    depends_on: []
+    openspec_change: null
+    contract: "implementation/workstreams/change-release-1-1-18-private-3/cards/M04-T01.md"
+    review_state: green
+    review_subject: "1d63028c7e1afca58fb1f0d432b5c0a40d8c03d5"
+    review_evidence: "implementation/workstreams/change-release-1-1-18-private-3/evidence/M04-T01-review.md"
+    result_commit: "1d63028c7e1afca58fb1f0d432b5c0a40d8c03d5"
+    result_pr: 15
+    evidence: "implementation/workstreams/change-release-1-1-18-private-3/evidence/M04-T01-implementation.md"
+    tests_summary: "GREEN on exact implementation subject 1d63028c7e1afca58fb1f0d432b5c0a40d8c03d5: PR Tests run #265 / 35534573820; runtime regression, Muse adapter regression, compile, Muse Max profile, package validation, package build, and archive verification all GREEN. Base main Tests run #264 / 35528766520 was also GREEN on 6ce308a6dd7c92136ed01037800b61ba974d22b3."
