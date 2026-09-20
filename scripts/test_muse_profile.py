@@ -191,7 +191,7 @@ class MuseMaxProfileTests(unittest.TestCase):
                         dry_run=True,
                     )
 
-    def test_active_docs_describe_mixed_harness_semantics(self) -> None:
+    def test_active_docs_describe_two_profile_harness_semantics(self) -> None:
         docs = [
             ROOT / "README.md",
             PACKAGE / "AGENTS.md",
@@ -209,7 +209,10 @@ class MuseMaxProfileTests(unittest.TestCase):
             "every workflow worker role is an external",
             combined,
         )
-        self.assertIn("GPT-5.6 Luna XHigh", combined)
+        self.assertNotIn("luna-xhigh", combined)
+        self.assertNotIn("pro-x5", combined)
+        self.assertNotIn("Companion", combined)
+        self.assertNotIn("Micro Executor", combined)
         self.assertIn("six", combined.lower())
         self.assertIn("logical worker/session", combined)
         self.assertIn("--logical-worker-id", combined)
