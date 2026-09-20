@@ -40,8 +40,8 @@ Path: `micro_fix`.
 ## Intended bounded correction
 
 - Under `plus`, keep internal Codex multi-agent tools enabled as today.
-- Under `muse-max`, set the workflow-owned internal-agent gates disabled so a stale/forgotten Main route cannot successfully use `spawn_agent` for workflow roles.
-- Switching profiles must update those gates transactionally and idempotently.
+- Under `muse-max`, set the workflow-owned `[agents].enabled = false` guard so a stale/forgotten Main route cannot successfully use `spawn_agent` for workflow roles, while preserving DEC-002's existing `[features].multi_agent = true` ownership.
+- Under `plus`, set `[agents].enabled = true`; switching profiles must update that guard transactionally and idempotently.
 - If an externally enabled MultiAgentV2 setting would override the guard, `muse-max` activation/update must fail closed with a clear validation error rather than leave an apparently protected but actually exposed surface.
 - Put only the minimal dispatch invariant in always-injected `AGENTS.md`: resolve the single-line active profile immediately before each worker dispatch, never trust pre-compaction remembered routing, and treat internal Codex worker APIs as forbidden under `muse-max` even if a stale long-lived session still exposes them.
 - Do not add a full workflow/document reload after compaction. Do not alter Muse session/process semantics.
