@@ -1,6 +1,6 @@
 id: "issue-compaction-runtime-routing"
 kind: "issue"
-status: "ready"
+status: "done"
 
 branch: "fix/compaction-runtime-routing"
 base_ref: "8130efb340ea2c6308e33c96dbff2a53bc98fc49"
@@ -42,4 +42,4 @@ branch_cleanup:
   evidence: null
 
 pr: 13
-result: null
+result: "d46eabe09fff819ff4c78584ad563fbf86ba6821"
