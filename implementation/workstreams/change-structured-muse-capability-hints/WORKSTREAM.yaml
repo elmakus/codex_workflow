@@ -1,0 +1,45 @@
+id: "change-structured-muse-capability-hints"
+kind: "change"
+status: "ready"
+
+branch: "work/structured-muse-capability-hints"
+base_ref: "738ac89eeaa0522348f175eb5e936bda02a3de8c"
+integration_target: "main"
+
+parent_workstream: null
+parent_branch: null
+parent_dependency: null
+
+intake:
+  state: "complete"
+  record: "implementation/workstreams/change-structured-muse-capability-hints/INTAKE.md"
+
+routing:
+  exploratory_scope: null
+  research_obligation: null
+  plan_review: null
+
+task_board: "implementation/workstreams/change-structured-muse-capability-hints/TASK_BOARD.yaml"
+
+authority:
+  requirements: "elmakus/muse-capability-admin@8aecaa42d0ffd40efa2342b5bbace85fcc976d7e:requirements/MUSE_CAPABILITY_ADMIN.md"
+  decisions:
+    - "elmakus/muse-capability-admin@8aecaa42d0ffd40efa2342b5bbace85fcc976d7e:decisions/MCA-DEC-001-STRUCTURED_CAPABILITY_HINTS.md"
+    - "elmakus/muse-capability-admin@8aecaa42d0ffd40efa2342b5bbace85fcc976d7e:decisions/MCA-DEC-002-ADMIN_AUTH_AND_SECRET_REUSE.md"
+  plan: "elmakus/muse-capability-admin@8aecaa42d0ffd40efa2342b5bbace85fcc976d7e:planning/MASTER_PLAN.md#M02"
+
+review:
+  requirement: "RECOMMENDED"
+  state: "green"
+  subject: "c8fc2d2c60a395bc20562d3f81efc844ee9a7405"
+  evidence: "implementation/workstreams/change-structured-muse-capability-hints/evidence/M02-close.md"
+  covered_by: "implementation/workstreams/change-structured-muse-capability-hints/evidence/M02-T01-review.md"
+
+branch_cleanup:
+  state: null
+  ref: null
+  verified_head: null
+  evidence: null
+
+pr: 10
+result: null

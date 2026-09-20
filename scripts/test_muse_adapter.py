@@ -26,13 +26,16 @@ from runtime.layout import PackageLayout, ProjectPaths, RuntimePaths  # noqa: E4
 from runtime.lifecycle import plan_bootstrap  # noqa: E402
 import runtime.muse_sessions as muse_sessions  # noqa: E402
 from runtime.muse_worker import (  # noqa: E402
+    MuseCapabilityHints,
     MuseWorkerError,
     MuseWorkerInvocation,
     _failure_kind,
     build_command,
+    build_prompt,
     enforce_retention,
     execute_worker,
     execute_workers_concurrently,
+    main as muse_worker_main,
 )
 
 
@@ -233,6 +236,7 @@ class AdapterFixture:
         logical_worker_id: str | None = None,
         caller_scope: str | None = None,
         resume: bool = False,
+        capability_hints: MuseCapabilityHints | None = None,
         invocation_id: str | None = None,
     ):
         with patch.dict(os.environ, {"FAKE_MUSE_MODE": mode}, clear=False):
@@ -249,6 +253,7 @@ class AdapterFixture:
                 logical_worker_id=logical_worker_id,
                 caller_scope=caller_scope,
                 resume=resume,
+                capability_hints=capability_hints,
                 invocation_id=invocation_id,
             )
 
@@ -257,6 +262,176 @@ class AdapterFixture:
 
 
 class MuseAdapterTests(unittest.TestCase):
+
+    def test_capability_hints_normalize_stably_with_required_precedence(self) -> None:
+        hints = MuseCapabilityHints(
+            required_skills=("skill.alpha", "skill.alpha", "skill.shared"),
+            relevant_skills=("skill.beta", "skill.shared", "skill.beta"),
+            required_capabilities=("mcp.github", "mcp.github"),
+            suggested_capabilities=("mcp.search", "mcp.github", "mcp.search"),
+        )
+        self.assertEqual(
+            hints.required_skills,
+            ("skill.alpha", "skill.shared"),
+        )
+        self.assertEqual(hints.relevant_skills, ("skill.beta",))
+        self.assertEqual(hints.required_capabilities, ("mcp.github",))
+        self.assertEqual(hints.suggested_capabilities, ("mcp.search",))
+
+    def test_capability_hint_identifiers_fail_closed_before_launch(self) -> None:
+        invalid = ("", "contains space", "../escape", "back\\slash", "x" * 129)
+        for value in invalid:
+            with self.subTest(value=value), self.assertRaises(MuseWorkerError):
+                MuseCapabilityHints(required_skills=(value,))
+
+    def test_prompt_always_renders_current_authoritative_hint_set(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            fixture = AdapterFixture(Path(temporary))
+            empty = build_prompt(
+                "default_executor",
+                "M07-T01",
+                "Perform the bounded fixture task.",
+                fixture.runtime,
+            )
+            self.assertIn("CURRENT MUSE CAPABILITY HINTS", empty)
+            self.assertEqual(empty.count("(none)"), 4)
+            self.assertIn("supersedes all capability hints from prior turns", empty)
+            self.assertIn("absence is non-blocking", empty)
+            self.assertIn("Do not install, configure, authenticate, update, or remove", empty)
+
+            hints = MuseCapabilityHints(
+                required_skills=("skill.domain",),
+                relevant_skills=("skill.reference",),
+                required_capabilities=("mcp.github",),
+                suggested_capabilities=("mcp.search",),
+            )
+            populated = build_prompt(
+                "tester",
+                "M07-T02",
+                "Verify the bounded fixture task.",
+                fixture.runtime,
+                capability_hints=hints,
+            )
+            self.assertIn("Required skills: skill.domain", populated)
+            self.assertIn("Relevant skills: skill.reference", populated)
+            self.assertIn("Required capabilities: mcp.github", populated)
+            self.assertIn("Suggested capabilities: mcp.search", populated)
+
+    def test_cli_capability_hints_use_same_normalized_contract(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            fixture = AdapterFixture(Path(temporary))
+            with (
+                patch("runtime.muse_worker._runtime_paths", return_value=fixture.runtime),
+                patch("runtime.muse_worker.shutil.which", return_value=str(fixture.fake_muse)),
+                patch("builtins.print") as output,
+            ):
+                code = muse_worker_main(
+                    [
+                        "--role",
+                        "default_executor",
+                        "--workspace",
+                        str(fixture.workspace),
+                        "--task-file",
+                        str(fixture.task),
+                        "--task-id",
+                        "M07-T01",
+                        "--required-skill",
+                        "skill.shared",
+                        "--required-skill",
+                        "skill.shared",
+                        "--relevant-skill",
+                        "skill.shared",
+                        "--relevant-skill",
+                        "skill.reference",
+                        "--required-capability",
+                        "mcp.github",
+                        "--suggested-capability",
+                        "mcp.github",
+                        "--suggested-capability",
+                        "mcp.search",
+                        "--dry-run",
+                    ]
+                )
+            self.assertEqual(code, 0)
+            payload = json.loads(output.call_args.args[0])
+            self.assertEqual(
+                payload["capability_hints"],
+                {
+                    "required_skills": ["skill.shared"],
+                    "relevant_skills": ["skill.reference"],
+                    "required_capabilities": ["mcp.github"],
+                    "suggested_capabilities": ["mcp.search"],
+                },
+            )
+
+    def test_resume_replaces_prior_capability_hints_with_current_empty_set(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            fixture = AdapterFixture(Path(temporary))
+            prior = MuseCapabilityHints(required_skills=("skill.prior",))
+            seen: list[MuseCapabilityHints] = []
+
+            def capture_prompt(role, task_id, task, runtime, capability_hints=None):
+                hints = capability_hints or MuseCapabilityHints()
+                seen.append(hints)
+                return build_prompt(
+                    role,
+                    task_id,
+                    task,
+                    runtime,
+                    capability_hints=hints,
+                )
+
+            with patch("runtime.muse_worker.build_prompt", side_effect=capture_prompt):
+                first = fixture.execute(
+                    logical_worker_id="A1",
+                    caller_scope="M10:lane-a",
+                    capability_hints=prior,
+                )
+                second = fixture.execute(
+                    logical_worker_id="A1",
+                    caller_scope="M10:lane-a",
+                    resume=True,
+                    capability_hints=MuseCapabilityHints(),
+                )
+
+            self.assertEqual(first["terminal_status"], "completed")
+            self.assertEqual(second["terminal_status"], "completed")
+            self.assertTrue(second["runtime"]["resumed"])
+            self.assertEqual(seen, [prior, MuseCapabilityHints()])
+
+    def test_concurrent_invocations_forward_independent_capability_hints(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            fixture = AdapterFixture(root)
+            first_hints = MuseCapabilityHints(required_skills=("skill.executor",))
+            second_hints = MuseCapabilityHints(relevant_skills=("skill.tester",))
+            invocations = [
+                self._batch_invocation(
+                    fixture,
+                    root / "lane-a",
+                    "M09-A",
+                    capability_hints=first_hints,
+                ),
+                self._batch_invocation(
+                    fixture,
+                    root / "lane-b",
+                    "M09-B",
+                    capability_hints=second_hints,
+                ),
+            ]
+
+            def fake_execute(role, workspace, task_file, **kwargs):
+                return {
+                    "terminal_status": "completed",
+                    "capability_hints": kwargs["capability_hints"].as_dict(),
+                }
+
+            with patch("runtime.muse_worker.execute_worker", side_effect=fake_execute):
+                results = execute_workers_concurrently(invocations, max_workers=2)
+
+            self.assertEqual(results[0]["capability_hints"], first_hints.as_dict())
+            self.assertEqual(results[1]["capability_hints"], second_hints.as_dict())
+
     def test_build_command_binds_m05_machine_surface(self) -> None:
         command = build_command(
             "/usr/local/bin/muse",
@@ -403,6 +578,7 @@ class MuseAdapterTests(unittest.TestCase):
         task_id: str,
         *,
         cancel_event: threading.Event | None = None,
+        capability_hints: MuseCapabilityHints | None = None,
         run_id: str | None = None,
     ) -> MuseWorkerInvocation:
         workspace.mkdir(exist_ok=True)
@@ -416,6 +592,7 @@ class MuseAdapterTests(unittest.TestCase):
             timeout_seconds=5.0,
             cancel_event=cancel_event,
             terminate_grace_seconds=0.1,
+            capability_hints=capability_hints or MuseCapabilityHints(),
             runtime=fixture.runtime,
             muse_path=str(fixture.fake_muse),
             run_id=run_id,
@@ -640,14 +817,17 @@ class MuseAdapterTests(unittest.TestCase):
     def test_executor_and_tester_logical_sessions_are_distinct(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             fixture = AdapterFixture(Path(temporary))
+            shared_hints = MuseCapabilityHints(required_skills=("skill.domain",))
             executor = fixture.execute(
                 logical_worker_id="A1",
                 caller_scope="M10:lane-a",
+                capability_hints=shared_hints,
             )
             tester = fixture.execute(
                 "tester",
                 logical_worker_id="B1",
                 caller_scope="M10:lane-a",
+                capability_hints=shared_hints,
             )
 
             self.assertEqual(executor["terminal_status"], "completed")
@@ -1197,7 +1377,6 @@ else:
                     resumer_at_session_lock.wait(2.0),
                     "resumer never reached the guarded session-lock acquisition",
                 )
-
                 competing = threading.Thread(target=run_competitor)
                 competing.start()
                 time.sleep(0.1)

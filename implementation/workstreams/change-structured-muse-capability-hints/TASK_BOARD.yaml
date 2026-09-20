@@ -1,0 +1,42 @@
+project: "codex_workflow"
+workstream_id: "change-structured-muse-capability-hints"
+plan_revision: "MCA-P1"
+current_milestone: "M02"
+
+execution_ref:
+  branch: "work/structured-muse-capability-hints"
+  pr: 10
+  head: "c8fc2d2c60a395bc20562d3f81efc844ee9a7405"
+
+research_obligation: null
+
+milestones:
+  M02:
+    decision_state: "accepted"
+    execution_status: "in_progress"
+    contract: "elmakus/muse-capability-admin@8aecaa42d0ffd40efa2342b5bbace85fcc976d7e:planning/MASTER_PLAN.md#M02"
+    checkpoint: "c8fc2d2c60a395bc20562d3f81efc844ee9a7405"
+    implementation_head: "c8fc2d2c60a395bc20562d3f81efc844ee9a7405"
+    handoff: "implementation/workstreams/change-structured-muse-capability-hints/handoffs/M02_HANDOFF.md"
+    acceptance_evidence: "implementation/workstreams/change-structured-muse-capability-hints/evidence/M02-close.md"
+    review_state: null
+    review_subject: null
+    review_evidence: null
+
+cards:
+  - id: "M02-T01"
+    title: "Structured Muse capability-hint protocol"
+    milestone: "M02"
+    decision_state: "accepted"
+    execution_status: "done"
+    executor: "chatgpt"
+    depends_on: []
+    openspec_change: "openspec/changes/m02-muse-capability-hints/"
+    contract: "implementation/workstreams/change-structured-muse-capability-hints/cards/M02-T01.md"
+    review_state: "green"
+    review_subject: "c8fc2d2c60a395bc20562d3f81efc844ee9a7405"
+    review_evidence: "implementation/workstreams/change-structured-muse-capability-hints/evidence/M02-T01-review.md"
+    result_commit: "c8fc2d2c60a395bc20562d3f81efc844ee9a7405"
+    result_pr: 10
+    evidence: "implementation/workstreams/change-structured-muse-capability-hints/evidence/M02-T01-implementation.md"
+    tests_summary: "GREEN on exact subject: PR #10 Tests run #222; runtime 97/97; Muse adapter 39/39; compile; Muse Max 7/7; package validate/build/archive verify; diff scan clean; VERSION unchanged"
