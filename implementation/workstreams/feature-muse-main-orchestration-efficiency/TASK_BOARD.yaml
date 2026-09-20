@@ -75,6 +75,6 @@ cards:
     openspec: null
     blocker: null
     review_requirement: "RECOMMENDED"
-    review_state: "in_progress"
+    review_state: "green"
     review_subject: "commit:3114bcc1c732adebf16efc9876301f98cae77d85"
-    review_evidence: "implementation/workstreams/feature-muse-main-orchestration-efficiency/evidence/M06-T01.md"
+    review_evidence: "implementation/workstreams/feature-muse-main-orchestration-efficiency/evidence/M06-T01-review.md"
