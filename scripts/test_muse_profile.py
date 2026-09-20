@@ -23,6 +23,7 @@ from runtime.compute_profiles import (  # noqa: E402
     plan_compute_profile,
     profile_summary,
     read_compute_profile,
+    render_heavy_route_for_profile,
     render_worker_for_profile,
 )
 from runtime.layout import (  # noqa: E402
@@ -92,8 +93,30 @@ class MuseMaxProfileTests(unittest.TestCase):
                 MUSE_ROLES,
             )
             heavy = (runtime.runtime / "heavy_route.md").read_text(encoding="utf-8")
-            self.assertIn("normal concise commentary", heavy)
+            self.assertIn("quiet milestone orchestration", heavy)
+            self.assertIn("routine worker starts", heavy)
+            self.assertIn("must not by themselves wake Main", heavy)
+            self.assertNotIn("normal concise commentary", heavy)
             self.assertNotIn("## Silent Orchestration", heavy)
+
+    def test_profile_communication_policies_are_distinct(self) -> None:
+        source = (PACKAGE / "heavy_route.md").read_text(encoding="utf-8")
+        plus = render_heavy_route_for_profile(source, "plus")
+        muse = render_heavy_route_for_profile(source, "muse-max")
+
+        self.assertIn("keep user-visible updates restrained", plus)
+        self.assertNotIn("quiet milestone orchestration", plus)
+        self.assertIn("quiet milestone orchestration", muse)
+        self.assertIn("routine worker starts", muse)
+        self.assertIn("session or recovery bookkeeping", muse)
+        self.assertIn("Git/repository bookkeeping", muse)
+        self.assertIn("user-meaningful phase changes", muse)
+        self.assertIn("blocker that requires user input", muse)
+        self.assertIn("material scope/architecture change", muse)
+        self.assertIn("not hard silence", muse)
+        self.assertIn("must not by themselves wake Main", muse)
+        self.assertNotIn("normal concise commentary", muse)
+        self.assertNotIn("## Silent Orchestration", muse)
 
     def test_muse_docs_require_one_cell_event_driven_wait(self) -> None:
         heavy = (PACKAGE / "heavy_route.md").read_text(encoding="utf-8")
