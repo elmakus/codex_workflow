@@ -6,16 +6,16 @@ current_milestone: "M02"
 execution_ref:
   branch: "work/structured-muse-capability-hints"
   pr: 10
-  head: "c8fc2d2c60a395bc20562d3f81efc844ee9a7405"
+  head: "2e8fada20a30ca4ebd98d5443e3155c0e50f66b0"
 
 research_obligation: null
 
 milestones:
   M02:
     decision_state: "accepted"
-    execution_status: "in_progress"
+    execution_status: "done"
     contract: "elmakus/muse-capability-admin@8aecaa42d0ffd40efa2342b5bbace85fcc976d7e:planning/MASTER_PLAN.md#M02"
-    checkpoint: "c8fc2d2c60a395bc20562d3f81efc844ee9a7405"
+    checkpoint: "1b297620f19ff495034ad160465ac90fa29b8ed8"
     implementation_head: "c8fc2d2c60a395bc20562d3f81efc844ee9a7405"
     handoff: "implementation/workstreams/change-structured-muse-capability-hints/handoffs/M02_HANDOFF.md"
     acceptance_evidence: "implementation/workstreams/change-structured-muse-capability-hints/evidence/M02-close.md"
