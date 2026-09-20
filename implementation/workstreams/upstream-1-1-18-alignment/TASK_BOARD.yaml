@@ -36,15 +36,15 @@ milestones:
 
   M03:
     decision_state: "accepted"
-    execution_status: "done"
+    execution_status: "in_progress"
     contract: "planning/MASTER_PLAN.md#M03--two-profile-execution-and-communication-semantics"
-    checkpoint: "b07e93a29aa70f97e585bbdaf5b41e8a44d1ea5e"
+    checkpoint: null
     implementation_head: "b07e93a29aa70f97e585bbdaf5b41e8a44d1ea5e"
-    handoff: "implementation/workstreams/upstream-1-1-18-alignment/handoffs/M03_HANDOFF.md"
-    acceptance_evidence: "implementation/workstreams/upstream-1-1-18-alignment/evidence/M03-acceptance.md"
-    review_state: "green"
-    review_subject: "b07e93a29aa70f97e585bbdaf5b41e8a44d1ea5e"
-    review_evidence: "implementation/workstreams/upstream-1-1-18-alignment/evidence/M03-acceptance.md"
+    handoff: null
+    acceptance_evidence: null
+    review_state: null
+    review_subject: null
+    review_evidence: null
 
 cards:
   - id: "M01-T01"
@@ -132,15 +132,15 @@ cards:
     title: "Plus-only Material Event Push and two-profile communication contract"
     milestone: "M03"
     decision_state: "accepted"
-    execution_status: "done"
+    execution_status: "in_progress"
     executor: "chatgpt"
     depends_on:
       - "M03-T01"
     openspec_change: null
     contract: "implementation/workstreams/upstream-1-1-18-alignment/cards/M03-T02.md"
-    review_state: "green"
+    review_state: "red"
     review_subject: "b07e93a29aa70f97e585bbdaf5b41e8a44d1ea5e"
-    review_evidence: "implementation/workstreams/upstream-1-1-18-alignment/evidence/M03-T02-review.md"
+    review_evidence: "implementation/workstreams/upstream-1-1-18-alignment/evidence/M03-T02-review-recovery.md"
     result_commit: "b07e93a29aa70f97e585bbdaf5b41e8a44d1ea5e"
     result_pr: 7
     evidence: "implementation/workstreams/upstream-1-1-18-alignment/evidence/M03-T02.md"
