@@ -1913,7 +1913,8 @@ class LifecycleIntegrationTests(unittest.TestCase):
             "executor_luna",
             "executor_sol",
             "executor_terra",
-            "explorer",
+            "companion",
+            "micro_executor",
             "end_of_session",
             "wave_barrier",
         ):
@@ -1935,7 +1936,8 @@ class LifecycleIntegrationTests(unittest.TestCase):
             "executor_luna",
             "executor_sol",
             "executor_terra",
-            "explorer",
+            "companion",
+            "micro_executor",
             "end_of_session",
             "wave_barrier",
         ):
