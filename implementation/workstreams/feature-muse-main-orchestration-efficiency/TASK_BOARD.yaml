@@ -21,11 +21,11 @@ milestones:
 
   M06:
     contract: "planning/MASTER_PLAN.md#M06 — quiet milestone communication and integrated acceptance"
-    execution_status: "in_progress"
-    checkpoint: null
-    implementation_head: null
-    acceptance_evidence: null
-    handoff: null
+    execution_status: "done"
+    checkpoint: "commit:24acbc480d84c72b212d34b14a81d868ee7e2077"
+    implementation_head: "3114bcc1c732adebf16efc9876301f98cae77d85"
+    acceptance_evidence: "implementation/workstreams/feature-muse-main-orchestration-efficiency/evidence/M06-acceptance.md"
+    handoff: "implementation/workstreams/feature-muse-main-orchestration-efficiency/handoffs/M06_HANDOFF.md"
 
 cards:
   - id: "M05-T01"
