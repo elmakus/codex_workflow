@@ -1,4 +1,4 @@
-"""Focused regression coverage for the mixed-harness Muse Max profile."""
+"""Focused regression coverage for the Muse Max worker profile."""
 
 from __future__ import annotations
 
@@ -40,25 +40,20 @@ from runtime.muse_worker import (  # noqa: E402
 
 
 MUSE_ROLES = {
-    "micro_executor",
+    "explorer",
+    "investigator",
     "default_executor",
     "senior_executor",
     "tester",
     "archivist",
-    "investigator",
 }
 
 
 class MuseMaxProfileTests(unittest.TestCase):
-    def test_muse_max_is_one_internal_companion_plus_six_muse_roles(self) -> None:
+    def test_muse_max_routes_all_six_workers_through_muse(self) -> None:
         profile = COMPUTE_PROFILES["muse-max"]
         self.assertEqual(set(profile), set(BUILTIN_WORKERS))
-        companion = profile["companion"]
-        self.assertEqual(companion.model, "gpt-5.6-luna")
-        self.assertEqual(companion.reasoning_effort, "xhigh")
-        self.assertEqual(companion.harness, "codex")
-
-        self.assertEqual(set(profile) - {"companion"}, MUSE_ROLES)
+        self.assertEqual(set(profile), MUSE_ROLES)
         for worker in MUSE_ROLES:
             with self.subTest(worker=worker):
                 spec = profile[worker]
@@ -67,30 +62,19 @@ class MuseMaxProfileTests(unittest.TestCase):
                 self.assertEqual(spec.harness, "muse-code")
 
         summary = profile_summary("muse-max")
-        self.assertEqual(summary["companion"]["harness"], "codex")
         for worker in MUSE_ROLES:
             self.assertEqual(summary[worker]["harness"], "muse-code")
 
-    def test_mixed_profile_renders_only_internal_companion(self) -> None:
-        executor_source = (PACKAGE / "agents" / "default_executor.toml").read_text(
-            encoding="utf-8"
-        )
-        executor_rendered = render_worker_for_profile(
-            executor_source, "default_executor", "muse-max"
-        )
-        self.assertEqual(executor_rendered, executor_source)
+    def test_muse_profile_keeps_external_worker_templates_dormant(self) -> None:
+        for worker in ("explorer", "default_executor"):
+            with self.subTest(worker=worker):
+                source = (PACKAGE / "agents" / f"{worker}.toml").read_text(
+                    encoding="utf-8"
+                )
+                rendered = render_worker_for_profile(source, worker, "muse-max")
+                self.assertEqual(rendered, source)
 
-        companion_source = (PACKAGE / "agents" / "companion.toml").read_text(
-            encoding="utf-8"
-        )
-        companion_rendered = render_worker_for_profile(
-            companion_source, "companion", "muse-max"
-        )
-        parsed = tomllib.loads(companion_rendered)
-        self.assertEqual(parsed["model"], "gpt-5.6-luna")
-        self.assertEqual(parsed["model_reasoning_effort"], "xhigh")
-
-    def test_profile_switch_materializes_mixed_runtime(self) -> None:
+    def test_profile_switch_materializes_muse_runtime(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
             runtime = RuntimePaths(root / "codex-home")
@@ -100,48 +84,42 @@ class MuseMaxProfileTests(unittest.TestCase):
 
             plan = plan_compute_profile(runtime, "muse-max")
             self.assertEqual(plan.details["main_agent"], "unchanged")
-            self.assertEqual(
-                plan.details["worker_harnesses"], ["codex", "muse-code"]
-            )
+            self.assertEqual(plan.details["worker_harnesses"], ["muse-code"])
             plan.apply()
             self.assertEqual(read_compute_profile(runtime), "muse-max")
-            companion = tomllib.loads(
-                (runtime.agents / "companion.toml").read_text(encoding="utf-8")
+            self.assertEqual(
+                {path.stem for path in runtime.agents.glob("*.toml")},
+                MUSE_ROLES,
             )
-            self.assertEqual(companion["model"], "gpt-5.6-luna")
-            self.assertEqual(companion["model_reasoning_effort"], "xhigh")
             heavy = (runtime.runtime / "heavy_route.md").read_text(encoding="utf-8")
             self.assertIn("normal concise commentary", heavy)
             self.assertNotIn("## Silent Orchestration", heavy)
 
-    def test_other_profile_allocations_are_unchanged_and_codex_backed(self) -> None:
+    def test_other_profile_allocations_keep_six_codex_workers(self) -> None:
         expected = {
             "plus": {
-                "micro_executor": ("gpt-5.6-luna", "high"),
+                "explorer": ("gpt-5.6-luna", "max"),
+                "investigator": ("gpt-5.6-luna", "max"),
                 "default_executor": ("gpt-5.6-luna", "max"),
                 "senior_executor": ("gpt-5.6-sol", "medium"),
                 "tester": ("gpt-5.6-luna", "max"),
                 "archivist": ("gpt-5.6-luna", "max"),
-                "companion": ("gpt-5.6-luna", "max"),
-                "investigator": ("gpt-5.6-luna", "max"),
             },
             "luna-xhigh": {
-                "micro_executor": ("gpt-5.6-luna", "xhigh"),
+                "explorer": ("gpt-5.6-luna", "xhigh"),
+                "investigator": ("gpt-5.6-luna", "xhigh"),
                 "default_executor": ("gpt-5.6-luna", "xhigh"),
                 "senior_executor": ("gpt-5.6-sol", "medium"),
                 "tester": ("gpt-5.6-luna", "xhigh"),
                 "archivist": ("gpt-5.6-luna", "xhigh"),
-                "companion": ("gpt-5.6-luna", "xhigh"),
-                "investigator": ("gpt-5.6-luna", "xhigh"),
             },
             "pro-x5": {
-                "micro_executor": ("gpt-5.6-sol", "low"),
+                "explorer": ("gpt-5.6-sol", "low"),
+                "investigator": ("gpt-5.6-sol", "low"),
                 "default_executor": ("gpt-5.6-sol", "low"),
                 "senior_executor": ("gpt-5.6-sol", "medium"),
                 "tester": ("gpt-5.6-sol", "low"),
                 "archivist": ("gpt-5.6-sol", "low"),
-                "companion": ("gpt-5.6-sol", "low"),
-                "investigator": ("gpt-5.6-sol", "low"),
             },
         }
         for profile_name, workers in expected.items():
@@ -219,17 +197,6 @@ class MuseMaxProfileTests(unittest.TestCase):
                         "muse-spark-1.3-contributor",
                     )
                     self.assertEqual(payload["reasoning_effort"], "max")
-
-                    with self.assertRaisesRegex(
-                        MuseWorkerError,
-                        "not assigned to muse-code",
-                    ):
-                        run(
-                            "companion",
-                            str(workspace),
-                            str(task),
-                            dry_run=True,
-                        )
 
                 plan_compute_profile(runtime, "plus").apply()
                 with self.assertRaisesRegex(
