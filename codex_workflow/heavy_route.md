@@ -12,7 +12,7 @@ Read `~/.codex/codex_workflow/settings.toml` to determine the active compute pro
 
 When the profile is `muse-max`, all six supported roles — Explorer, Investigator, Default Executor, Senior Executor, Tester, and Archivist — run as logical Muse workers using Muse Spark 1.3 Contributor with `max` reasoning. Read `~/.codex/codex_workflow/delegation.md` before the first worker package and route those roles through `runtime/muse_worker.py`. Each turn is one bounded native Muse Code process with a unique invocation identity, while the role instance owns a separate stable session identity. Ordinary follow-up, repair, and recheck resume that same bound logical worker when safe; a freshness requirement or unsafe/unavailable resume uses an explicitly new logical worker/session.
 
-For `plus`, `luna-xhigh`, and `pro-x5`, all six supported roles use the internal Codex worker lifecycle described below. Current profile names remain transitional M02 compatibility surface; profile removal belongs to M03.
+For `plus`, all six supported roles use the internal Codex worker lifecycle described below.
 
 ## Orchestrator-First Execution
 
@@ -89,9 +89,9 @@ Use app-level `create_thread` only when the user explicitly asks for a separate 
 
 Preserve sequential ordering where dependencies, ownership, uncertainty, or risk require it. Do not maximize concurrency without a concrete benefit.
 
-## Material Event Handling
+## Plus Material Event Handling
 
-The standing worker-side `send_message` policy lives in `AGENTS.md`. Keep the long event-driven `wait_agent` lifecycle unchanged; material-event push complements it and does not replace normal completion notifications or waiting.
+When the active profile is `plus`, the standing internal-worker `send_message` policy lives in `AGENTS.md`. Keep the long event-driven `wait_agent` lifecycle unchanged; material-event push complements it and does not replace normal completion notifications or waiting.
 
 When Main receives a material worker message, including when it wakes Main from `wait_agent`, process only the necessary orchestration consequence. Receipt of a material worker message must not cause status polling, repeated worker listings, progress requests, broad check-ins, interruption, or replacement. If the event changes another active package, steer only the affected worker or decision. Then continue independent useful work or return to another long `wait_agent` when idle.
 
