@@ -177,7 +177,7 @@ cards:
     title: "Integrated regression and residual reference closure"
     milestone: "M04"
     decision_state: "accepted"
-    execution_status: "in_progress"
+    execution_status: "done"
     executor: "chatgpt"
     depends_on:
       - "M04-T01"
