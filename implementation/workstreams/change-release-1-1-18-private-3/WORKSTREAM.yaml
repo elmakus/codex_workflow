@@ -1,6 +1,6 @@
 id: "change-release-1-1-18-private-3"
 kind: "change"
-status: "review"
+status: "ready"
 
 branch: "work/release-1-1-18-private-3"
 base_ref: "6ce308a6dd7c92136ed01037800b61ba974d22b3"
@@ -29,10 +29,10 @@ authority:
 
 review:
   requirement: "RECOMMENDED"
-  state: null
-  subject: null
-  evidence: null
-  covered_by: null
+  state: "green"
+  subject: "1d63028c7e1afca58fb1f0d432b5c0a40d8c03d5"
+  evidence: "implementation/workstreams/change-release-1-1-18-private-3/evidence/M04-T01-review.md"
+  covered_by: "task_board:M04-T01"
 
 branch_cleanup:
   state: null
