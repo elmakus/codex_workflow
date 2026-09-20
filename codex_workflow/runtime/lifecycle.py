@@ -34,10 +34,18 @@ from .transaction import Mutation
 
 
 def plan_bootstrap(
-    package: PackageLayout, runtime: RuntimePaths, project: ProjectPaths
+    package: PackageLayout,
+    runtime: RuntimePaths,
+    project: ProjectPaths,
+    *,
+    legacy_local_instructions: str | None = None,
 ) -> OperationPlan:
     mutations, owned_runtime, skill_cleanup = plan_runtime_files(package, runtime)
-    project_plan = plan_project_install(package, project)
+    project_plan = plan_project_install(
+        package,
+        project,
+        legacy_local_instructions=legacy_local_instructions,
+    )
     mutations.extend(project_plan.mutations)
     state = {
         "schema_version": RUNTIME_SCHEMA_VERSION,
