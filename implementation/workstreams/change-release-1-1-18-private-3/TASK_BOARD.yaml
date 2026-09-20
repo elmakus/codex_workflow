@@ -1,0 +1,42 @@
+project: "codex_workflow"
+workstream_id: "change-release-1-1-18-private-3"
+plan_revision: "R2"
+current_milestone: "M04"
+
+execution_ref:
+  branch: "work/release-1-1-18-private-3"
+  pr: 15
+  head: "c338c2e708ae06b7def4ddad1329a01ad3840ba1"
+
+research_obligation: null
+
+milestones:
+  M04:
+    decision_state: accepted
+    execution_status: done
+    contract: "planning/MASTER_PLAN.md#4-milestones"
+    checkpoint: "8bd568b2b1c5923903c17408ba8c9e42692b677e"
+    implementation_head: "1d63028c7e1afca58fb1f0d432b5c0a40d8c03d5"
+    handoff: "implementation/workstreams/change-release-1-1-18-private-3/handoffs/M04_HANDOFF.md"
+    acceptance_evidence: "implementation/workstreams/change-release-1-1-18-private-3/evidence/M04-acceptance.md"
+    review_state: null
+    review_subject: null
+    review_evidence: null
+
+cards:
+  - id: "M04-T01"
+    title: "Prepare owner release 1.1.18-private.3"
+    milestone: "M04"
+    decision_state: accepted
+    execution_status: done
+    executor: chatgpt
+    depends_on: []
+    openspec_change: null
+    contract: "implementation/workstreams/change-release-1-1-18-private-3/cards/M04-T01.md"
+    review_state: green
+    review_subject: "1d63028c7e1afca58fb1f0d432b5c0a40d8c03d5"
+    review_evidence: "implementation/workstreams/change-release-1-1-18-private-3/evidence/M04-T01-review.md"
+    result_commit: "1d63028c7e1afca58fb1f0d432b5c0a40d8c03d5"
+    result_pr: 15
+    evidence: "implementation/workstreams/change-release-1-1-18-private-3/evidence/M04-T01-implementation.md"
+    tests_summary: "GREEN: exact implementation PR Tests #265 / 35534573820; closure-ready PR Tests #271 / 35534974890; post-merge Release #13 / 35535078252 and Tests #272 / 35535078293 on integration result 8bd568b2b1c5923903c17408ba8c9e42692b677e. Release v1.1.18-private.3 is verified non-draft prerelease with exactly codex_workflow-1.1.18-private.3.zip and SHA256SUMS."
