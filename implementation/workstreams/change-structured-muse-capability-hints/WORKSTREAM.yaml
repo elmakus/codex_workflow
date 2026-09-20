@@ -1,6 +1,6 @@
 id: "change-structured-muse-capability-hints"
 kind: "change"
-status: "ready"
+status: "in_progress"
 
 branch: "work/structured-muse-capability-hints"
 base_ref: "738ac89eeaa0522348f175eb5e936bda02a3de8c"
