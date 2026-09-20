@@ -285,32 +285,31 @@ class ComputeProfileTests(unittest.TestCase):
         self.assertTrue(self.runtime.compute_settings.is_file())
         self.assertEqual(read_compute_profile(self.runtime), "plus")
 
-    def test_luna_xhigh_uses_luna_xhigh_except_senior(self) -> None:
-        expected = {
-            worker: (
-                ("gpt-5.6-sol", "medium")
-                if worker == "senior_executor"
-                else ("gpt-5.6-luna", "xhigh")
-            )
-            for worker in COMPUTE_PROFILES["luna-xhigh"]
-        }
-        self.assertEqual(_expected_profile_models("luna-xhigh"), expected)
+    def test_only_plus_and_muse_max_are_supported(self) -> None:
+        self.assertEqual(set(COMPUTE_PROFILES), {"plus", "muse-max"})
+        for removed in ("luna-xhigh", "pro-x5"):
+            with self.subTest(profile=removed):
+                with self.assertRaisesRegex(ValidationError, "unsupported compute profile"):
+                    plan_compute_profile(self.runtime, removed)
 
-    def test_switches_between_all_profiles(self) -> None:
-        for profile in ("luna-xhigh", "pro-x5", "plus"):
-            plan_compute_profile(self.runtime, profile).apply()
-            self.assertEqual(read_compute_profile(self.runtime), profile)
-            self.assertEqual(
-                _installed_worker_models(self.runtime),
-                _expected_profile_models(profile),
-            )
+    def test_switches_between_supported_profiles(self) -> None:
+        plan_compute_profile(self.runtime, "muse-max").apply()
+        self.assertEqual(read_compute_profile(self.runtime), "muse-max")
+        heavy = (self.runtime.runtime / "heavy_route.md").read_text(encoding="utf-8")
+        self.assertIn("live Muse-worker experiment", heavy)
+
+        plan_compute_profile(self.runtime, "plus").apply()
+        self.assertEqual(read_compute_profile(self.runtime), "plus")
+        self.assertEqual(
+            _installed_worker_models(self.runtime),
+            _expected_profile_models("plus"),
+        )
 
     def test_profile_switch_renders_distinct_communication_policies(self) -> None:
         heavy_path = self.runtime.runtime / "heavy_route.md"
         expected = {
-            "plus": ("restrained and outcome-oriented", "Silent Orchestration"),
-            "luna-xhigh": ("If work can continue safely without user input, remain silent", "Skill announcements should be brief"),
-            "pro-x5": ("Use normal concise commentary", "If work can continue safely without user input, remain silent"),
+            "plus": ("restrained and outcome-oriented", "live Muse-worker experiment"),
+            "muse-max": ("live Muse-worker experiment", "restrained and outcome-oriented"),
         }
         for profile, (present, absent) in expected.items():
             plan_compute_profile(self.runtime, profile).apply()
@@ -337,7 +336,7 @@ class ComputeProfileTests(unittest.TestCase):
         )
 
     def test_profile_apply_rolls_back_earlier_worker_writes_on_failure(self) -> None:
-        plan = plan_compute_profile(self.runtime, "luna-xhigh")
+        plan = plan_compute_profile(self.runtime, "plus")
         before_settings = self.runtime.compute_settings.read_bytes()
         heavy_path = self.runtime.runtime / "heavy_route.md"
         before_heavy = heavy_path.read_bytes()
@@ -356,8 +355,8 @@ class ComputeProfileTests(unittest.TestCase):
                 continue
             self.assertEqual((self.runtime.agents / name).read_bytes(), content)
 
-    def test_update_preserves_selected_luna_xhigh_profile(self) -> None:
-        plan_compute_profile(self.runtime, "luna-xhigh").apply()
+    def test_update_preserves_selected_muse_max_profile(self) -> None:
+        plan_compute_profile(self.runtime, "muse-max").apply()
         root = Path(self.temporary.name)
         incoming_root = root / "incoming"
         shutil.copytree(PACKAGE, incoming_root)
@@ -374,11 +373,10 @@ class ComputeProfileTests(unittest.TestCase):
         )
         incoming = PackageLayout.resolve(incoming_root)
         plan_update(incoming, self.runtime, self.project).apply()
-        self.assertEqual(read_compute_profile(self.runtime), "luna-xhigh")
-        self.assertEqual(
-            _installed_worker_models(self.runtime),
-            _expected_profile_models("luna-xhigh"),
-        )
+        self.assertEqual(read_compute_profile(self.runtime), "muse-max")
+        heavy = (self.runtime.runtime / "heavy_route.md").read_text(encoding="utf-8")
+        self.assertIn("live Muse-worker experiment", heavy)
+
 
 
 base.PrivateCustomizationTests.test_private_version_and_user_marker_are_synchronized = _test_private_version_and_user_marker_are_synchronized
