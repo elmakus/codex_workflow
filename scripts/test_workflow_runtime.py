@@ -37,13 +37,12 @@ def _test_private_version_and_user_marker_are_synchronized(self: unittest.TestCa
 
 def _test_worker_models_and_reasoning(self: unittest.TestCase) -> None:
     expected = {
-        "micro_executor": ("gpt-5.6-luna", "high"),
+        "explorer": ("gpt-5.6-luna", "max"),
+        "investigator": ("gpt-5.6-luna", "max"),
         "default_executor": ("gpt-5.6-luna", "max"),
         "senior_executor": ("gpt-5.6-sol", "medium"),
         "tester": ("gpt-5.6-luna", "max"),
         "archivist": ("gpt-5.6-luna", "max"),
-        "companion": ("gpt-5.6-luna", "max"),
-        "investigator": ("gpt-5.6-luna", "max"),
     }
     paths = sorted((PACKAGE / "agents").glob("*.toml"))
     self.assertEqual({path.stem for path in paths}, set(expected))
@@ -80,7 +79,7 @@ def _test_current_private_contract(self: unittest.TestCase) -> None:
     agents = (PACKAGE / "AGENTS.md").read_text(encoding="utf-8")
     heavy = (PACKAGE / "heavy_route.md").read_text(encoding="utf-8")
     delegation = (PACKAGE / "delegation.md").read_text(encoding="utf-8")
-    companion = (PACKAGE / "agents" / "companion.toml").read_text(encoding="utf-8")
+    explorer = (PACKAGE / "agents" / "explorer.toml").read_text(encoding="utf-8")
     investigator = (PACKAGE / "agents" / "investigator.toml").read_text(encoding="utf-8")
     archivist = (PACKAGE / "agents" / "archivist.toml").read_text(encoding="utf-8")
     archivist_contract = (PACKAGE / "archivist.md").read_text(encoding="utf-8")
@@ -173,10 +172,10 @@ def _test_current_private_contract(self: unittest.TestCase) -> None:
     self.assertIn("must not cause status polling", heavy)
     self.assertIn("Do not ask workers to send routine progress", heavy)
 
-    self.assertIn("Do not turn the bootstrap into a full-project intake", companion)
-    self.assertIn("do not read the complete `agent_docs/` framework", companion)
-    self.assertIn("unrelated module documents", companion)
-    self.assertIn("If no useful bounded context is", companion)
+    self.assertIn("disposable read-only project-context worker", explorer)
+    self.assertIn("bounded project evidence", explorer)
+    self.assertIn("not fault", explorer)
+    self.assertIn("Do not modify project, environment, or", explorer)
 
     for public_doc in (readme, workflow_map):
         public_doc_flat = " ".join(public_doc.split()).lower()
