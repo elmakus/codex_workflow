@@ -397,6 +397,26 @@ class ComputeProfileTests(unittest.TestCase):
         self.assertEqual(read_compute_profile(self.runtime), "plus")
         self.assertEqual(self.runtime.config_toml.read_bytes(), before)
 
+    def test_muse_max_rejects_external_multi_agent_v2_table_override(self) -> None:
+        original = self.runtime.config_toml.read_text(encoding="utf-8")
+        conflicting = (
+            original
+            + "\n[features.multi_agent_v2]\n"
+            + "enabled = true\n"
+            + "max_wait_timeout_ms = 1800000\n"
+        )
+        self.runtime.config_toml.write_text(conflicting, encoding="utf-8")
+        before = self.runtime.config_toml.read_bytes()
+
+        with self.assertRaisesRegex(
+            ValidationError,
+            "multi_agent_v2 is enabled",
+        ):
+            plan_compute_profile(self.runtime, "muse-max")
+
+        self.assertEqual(read_compute_profile(self.runtime), "plus")
+        self.assertEqual(self.runtime.config_toml.read_bytes(), before)
+
     def test_profile_switch_renders_distinct_communication_policies(self) -> None:
         heavy_path = self.runtime.runtime / "heavy_route.md"
         expected = {
