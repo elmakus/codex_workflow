@@ -20,11 +20,13 @@ def patch_codex_settings(
         except tomllib.TOMLDecodeError as error:
             raise ValidationError(f"existing Codex config is invalid TOML: {error}") from error
     features = parsed.get("features")
-    if (
-        not internal_agents_enabled
-        and isinstance(features, dict)
-        and features.get("multi_agent_v2") is True
-    ):
+    multi_agent_v2 = (
+        features.get("multi_agent_v2") if isinstance(features, dict) else None
+    )
+    multi_agent_v2_enabled = multi_agent_v2 is True or (
+        isinstance(multi_agent_v2, dict) and multi_agent_v2.get("enabled") is True
+    )
+    if not internal_agents_enabled and multi_agent_v2_enabled:
         raise ValidationError(
             "muse-max cannot disable internal Codex agents while "
             "[features].multi_agent_v2 is enabled; disable that external override first"
