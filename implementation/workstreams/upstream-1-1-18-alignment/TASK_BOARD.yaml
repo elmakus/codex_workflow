@@ -1,7 +1,7 @@
 project: "codex_workflow"
 workstream_id: "upstream-1-1-18-alignment"
 plan_revision: "R2"
-current_milestone: "M03"
+current_milestone: "M04"
 
 execution_ref:
   branch: "feat/upstream-1.1.18-alignment"
@@ -45,6 +45,17 @@ milestones:
     review_state: "green"
     review_subject: "3e6f86cb78b54c8690b386d8575fc2647465eed3"
     review_evidence: "implementation/workstreams/upstream-1-1-18-alignment/evidence/M03-acceptance.md"
+  M04:
+    decision_state: "accepted"
+    execution_status: "ready"
+    contract: "planning/MASTER_PLAN.md#M04--documentation-packaging-and-integrated-regression-closure"
+    checkpoint: null
+    implementation_head: null
+    handoff: null
+    acceptance_evidence: null
+    review_state: null
+    review_subject: null
+    review_evidence: null
 
 cards:
   - id: "M01-T01"
@@ -145,3 +156,21 @@ cards:
     result_pr: 7
     evidence: "implementation/workstreams/upstream-1-1-18-alignment/evidence/M03-T02-correction.md"
     tests_summary: "GREEN: PR #7 Tests run #155 on exact corrected subject; runtime 97/97; Muse adapter 33/33; Muse Max 7/7; compile/package validate/build/archive verify GREEN; retired luna-xhigh/pro-x5 command dispatch forms removed and guarded; VERSION unchanged"
+  - id: "M04-T01"
+    title: "Canonical workflow documentation and adapted upstream docs"
+    milestone: "M04"
+    decision_state: "accepted"
+    execution_status: "ready"
+    executor: "chatgpt"
+    depends_on:
+      - "M03-T02"
+    openspec_change: null
+    contract: "implementation/workstreams/upstream-1-1-18-alignment/cards/M04-T01.md"
+    review_state: null
+    review_subject: null
+    review_evidence: null
+    result_commit: null
+    result_pr: 7
+    evidence: null
+    tests_summary: null
+
