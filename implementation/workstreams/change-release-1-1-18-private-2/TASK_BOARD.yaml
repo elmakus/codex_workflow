@@ -33,9 +33,9 @@ cards:
     depends_on: []
     openspec_change: null
     contract: "implementation/workstreams/change-release-1-1-18-private-2/cards/M04-T01.md"
-    review_state: in_progress
+    review_state: green
     review_subject: "8336e6efe68dd12de8836e5e36ef667594d48754"
-    review_evidence: null
+    review_evidence: "implementation/workstreams/change-release-1-1-18-private-2/evidence/M04-T01-review.md"
     result_commit: "8336e6efe68dd12de8836e5e36ef667594d48754"
     result_pr: 11
     evidence: "implementation/workstreams/change-release-1-1-18-private-2/evidence/M04-T01-implementation.md"
