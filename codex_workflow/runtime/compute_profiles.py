@@ -31,24 +31,6 @@ Do not narrate hidden or internal reasoning, instruction-conflict resolution, ro
 
 A mid-task question or risk notice is appropriate when execution cannot continue without user input, or when an immediate security, publication, destructive-action, or authorization risk requires explicit approval. At completion, send one normal final response containing the result, material findings, verification, and residual risk.
 """,
-    "luna-xhigh": """## Silent Orchestration
-
-During execution, do not send user-visible progress, status narration, intermediate findings, hypotheses, evidence summaries, routing decisions, worker-state updates, Git or branch-state updates, checkpoints, or next-step descriptions. Perform orchestration through tool calls only.
-
-Do not narrate an \"important discovery\", changed hypothesis, changed plan, successful intermediate result, newly discovered evidence, repository state, skill selection, or instruction-conflict resolution. Incorporate those internally and continue working.
-
-A mid-task user-visible message is permitted only when execution cannot continue without a user decision or missing information, an immediate security/publication/destructive-action/authorization risk requires explicit approval, or the user explicitly requested progress updates for this task. If work can continue safely without user input, remain silent.
-
-When the task completes, send one normal final response containing the result, material findings, verification, and residual risk. Silence limits narration only; correctness work continues.
-""",
-    "pro-x5": """## Orchestration Communication
-
-Use normal concise commentary during substantive work. Give relevant progress updates, including a brief announcement when a skill is used and why it helps, often enough that the user can follow meaningful progress without a routine play-by-play.
-
-Keep updates focused on user-relevant outcomes, assumptions, blockers, and material milestones. Do not expose hidden or internal reasoning, narrate instruction-conflict resolution, or report routine routing, worker state, trivial discoveries, and repository bookkeeping.
-
-Ask promptly when execution cannot continue without user input, or when an immediate security, publication, destructive-action, or authorization risk requires explicit approval. At completion, send one normal final response containing the result, material findings, verification, and residual risk.
-""",
     "muse-max": """## Orchestration Communication
 
 Use normal concise commentary during substantive work. Give relevant progress updates at meaningful milestones so the user can follow the live Muse-worker experiment without a routine play-by-play.
@@ -67,43 +49,22 @@ _COMMUNICATION_SECTION = re.compile(
 
 COMPUTE_PROFILES: dict[str, dict[str, WorkerModel]] = {
     "plus": {
-        "micro_executor": WorkerModel("gpt-5.6-luna", "high"),
+        "explorer": WorkerModel("gpt-5.6-luna", "max"),
+        "investigator": WorkerModel("gpt-5.6-luna", "max"),
         "default_executor": WorkerModel("gpt-5.6-luna", "max"),
         "senior_executor": WorkerModel("gpt-5.6-sol", "medium"),
         "tester": WorkerModel("gpt-5.6-luna", "max"),
         "archivist": WorkerModel("gpt-5.6-luna", "max"),
-        "companion": WorkerModel("gpt-5.6-luna", "max"),
-        "investigator": WorkerModel("gpt-5.6-luna", "max"),
-    },
-    "luna-xhigh": {
-        "micro_executor": WorkerModel("gpt-5.6-luna", "xhigh"),
-        "default_executor": WorkerModel("gpt-5.6-luna", "xhigh"),
-        "senior_executor": WorkerModel("gpt-5.6-sol", "medium"),
-        "tester": WorkerModel("gpt-5.6-luna", "xhigh"),
-        "archivist": WorkerModel("gpt-5.6-luna", "xhigh"),
-        "companion": WorkerModel("gpt-5.6-luna", "xhigh"),
-        "investigator": WorkerModel("gpt-5.6-luna", "xhigh"),
-    },
-    "pro-x5": {
-        "micro_executor": WorkerModel("gpt-5.6-sol", "low"),
-        "default_executor": WorkerModel("gpt-5.6-sol", "low"),
-        "senior_executor": WorkerModel("gpt-5.6-sol", "medium"),
-        "tester": WorkerModel("gpt-5.6-sol", "low"),
-        "archivist": WorkerModel("gpt-5.6-sol", "low"),
-        "companion": WorkerModel("gpt-5.6-sol", "low"),
-        "investigator": WorkerModel("gpt-5.6-sol", "low"),
     },
     "muse-max": {
-        "micro_executor": WorkerModel("muse-spark-1.3-contributor", "max", "muse-code"),
+        "explorer": WorkerModel("muse-spark-1.3-contributor", "max", "muse-code"),
+        "investigator": WorkerModel("muse-spark-1.3-contributor", "max", "muse-code"),
         "default_executor": WorkerModel("muse-spark-1.3-contributor", "max", "muse-code"),
         "senior_executor": WorkerModel("muse-spark-1.3-contributor", "max", "muse-code"),
         "tester": WorkerModel("muse-spark-1.3-contributor", "max", "muse-code"),
         "archivist": WorkerModel("muse-spark-1.3-contributor", "max", "muse-code"),
-        "companion": WorkerModel("gpt-5.6-luna", "xhigh"),
-        "investigator": WorkerModel("muse-spark-1.3-contributor", "max", "muse-code"),
     },
 }
-
 
 _MODEL_LINE = re.compile(r'^model\s*=\s*"[^"]+"\s*$', re.MULTILINE)
 _REASONING_LINE = re.compile(
@@ -201,8 +162,8 @@ def render_worker_for_profile(text: str, worker: str, profile: str) -> str:
         )
 
     # Roles assigned to an external harness deliberately keep their installed
-    # Codex worker TOMLs valid but dormant. Internal roles in a mixed profile are
-    # still rendered normally from this same profile authority.
+    # Codex worker TOMLs valid but dormant. Internal Codex roles are rendered
+    # normally from this same profile authority.
     if spec.harness != "codex":
         return text
 

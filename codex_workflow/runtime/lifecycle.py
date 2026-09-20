@@ -6,7 +6,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from . import RUNTIME_SCHEMA_VERSION
-from .backup import append_backup_mutations
+from .backup import append_backup_mutations, append_project_backup_mutations
 from .errors import ValidationError
 from .layout import USER_STATE, PackageLayout, ProjectPaths, RuntimePaths
 from .personalization import materialize_personalization
@@ -34,10 +34,18 @@ from .transaction import Mutation
 
 
 def plan_bootstrap(
-    package: PackageLayout, runtime: RuntimePaths, project: ProjectPaths
+    package: PackageLayout,
+    runtime: RuntimePaths,
+    project: ProjectPaths,
+    *,
+    legacy_local_instructions: str | None = None,
 ) -> OperationPlan:
     mutations, owned_runtime, skill_cleanup = plan_runtime_files(package, runtime)
-    project_plan = plan_project_install(package, project)
+    project_plan = plan_project_install(
+        package,
+        project,
+        legacy_local_instructions=legacy_local_instructions,
+    )
     mutations.extend(project_plan.mutations)
     state = {
         "schema_version": RUNTIME_SCHEMA_VERSION,
@@ -145,6 +153,56 @@ def plan_update(
             "backup": str(backup_root),
         },
         cleanup_dirs=skill_cleanup,
+    )
+
+
+def plan_project_only_update(
+    installed: PackageLayout,
+    runtime: RuntimePaths,
+    project: ProjectPaths,
+    *,
+    legacy_local_instructions: str | None = None,
+) -> OperationPlan:
+    """Bring one project up to the installed user-level version."""
+
+    project_installed = _project_installed_package(installed, runtime, project)
+    project_mutations, warnings = plan_project_update(
+        project_installed,
+        installed,
+        project,
+        legacy_local_instructions=legacy_local_instructions,
+    )
+    changed = [
+        mutation
+        for mutation in project_mutations
+        if mutation.content is None
+        or not mutation.path.is_file()
+        or mutation.path.read_bytes() != mutation.content
+    ]
+    backup_root = None
+    mutations: list[Mutation] = []
+    existing = [mutation for mutation in changed if mutation.path.is_file()]
+    if existing:
+        backup_root = (
+            runtime.runtime
+            / ".backups"
+            / f"{project_installed.version}-{datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%S%fZ')}"
+        )
+        append_project_backup_mutations(mutations, backup_root, project, existing)
+    mutations.extend(changed)
+    if warnings and not changed:
+        warnings = ["current project has no workflow entry point; nothing was changed"]
+    return OperationPlan(
+        "project-update",
+        mutations,
+        warnings,
+        [],
+        {
+            "from_version": installed.version,
+            "to_version": installed.version,
+            "project_from_version": project_installed.version,
+            "backup": str(backup_root) if backup_root else None,
+        },
     )
 
 

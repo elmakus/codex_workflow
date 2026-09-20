@@ -39,6 +39,7 @@ from runtime.lifecycle import (
     plan_enable,
     plan_personalize,
     plan_project_install,
+    plan_project_only_update,
     plan_remove,
     plan_update,
 )
@@ -59,18 +60,28 @@ def _add_common(parser: argparse.ArgumentParser, *, project: bool = True) -> Non
     parser.add_argument("--json", action="store_true", help="emit compact JSON")
 
 
+def _add_local_review_option(parser: argparse.ArgumentParser) -> None:
+    parser.add_argument(
+        "--legacy-local-instructions",
+        type=Path,
+        help="reviewed project-local instructions to import or replace",
+    )
+
+
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     commands = parser.add_subparsers(dest="command", required=True)
 
     install = commands.add_parser("install")
     _add_common(install)
+    _add_local_review_option(install)
     # Retained for callers that have an extracted package available. This is
     # a read-only project-install source; install never bootstraps user files.
     install.add_argument("--package-root", type=Path, help=argparse.SUPPRESS)
 
     bootstrap = commands.add_parser("bootstrap", help=argparse.SUPPRESS)
     _add_common(bootstrap)
+    _add_local_review_option(bootstrap)
     bootstrap.add_argument(
         "--package-root", type=Path, default=PACKAGE_ROOT
     )
@@ -80,11 +91,7 @@ def parse_args() -> argparse.Namespace:
     # Internal/recovery hand-off for an already verified extracted package.
     update.add_argument("--source", type=Path, help=argparse.SUPPRESS)
     update.add_argument("--allow-downgrade", action="store_true")
-    update.add_argument(
-        "--legacy-local-instructions",
-        type=Path,
-        help="reviewed local instructions extracted from a legacy merged entry point",
-    )
+    _add_local_review_option(update)
 
     remove = commands.add_parser("remove")
     _add_common(remove)
@@ -329,9 +336,27 @@ def main() -> int:
         if args.command == "bootstrap":
             assert project is not None
             package = PackageLayout.resolve(args.package_root)
-            return _finish(plan_bootstrap(package, runtime, project), args)
+            legacy_local = (
+                args.legacy_local_instructions.read_text(encoding="utf-8")
+                if args.legacy_local_instructions
+                else None
+            )
+            return _finish(
+                plan_bootstrap(
+                    package,
+                    runtime,
+                    project,
+                    legacy_local_instructions=legacy_local,
+                ),
+                args,
+            )
         if args.command == "install":
             assert project is not None
+            legacy_local = (
+                args.legacy_local_instructions.read_text(encoding="utf-8")
+                if args.legacy_local_instructions
+                else None
+            )
             if project.active.exists() and project.disabled.exists():
                 raise WorkflowError("both active and disabled project entry points exist")
             if _has_package_version(runtime.runtime):
@@ -349,7 +374,11 @@ def main() -> int:
                 # turns stale, malformed, or personalization-drifted installs
                 # into actionable errors instead of misreporting them as merely
                 # disabled.
-                existing_plan = plan_project_install(package, project)
+                existing_plan = plan_project_install(
+                    package,
+                    project,
+                    legacy_local_instructions=legacy_local,
+                )
                 documentation_action_required = any(
                     action.get("files") for action in existing_plan.agent_actions
                 )
@@ -373,18 +402,61 @@ def main() -> int:
                     compact=args.json,
                 )
                 return 0
-            return _finish(plan_project_install(package, project), args)
+            return _finish(
+                plan_project_install(
+                    package,
+                    project,
+                    legacy_local_instructions=legacy_local,
+                ),
+                args,
+            )
         if args.command == "update":
             assert project is not None
             if args.source is not None:
                 incoming_root = _package_root(args.source)
             else:
                 selected = select_latest()
-                temporary, package_path = acquire(selected)
-                incoming_root = _package_root(package_path)
+                if selected.version == _package_version(runtime.runtime):
+                    # The installed source is already verified and is the
+                    # template authority for projects that lag behind it.
+                    incoming_root = runtime.runtime
+                else:
+                    temporary, package_path = acquire(selected)
+                    incoming_root = _package_root(package_path)
             incoming_version, installed_version = _validate_update_order(
                 incoming_root, runtime, allow_downgrade=args.allow_downgrade
             )
+            if incoming_version == installed_version:
+                legacy_local = (
+                    args.legacy_local_instructions.read_text(encoding="utf-8")
+                    if args.legacy_local_instructions
+                    else None
+                )
+                installed = PackageLayout.resolve(runtime.runtime, allow_legacy=True)
+                plan = plan_project_only_update(
+                    installed,
+                    runtime,
+                    project,
+                    legacy_local_instructions=legacy_local,
+                )
+                project_version = parse_semver(str(plan.details["project_from_version"]))
+                if project_version > incoming_version and not args.allow_downgrade:
+                    raise WorkflowError(
+                        "target project was installed from a newer workflow version; "
+                        "pass --allow-downgrade after approval"
+                    )
+                if not plan.mutations:
+                    summary = plan.summary()
+                    summary["applied"] = False
+                    summary["status"] = (
+                        "no project workflow entry point"
+                        if plan.warnings
+                        else "already current"
+                    )
+                    summary["instruction"] = "No action is required."
+                    _emit(summary, compact=args.json)
+                    return 0
+                return _finish(plan, args)
             if incoming_root != PACKAGE_ROOT:
                 # The incoming runtime owns package validation. An installed
                 # launcher may be older than the package it is updating to and
@@ -396,31 +468,15 @@ def main() -> int:
                 if args.legacy_local_instructions
                 else None
             )
-            plan = plan_update(
-                incoming,
-                runtime,
-                project,
-                legacy_local_instructions=legacy_local,
+            return _finish(
+                plan_update(
+                    incoming,
+                    runtime,
+                    project,
+                    legacy_local_instructions=legacy_local,
+                ),
+                args,
             )
-            if incoming_version == installed_version:
-                project_version = parse_semver(str(plan.details["project_from_version"]))
-                if project_version == incoming_version:
-                    _emit(
-                        {
-                            "applied": False,
-                            "status": "already current",
-                            "instruction": "No action is required.",
-                            "details": plan.details,
-                        },
-                        compact=args.json,
-                    )
-                    return 0
-                if project_version > incoming_version and not args.allow_downgrade:
-                    raise WorkflowError(
-                        "target project was installed from a newer workflow version; "
-                        "pass --allow-downgrade after approval"
-                    )
-            return _finish(plan, args)
         if args.command == "personalize":
             assert project is not None
             resource = args.resource.read_text(encoding="utf-8")

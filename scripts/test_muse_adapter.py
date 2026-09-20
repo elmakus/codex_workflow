@@ -354,11 +354,12 @@ class MuseAdapterTests(unittest.TestCase):
                 self.assertEqual(result["terminal_status"], "failed")
                 self.assertEqual(result["failure_kind"], expected)
 
-    def test_profile_rejection_prevents_companion_muse_launch(self) -> None:
+    def test_profile_rejection_prevents_codex_backed_muse_launch(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             fixture = AdapterFixture(Path(temporary))
+            plan_compute_profile(fixture.runtime, "plus").apply()
             with self.assertRaisesRegex(MuseWorkerError, "not assigned to muse-code"):
-                fixture.execute("companion")
+                fixture.execute("default_executor")
 
     def test_normalized_result_redacts_obvious_secret_material(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:

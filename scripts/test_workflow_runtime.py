@@ -31,19 +31,22 @@ def _test_private_version_and_user_marker_are_synchronized(self: unittest.TestCa
     self.assertEqual(version, "1.1.17-private.12")
     user_agents = (PACKAGE / "operate" / "user_AGENTS.md").read_text(encoding="utf-8")
     self.assertEqual(user_agents.count(f"<!-- codex-workflow-version: {version} -->"), 1)
+    self.assertIn("codex_workflow --profile plus", user_agents)
+    self.assertIn("codex_workflow --profile muse-max", user_agents)
+    self.assertNotIn("codex_workflow --profile luna-xhigh", user_agents)
+    self.assertNotIn("codex_workflow --profile pro-x5", user_agents)
     self.assertGreater(base.parse_semver("1.1.17-private.12"), base.parse_semver("1.1.17-private.11"))
     self.assertEqual(base.NEXT_PACKAGE_VERSION, "1.1.17-private.13")
 
 
 def _test_worker_models_and_reasoning(self: unittest.TestCase) -> None:
     expected = {
-        "micro_executor": ("gpt-5.6-luna", "high"),
+        "explorer": ("gpt-5.6-luna", "max"),
+        "investigator": ("gpt-5.6-luna", "max"),
         "default_executor": ("gpt-5.6-luna", "max"),
         "senior_executor": ("gpt-5.6-sol", "medium"),
         "tester": ("gpt-5.6-luna", "max"),
         "archivist": ("gpt-5.6-luna", "max"),
-        "companion": ("gpt-5.6-luna", "max"),
-        "investigator": ("gpt-5.6-luna", "max"),
     }
     paths = sorted((PACKAGE / "agents").glob("*.toml"))
     self.assertEqual({path.stem for path in paths}, set(expected))
@@ -61,9 +64,9 @@ def _test_heavy_only_workflow_keeps_leaf_direct_path(self: unittest.TestCase) ->
     self.assertIn("Use `leaf state` only for questions and genuinely trivial bounded actions", agents)
     self.assertIn("Do not classify nontrivial work as leaf merely because it is bounded or short", agents)
     self.assertNotIn("small bounded operations", agents)
-    self.assertIn("enter `deployment state`, bootstrap the session Companion below", agents)
-    self.assertIn("read that Heavy contract", agents)
-    self.assertIn("## Early Companion", agents)
+    self.assertIn("enter `deployment state`, read that Heavy contract", agents)
+    self.assertIn("Use Explorer for bounded project-context discovery", agents)
+    self.assertIn("## Bounded Context Discovery", agents)
     self.assertNotIn("## Route Selection", agents)
     self.assertNotIn("**Light**", agents)
     self.assertNotIn("**Medium**", agents)
@@ -71,7 +74,8 @@ def _test_heavy_only_workflow_keeps_leaf_direct_path(self: unittest.TestCase) ->
 
     heavy = (PACKAGE / "heavy_route.md").read_text(encoding="utf-8")
     self.assertIn("Use as the substantive-work contract under `AGENTS.md`.", heavy)
-    self.assertIn("## Companion Lifecycle", heavy)
+    self.assertIn("## Explorer Discovery", heavy)
+    self.assertIn("## Investigator Lanes", heavy)
     self.assertNotIn("## Fast Path", heavy)
     self.assertIn("## Closure", heavy)
 
@@ -80,15 +84,21 @@ def _test_current_private_contract(self: unittest.TestCase) -> None:
     agents = (PACKAGE / "AGENTS.md").read_text(encoding="utf-8")
     heavy = (PACKAGE / "heavy_route.md").read_text(encoding="utf-8")
     delegation = (PACKAGE / "delegation.md").read_text(encoding="utf-8")
-    companion = (PACKAGE / "agents" / "companion.toml").read_text(encoding="utf-8")
+    explorer = (PACKAGE / "agents" / "explorer.toml").read_text(encoding="utf-8")
     investigator = (PACKAGE / "agents" / "investigator.toml").read_text(encoding="utf-8")
     archivist = (PACKAGE / "agents" / "archivist.toml").read_text(encoding="utf-8")
     archivist_contract = (PACKAGE / "archivist.md").read_text(encoding="utf-8")
     repo_root = PACKAGE.parent
     readme = (repo_root / "README.md").read_text(encoding="utf-8")
-    workflow_map = (repo_root / "workflow_break_down.md").read_text(encoding="utf-8")
+    releasing = (repo_root / "RELEASING.md").read_text(encoding="utf-8")
+    workflow_map_path = repo_root / "workflow_breakdown.md"
+    self.assertTrue(workflow_map_path.is_file())
+    self.assertFalse((repo_root / "workflow_break_down.md").exists())
+    workflow_map = workflow_map_path.read_text(encoding="utf-8")
+    benchmark_guide = (repo_root / "benchmarks" / "README.md").read_text(encoding="utf-8")
     heavy_flat = " ".join(heavy.split())
     delegation_flat = " ".join(delegation.split())
+    active_contracts = "\n".join((agents, heavy, delegation))
 
     self.assertFalse((PACKAGE / "medium_route.md").exists())
     self.assertFalse((PACKAGE / "skills").exists())
@@ -96,7 +106,7 @@ def _test_current_private_contract(self: unittest.TestCase) -> None:
     self.assertIn("Use `leaf state` only for questions and genuinely trivial bounded actions", agents)
     self.assertIn("Do not classify nontrivial work as leaf merely because it is bounded or short", agents)
     self.assertNotIn("small bounded operations", agents)
-    self.assertIn("enter `deployment state`, bootstrap the session Companion", agents)
+    self.assertIn("enter `deployment state`, read that Heavy contract", agents)
     self.assertIn("## Deployment Communication", agents)
     self.assertIn("profile-specific user-communication policy", agents)
     self.assertIn("never expose hidden reasoning", agents)
@@ -104,19 +114,14 @@ def _test_current_private_contract(self: unittest.TestCase) -> None:
     for doc in ("project_progress.md", "project_diary.md", "latest_session_work.md"):
         self.assertIn(doc, agents)
 
-    self.assertIn("## Early Companion", agents)
-    self.assertIn('agent_type="companion"', agents)
-    self.assertIn('task_name="companion"', agents)
-    self.assertIn('fork_turns="none"', agents)
-    self.assertIn("before broad project discovery, planning", agents)
-    self.assertIn("while Main's context is still small", agents)
-    self.assertIn("Do not ask it to read the complete `agent_docs/` framework", agents)
-    self.assertIn("unrelated module documents", agents)
-    self.assertIn("Do not wait solely for Companion", agents)
-    self.assertIn("later deployments in the same workflow session", agents)
-    self.assertIn("continue with proportionate Main reads", agents)
+    self.assertIn("## Bounded Context Discovery", agents)
+    self.assertIn("bounded disposable Explorer assignment", agents)
+    self.assertIn("not a persistent session secretary", agents)
+    self.assertIn("complete-`agent_docs/` intake", agents)
+    self.assertIn("directly to Main", agents)
 
     self.assertIn("## Worker Material Event Push", agents)
+    self.assertIn("Under `plus`, an internal Codex worker", agents)
     self.assertIn("`send_message`", agents)
     self.assertIn("`BLOCKER`", agents)
     self.assertIn("`COURSE_CHANGE`", agents)
@@ -124,7 +129,10 @@ def _test_current_private_contract(self: unittest.TestCase) -> None:
     self.assertIn("routine progress", agents)
     self.assertIn("normal completion", agents)
     self.assertIn("Do not resend an unchanged event", agents)
-    self.assertIn("worker-to-`/root`", agents)
+    self.assertIn("material events to `/root`/Main", agents)
+    self.assertIn("direct sibling messaging is not part of the workflow contract", agents)
+    self.assertNotIn("do not have the Codex `send_message` channel", agents)
+    self.assertNotIn("do not emulate material-event push", agents)
 
     archivist_contract_flat = " ".join(archivist_contract.split()).lower()
     self.assertIn("genuinely trivial bounded actions classified as leaf state before heavy entry", archivist_contract_flat)
@@ -148,35 +156,52 @@ def _test_current_private_contract(self: unittest.TestCase) -> None:
     self.assertIn("`1500000` ms (25 minutes)", heavy)
     self.assertIn("wait again rather than polling", heavy_flat)
     self.assertIn("Do not load it merely to enter Heavy", heavy_flat)
-    self.assertIn("project or Internet context gap", heavy)
-    self.assertIn("Micro Executor", heavy)
-    self.assertIn("Spark High", heavy)
-    self.assertIn("Luna High", heavy)
-    self.assertIn("Luna XHigh", heavy)
-    self.assertIn("Sol Low", heavy)
-    self.assertIn("luna-xhigh", heavy)
+    self.assertIn("## Explorer Discovery", heavy)
+    self.assertIn("## Investigator Lanes", heavy)
+    self.assertIn("exactly three independent lanes", heavy)
+    self.assertIn("shared **Problem ID**", heavy)
+    self.assertIn("distinct **Task IDs**", heavy)
+    self.assertIn("complementary evidence/search angles", heavy)
+    self.assertIn("majority count is never a decision rule", heavy)
+    self.assertIn("Every worker final result returns directly to Main", heavy)
+    self.assertIn("Direct worker-to-worker messaging is not part of the workflow contract", heavy)
+    for role in ("Explorer", "Investigator", "Default Executor", "Senior Executor", "Tester", "Archivist"):
+        self.assertIn(f"| {role} |", heavy)
+    self.assertNotIn("luna-xhigh", heavy)
+    self.assertNotIn("pro-x5", heavy)
+    self.assertIn("For `plus`, all six supported roles use the internal Codex worker lifecycle", heavy)
+    self.assertIn("When the profile is `muse-max`, all six supported roles", heavy)
     self.assertIn("active compute profile", heavy)
-    self.assertIn("## Companion Lifecycle", heavy)
-    self.assertIn("bootstrapped on first `deployment state` entry", heavy)
-    self.assertIn("do not create a second one", heavy)
-    self.assertIn("bootstrap does not authorize a full-project intake", heavy)
-    self.assertIn("Wait for its result only when the result gates a decision", heavy)
-    self.assertIn("Use one persistent Companion per workflow session", heavy)
     self.assertIn("## Fresh and Independent Context Routing", heavy)
     self.assertIn('`fork_turns="none"`', heavy)
     self.assertIn("Do not call app-level `create_thread` solely", heavy)
     self.assertIn("Use a new Tester for independent review", heavy)
     self.assertIn("effective child permissions must be treated as separate runtime state", heavy)
-    self.assertIn("## Material Event Handling", heavy)
+    self.assertIn("## Plus Material Event Handling", heavy)
+    self.assertIn("When the active profile is `plus`", heavy)
     self.assertIn("long event-driven `wait_agent` lifecycle unchanged", heavy)
     self.assertIn("When Main receives a material worker message", heavy)
     self.assertIn("must not cause status polling", heavy)
     self.assertIn("Do not ask workers to send routine progress", heavy)
 
-    self.assertIn("Do not turn the bootstrap into a full-project intake", companion)
-    self.assertIn("do not read the complete `agent_docs/` framework", companion)
-    self.assertIn("unrelated module documents", companion)
-    self.assertIn("If no useful bounded context is", companion)
+    self.assertIn("disposable read-only project-context worker", explorer)
+    self.assertIn("bounded project evidence", explorer)
+    self.assertIn("not fault", explorer)
+    self.assertIn("Do not modify project, environment, or", explorer)
+    self.assertIn("project evidence, Internet sources, or both", investigator)
+
+    self.assertNotIn("Companion", active_contracts)
+    self.assertNotIn("Micro Executor", active_contracts)
+    self.assertNotIn("micro_executor", active_contracts)
+    self.assertNotIn("Micro Execution", active_contracts)
+    self.assertNotIn("luna-xhigh", active_contracts)
+    self.assertNotIn("pro-x5", active_contracts)
+    self.assertNotIn("do not have the Codex `send_message` channel", active_contracts)
+    self.assertNotIn("Do not build a polling or background-message shim", active_contracts)
+    self.assertEqual(heavy.count("## Role-Specific Work Packages"), 1)
+    self.assertNotRegex(active_contracts, r"(?i)at most\s+\d+\s+words")
+    self.assertNotIn("direct sibling messaging is exceptional", active_contracts)
+    self.assertNotIn("sibling's active task", active_contracts)
 
     for public_doc in (readme, workflow_map):
         public_doc_flat = " ".join(public_doc.split()).lower()
@@ -184,15 +209,39 @@ def _test_current_private_contract(self: unittest.TestCase) -> None:
         self.assertIn("bounded but nontrivial", public_doc_flat)
         self.assertNotIn("small bounded tasks", public_doc_flat)
         self.assertNotIn("created on demand", public_doc)
-        self.assertIn("first deployment", public_doc)
-        self.assertIn("full `agent_docs/`", public_doc)
+        self.assertIn("proportionate", public_doc_flat)
         self.assertIn("send_message", public_doc)
         self.assertIn("BLOCKER", public_doc)
         self.assertIn("COURSE_CHANGE", public_doc)
         self.assertIn("CRITICAL_PARTIAL", public_doc)
-        self.assertIn("pro-x5", public_doc)
-        self.assertIn("luna-xhigh", public_doc)
+        self.assertIn("plus", public_doc)
+        self.assertIn("muse-max", public_doc)
+        self.assertNotIn("pro-x5", public_doc)
+        self.assertNotIn("luna-xhigh", public_doc)
+        self.assertNotIn("Companion", public_doc)
+        self.assertNotIn("Micro Executor", public_doc)
         self.assertIn("settings.toml", public_doc)
+
+    self.assertIn("## Deep dive: orchestration design", workflow_map)
+    self.assertIn("exactly three independent Investigator lanes", " ".join(workflow_map.split()))
+    benchmark_guide_flat = " ".join(benchmark_guide.split())
+    self.assertIn("initial case study", benchmark_guide_flat)
+    self.assertIn("`plus`", benchmark_guide)
+    self.assertIn("`muse-max`", benchmark_guide)
+    self.assertNotIn("luna-xhigh", benchmark_guide)
+    self.assertNotIn("pro-x5", benchmark_guide)
+    self.assertNotIn("Companion", benchmark_guide)
+    self.assertNotIn("Micro Executor", benchmark_guide)
+
+    self.assertIn("exactly two compute profiles", releasing)
+    self.assertIn("codex_workflow --profile plus", releasing)
+    self.assertIn("codex_workflow --profile muse-max", releasing)
+    self.assertNotIn("codex_workflow --profile luna-xhigh", releasing)
+    self.assertNotIn("codex_workflow --profile pro-x5", releasing)
+    self.assertNotIn("Companion", releasing)
+    self.assertNotIn("Micro Executor", releasing)
+    self.assertNotIn("workflow_break_down.md", releasing)
+    self.assertNotIn("multi_agent_v2", releasing)
 
     self.assertIn("## Work Packages", delegation)
     self.assertIn("## Fresh and Independent Contexts", delegation)
@@ -200,21 +249,32 @@ def _test_current_private_contract(self: unittest.TestCase) -> None:
     self.assertIn("Do not use app-level `create_thread` solely", delegation)
     self.assertIn("implementing worker must not substitute for the independent reviewer", delegation)
     self.assertIn("effective child permissions as an independent runtime fact", delegation)
-    self.assertIn("## Micro Execution", delegation)
     self.assertIn("## Recovery", delegation)
+    self.assertIn("Explorer | **Project Context Scope**", delegation)
+    self.assertIn("Investigator | **Problem ID**", delegation)
     self.assertIn("**Investigation Context**", delegation)
     self.assertIn("**Evidence Question + Goal**", delegation)
+    self.assertIn("one shared **Problem ID**", delegation)
+    self.assertIn("exactly three independent Investigator lanes", delegation)
+    self.assertIn("distinct **Task ID**", delegation)
+    self.assertIn("Lanes do not coordinate, message one another, or vote", delegation)
+    self.assertIn("Main compares all three reports", delegation)
+    self.assertIn("majority voting is not a decision rule", delegation)
     self.assertIn("project evidence, Internet sources, or both", delegation_flat)
-    self.assertIn('agent_type="micro_executor"', delegation)
-    self.assertIn('model="gpt-5.3-codex-spark"', delegation)
-    self.assertIn("Default Executor using the active compute profile", delegation)
-    self.assertIn("Senior remains Sol Medium in those three profiles", delegation)
-    self.assertIn("luna-xhigh", delegation)
-    self.assertIn("## Material Event Push", delegation)
+    self.assertIn("For `plus`, all six supported roles use the normal internal Codex lifecycle", delegation)
+    self.assertIn("Under `muse-max`, all six roles use Muse Spark 1.3 Contributor Max", delegation)
+    self.assertNotIn("luna-xhigh", delegation)
+    self.assertNotIn("pro-x5", delegation)
+    self.assertIn("## Plus Material Event Push", delegation)
+    self.assertIn("Under `plus`, the standing internal-Codex-worker material-event policy", delegation)
     self.assertIn("do not repeat it in every task capsule", delegation)
+    self.assertNotIn("have no `send_message` path", delegation)
+    self.assertNotIn("polling or background-message shim", delegation)
+    self.assertEqual(delegation.count("## Worker Follow-up and Repair"), 1)
     self.assertIn("Do not use Main follow-ups to poll worker status", delegation)
     self.assertIn("a `wait_agent` timeout without new evidence is not a reason to request an update", delegation)
-    self.assertIn("project evidence, Internet sources, or both", investigator)
+    self.assertIn("Do not instruct or permit direct sibling messaging", delegation)
+    self.assertIn("smallest complete, evidence-linked, decision-ready return", delegation)
     self.assertIn("Do not\nedit those files during a deployment", archivist)
     for template in ("project_progress.md", "latest_session_work.md"):
         text = (PACKAGE / "project_docs" / template).read_text(encoding="utf-8")
@@ -274,32 +334,31 @@ class ComputeProfileTests(unittest.TestCase):
         self.assertTrue(self.runtime.compute_settings.is_file())
         self.assertEqual(read_compute_profile(self.runtime), "plus")
 
-    def test_luna_xhigh_uses_luna_xhigh_except_senior(self) -> None:
-        expected = {
-            worker: (
-                ("gpt-5.6-sol", "medium")
-                if worker == "senior_executor"
-                else ("gpt-5.6-luna", "xhigh")
-            )
-            for worker in COMPUTE_PROFILES["luna-xhigh"]
-        }
-        self.assertEqual(_expected_profile_models("luna-xhigh"), expected)
+    def test_only_plus_and_muse_max_are_supported(self) -> None:
+        self.assertEqual(set(COMPUTE_PROFILES), {"plus", "muse-max"})
+        for removed in ("luna-xhigh", "pro-x5"):
+            with self.subTest(profile=removed):
+                with self.assertRaisesRegex(ValidationError, "unsupported compute profile"):
+                    plan_compute_profile(self.runtime, removed)
 
-    def test_switches_between_all_profiles(self) -> None:
-        for profile in ("luna-xhigh", "pro-x5", "plus"):
-            plan_compute_profile(self.runtime, profile).apply()
-            self.assertEqual(read_compute_profile(self.runtime), profile)
-            self.assertEqual(
-                _installed_worker_models(self.runtime),
-                _expected_profile_models(profile),
-            )
+    def test_switches_between_supported_profiles(self) -> None:
+        plan_compute_profile(self.runtime, "muse-max").apply()
+        self.assertEqual(read_compute_profile(self.runtime), "muse-max")
+        heavy = (self.runtime.runtime / "heavy_route.md").read_text(encoding="utf-8")
+        self.assertIn("live Muse-worker experiment", heavy)
+
+        plan_compute_profile(self.runtime, "plus").apply()
+        self.assertEqual(read_compute_profile(self.runtime), "plus")
+        self.assertEqual(
+            _installed_worker_models(self.runtime),
+            _expected_profile_models("plus"),
+        )
 
     def test_profile_switch_renders_distinct_communication_policies(self) -> None:
         heavy_path = self.runtime.runtime / "heavy_route.md"
         expected = {
-            "plus": ("restrained and outcome-oriented", "Silent Orchestration"),
-            "luna-xhigh": ("If work can continue safely without user input, remain silent", "Skill announcements should be brief"),
-            "pro-x5": ("Use normal concise commentary", "If work can continue safely without user input, remain silent"),
+            "plus": ("restrained and outcome-oriented", "live Muse-worker experiment"),
+            "muse-max": ("live Muse-worker experiment", "restrained and outcome-oriented"),
         }
         for profile, (present, absent) in expected.items():
             plan_compute_profile(self.runtime, profile).apply()
@@ -326,7 +385,7 @@ class ComputeProfileTests(unittest.TestCase):
         )
 
     def test_profile_apply_rolls_back_earlier_worker_writes_on_failure(self) -> None:
-        plan = plan_compute_profile(self.runtime, "luna-xhigh")
+        plan = plan_compute_profile(self.runtime, "plus")
         before_settings = self.runtime.compute_settings.read_bytes()
         heavy_path = self.runtime.runtime / "heavy_route.md"
         before_heavy = heavy_path.read_bytes()
@@ -345,8 +404,8 @@ class ComputeProfileTests(unittest.TestCase):
                 continue
             self.assertEqual((self.runtime.agents / name).read_bytes(), content)
 
-    def test_update_preserves_selected_luna_xhigh_profile(self) -> None:
-        plan_compute_profile(self.runtime, "luna-xhigh").apply()
+    def test_update_preserves_selected_muse_max_profile(self) -> None:
+        plan_compute_profile(self.runtime, "muse-max").apply()
         root = Path(self.temporary.name)
         incoming_root = root / "incoming"
         shutil.copytree(PACKAGE, incoming_root)
@@ -363,11 +422,10 @@ class ComputeProfileTests(unittest.TestCase):
         )
         incoming = PackageLayout.resolve(incoming_root)
         plan_update(incoming, self.runtime, self.project).apply()
-        self.assertEqual(read_compute_profile(self.runtime), "luna-xhigh")
-        self.assertEqual(
-            _installed_worker_models(self.runtime),
-            _expected_profile_models("luna-xhigh"),
-        )
+        self.assertEqual(read_compute_profile(self.runtime), "muse-max")
+        heavy = (self.runtime.runtime / "heavy_route.md").read_text(encoding="utf-8")
+        self.assertIn("live Muse-worker experiment", heavy)
+
 
 
 base.PrivateCustomizationTests.test_private_version_and_user_marker_are_synchronized = _test_private_version_and_user_marker_are_synchronized

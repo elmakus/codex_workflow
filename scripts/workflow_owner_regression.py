@@ -886,9 +886,9 @@ def _test_source_less_update_uses_verified_owner_release(
         incoming = root / "incoming"
         incoming_version = incoming / "operate" / "VERSION"
         incoming_version.parent.mkdir(parents=True)
-        incoming_version.write_text("1.1.14-private.3\n", encoding="utf-8")
+        incoming_version.write_text("1.1.14-private.4\n", encoding="utf-8")
         release_temporary = mock.Mock()
-        selection = mock.sentinel.selection
+        selection = mock.Mock(version=base.parse_semver("1.1.14-private.4"))
         argv = [
             "workflow.py",
             "update",
@@ -937,7 +937,7 @@ def _test_explicit_source_update_skips_release_discovery(
         incoming = root / "incoming"
         incoming_version = incoming / "operate" / "VERSION"
         incoming_version.parent.mkdir(parents=True)
-        incoming_version.write_text("1.1.14-private.3\n", encoding="utf-8")
+        incoming_version.write_text("1.1.14-private.4\n", encoding="utf-8")
         argv = [
             "workflow.py",
             "update",

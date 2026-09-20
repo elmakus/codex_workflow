@@ -31,13 +31,12 @@ USER_MANAGED_START = "<!-- codex-workflow-user-managed-start -->"
 USER_MANAGED_END = "<!-- codex-workflow-user-managed-end -->"
 BUILTIN_WORKERS = frozenset(
     {
-        "micro_executor",
+        "explorer",
+        "investigator",
         "default_executor",
         "senior_executor",
         "tester",
         "archivist",
-        "companion",
-        "investigator",
     }
 )
 BUILTIN_SKILLS: frozenset[str] = frozenset()
@@ -324,9 +323,10 @@ def _verify_member_names(names: Iterable[str]) -> list[str]:
         f"{PACKAGE_DIR_NAME}/agents/executor_luna.toml",
         f"{PACKAGE_DIR_NAME}/agents/executor_sol.toml",
         f"{PACKAGE_DIR_NAME}/agents/executor_terra.toml",
-        f"{PACKAGE_DIR_NAME}/agents/explorer.toml",
         f"{PACKAGE_DIR_NAME}/agents/end_of_session.toml",
         f"{PACKAGE_DIR_NAME}/agents/wave_barrier.toml",
+        f"{PACKAGE_DIR_NAME}/agents/companion.toml",
+        f"{PACKAGE_DIR_NAME}/agents/micro_executor.toml",
     }
     present_retired = sorted(retired_workers.intersection(normalized))
     if present_retired:

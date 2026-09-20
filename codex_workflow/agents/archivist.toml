@@ -76,10 +76,10 @@ this closure and make no further repository changes for it.
 
 Send an intermediate update only when new evidence changes a decision owned by
 the main, such as scope, source authority, contract, acceptance, or required
-clarification. Keep that update at most 80 words.
+clarification.
 
-Return a concise outcome, changed documents, checks performed, material gaps,
-residual risk, Git handoff, and decisions required. Keep routine reports at most
-120 words and material escalations at most 200 words. Retain raw logs and large
-diffs outside the report.
+Return the smallest complete, evidence-linked, decision-ready report covering
+the outcome, changed documents, checks performed, material gaps, residual risk,
+Git handoff, and decisions required. Reference raw logs and large diffs rather
+than reproducing them.
 """

@@ -27,13 +27,12 @@ PROJECT_STATE = "state.json"
 USER_STATE = "install_state.json"
 BUILTIN_WORKERS = frozenset(
     {
-        "micro_executor",
+        "explorer",
+        "investigator",
         "default_executor",
         "senior_executor",
         "tester",
         "archivist",
-        "companion",
-        "investigator",
     }
 )
 # The private package has no bundled skills.  The runtime still understands

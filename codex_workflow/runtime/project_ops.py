@@ -28,6 +28,39 @@ LEGACY_GITIGNORE_ENTRIES = ("agent_docs/", *GITIGNORE_ENTRIES)
 GITIGNORE_MANAGED_START = "# codex-workflow-managed-start"
 GITIGNORE_MANAGED_END = "# codex-workflow-managed-end"
 BOOTSTRAP_DOC_MARKER = "<!-- codex-workflow-bootstrap-template -->"
+LEGACY_PROJECT_ROUTE_REFERENCES = (
+    "agent_docs/workflows/medium_route.md",
+    "agent_docs/workflows/heavy_route.md",
+)
+
+
+def _resolve_local_instructions(
+    project: ProjectPaths,
+    current: str,
+    reviewed: str | None,
+) -> str:
+    """Reject unresolved legacy route imports or use an explicit reviewed body."""
+
+    selected = current if reviewed is None else reviewed
+    if reviewed is not None:
+        reject_reserved_markers(reviewed)
+    missing = [
+        reference
+        for reference in LEGACY_PROJECT_ROUTE_REFERENCES
+        if reference in selected and not (project.root / reference).is_file()
+    ]
+    if missing:
+        detail = ", ".join(missing)
+        if reviewed is None:
+            raise ValidationError(
+                "existing project instructions reference missing legacy workflow route "
+                f"files: {detail}; extract only reviewed project-local instructions and "
+                "rerun with --legacy-local-instructions <file>"
+            )
+        raise ValidationError(
+            f"reviewed project-local instructions still reference missing files: {detail}"
+        )
+    return selected
 
 
 def _gitignore_block(entries: tuple[str, ...] = GITIGNORE_ENTRIES) -> str:
@@ -187,7 +220,12 @@ def _plan_source_cleanup(project: ProjectPaths) -> tuple[list[Mutation], list[Pa
     return mutations, cleanup_dirs
 
 
-def plan_project_install(package: PackageLayout, project: ProjectPaths) -> OperationPlan:
+def plan_project_install(
+    package: PackageLayout,
+    project: ProjectPaths,
+    *,
+    legacy_local_instructions: str | None = None,
+) -> OperationPlan:
     active_exists = project.active.exists()
     disabled_exists = project.disabled.exists()
     if active_exists and disabled_exists:
@@ -214,7 +252,12 @@ def plan_project_install(package: PackageLayout, project: ProjectPaths) -> Opera
                 )
             extract(current, WORKFLOW_MANAGED)
             current_personalization = extract(current, PROJECT_PERSONALIZATION)
-            extract(current, PROJECT_LOCAL)
+            current_local = extract(current, PROJECT_LOCAL)
+            local = _resolve_local_instructions(
+                project,
+                current_local,
+                legacy_local_instructions,
+            )
             if not project.personalization.is_file() and current_personalization:
                 raise ValidationError(
                     "personalization resource is missing but the generated region is not empty"
@@ -229,18 +272,42 @@ def plan_project_install(package: PackageLayout, project: ProjectPaths) -> Opera
                     "recognized project entry point uses an older or modified workflow template; "
                     "run codex_workflow --update"
                 )
+            if local != current_local:
+                mutations.append(
+                    text_mutation(
+                        entry_path,
+                        render_project_entry(
+                            template,
+                            personalization=direct_personalization,
+                            local_instructions=local,
+                        ),
+                    )
+                )
         else:
             if disabled_exists:
                 raise ValidationError("unrecognized disabled entry point cannot be imported")
             reject_reserved_markers(current)
+            local = _resolve_local_instructions(
+                project,
+                current,
+                legacy_local_instructions,
+            )
             rendered = render_project_entry(
                 template,
                 personalization=direct_personalization,
-                local_instructions=current,
+                local_instructions=local,
             )
             mutations.append(text_mutation(entry_path, rendered))
-            warnings.append("existing AGENTS.md will be preserved in the project-local region")
+            warnings.append(
+                "reviewed project-local instructions will be imported"
+                if legacy_local_instructions is not None
+                else "existing AGENTS.md will be preserved in the project-local region"
+            )
     else:
+        if legacy_local_instructions is not None:
+            raise ValidationError(
+                "--legacy-local-instructions requires an existing project entry point"
+            )
         rendered = render_project_entry(template, personalization=direct_personalization)
         mutations.append(text_mutation(project.active, rendered))
     if not project.personalization.is_file():
@@ -391,7 +458,11 @@ def plan_project_update(
             raise ValidationError(
                 "personalization resource is missing but the generated region is not empty"
             )
-        local = extract(current, PROJECT_LOCAL)
+        local = _resolve_local_instructions(
+            project,
+            extract(current, PROJECT_LOCAL),
+            legacy_local_instructions,
+        )
     else:
         old_template = installed.project_template.read_text(encoding="utf-8")
         current_without_personalization = replace(current, PROJECT_PERSONALIZATION, "")
@@ -401,10 +472,10 @@ def plan_project_update(
                 raise ValidationError(
                     "legacy project entry contains local edits; pass reviewed local instructions explicitly"
                 )
-            reject_reserved_markers(legacy_local_instructions)
             local = legacy_local_instructions
         else:
             local = legacy_local_instructions or ""
+        local = _resolve_local_instructions(project, local, local)
     rendered = render_project_entry(
         incoming.project_template.read_text(encoding="utf-8"),
         personalization=direct,

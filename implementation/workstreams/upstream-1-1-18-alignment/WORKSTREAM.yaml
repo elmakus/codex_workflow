@@ -1,0 +1,42 @@
+id: "upstream-1-1-18-alignment"
+kind: "maintenance"
+status: "blocked"
+
+branch: "feat/upstream-1.1.18-alignment"
+base_ref: "a4754147e436784972538bad664dde6e866e52a2"
+integration_target: "main"
+
+parent_workstream: null
+parent_branch: null
+parent_dependency: null
+
+intake:
+  state: null
+  record: null
+
+task_board: "implementation/workstreams/upstream-1-1-18-alignment/TASK_BOARD.yaml"
+
+authority:
+  requirements: "requirements/REQUIREMENTS.md"
+  decisions:
+    - "decisions/DEC-001-worker-topology.md"
+    - "decisions/DEC-002-compute-profiles.md"
+    - "decisions/DEC-003-communication-context.md"
+    - "decisions/DEC-004-selective-upstream-adoption.md"
+  plan: "planning/MASTER_PLAN.md"
+
+review:
+  requirement: "RECOMMENDED"
+  state: "green"
+  subject: "9a0761f8b0159e63d8c12a95660d5874007b790a"
+  evidence: "implementation/workstreams/upstream-1-1-18-alignment/evidence/final-integration-review-coverage.md"
+  covered_by: "implementation/workstreams/upstream-1-1-18-alignment/evidence/M04-T02-review.md"
+
+branch_cleanup:
+  state: null
+  ref: null
+  verified_head: null
+  evidence: null
+
+pr: 7
+result: null

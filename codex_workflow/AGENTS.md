@@ -16,7 +16,7 @@ Read personalization and project-local instructions from the protected regions a
 
 ## Deployment Communication
 
-In `deployment state`, follow the profile-specific user-communication policy in `~/.codex/codex_workflow/heavy_route.md`. The active compute profile controls whether orchestration is silent, restrained, or uses normal concise progress updates.
+In `deployment state`, follow the profile-specific user-communication policy in `~/.codex/codex_workflow/heavy_route.md`. Under `plus`, orchestration communication is restrained and outcome-oriented; under `muse-max`, use normal concise milestone updates.
 
 Regardless of profile, never expose hidden reasoning or narrate internal instruction-conflict resolution. User-visible updates must remain concise, relevant, and outcome-oriented. Questions required to unblock execution and immediate security, publication, destructive-action, or authorization risks may always be raised.
 
@@ -34,29 +34,24 @@ Keep raw logs, temporary reasoning, and short-lived checkpoints out of durable d
 
 ## Workflow
 
-In leaf state, work directly without reading `~/.codex/codex_workflow/heavy_route.md` or spawning subagents. Do not classify nontrivial work as leaf merely because it is bounded or short. When work is substantive, enter `deployment state`, bootstrap the session Companion below, read that Heavy contract, and delegate execution under it.
+In leaf state, work directly without reading `~/.codex/codex_workflow/heavy_route.md` or spawning subagents. Do not classify nontrivial work as leaf merely because it is bounded or short. When work is substantive, enter `deployment state`, read that Heavy contract, and delegate execution under it. Use Explorer for bounded project-context discovery when broader mapping or evidence retrieval would reduce Main context load.
 
-## Early Companion
+## Bounded Context Discovery
 
-On the first transition into `deployment state` in a workflow session, determine the active compute profile from `~/.codex/codex_workflow/settings.toml` before creating the Companion. Do this before broad project discovery, planning, modifying project state, or dispatching any other worker, while Main's context is still small. Never create a second Companion in the same workflow session.
+Main keeps documentation intake proportionate to the current task. When broader project-context discovery, mapping, or evidence retrieval would otherwise consume substantial Main context, create a bounded disposable Explorer assignment with **Task ID**, **Project Context Scope**, **Context Task + Goal**, and **Main-Agent Context Guidance**.
 
-Prepare the bootstrap assignment from the user request and already-known context only; do not perform broad discovery just to prepare it. Include **Task ID**, **Project Context Scope**, **Context Task + Goal**, and **Main-Agent Context Guidance**. Keep the scope bounded to the current deployment goal. Ask Companion to inspect only directly relevant checkpoints, documents, or project surfaces, retain useful supporting detail, and return a compact source-linked brief. Do not ask it to read the complete `agent_docs/` framework or unrelated module documents unless the current scope actually requires them.
-
-For every compute profile, including `muse-max`, immediately create one persistent internal Codex Companion with `agent_type="companion"`, `task_name="companion"`, and `fork_turns="none"`, or reuse the existing Companion. Under `muse-max`, the active profile renders this Companion to GPT-5.6 Luna XHigh; never route it through `runtime/muse_worker.py`. Reuse the same Companion for later context assignments and later deployments in the same workflow session. If Companion creation is temporarily unavailable, continue with proportionate Main reads and create the single Companion later only if the capability becomes available.
-
-After bootstrapping Companion, continue independent Heavy intake and orchestration immediately when the active worker runtime supports it. Do not wait solely for Companion unless its result is needed for a decision.
+Explorer is read-only and task-scoped. It is not a persistent session secretary and must not bootstrap a complete-project or complete-`agent_docs/` intake unless the bounded assignment actually requires that surface. Explorer returns the smallest complete evidence-linked map or retrieval result directly to Main and does not coordinate another worker.
 
 ## Worker Material Event Push
 
-For internal Codex workers, including the `muse-max` Companion, when the runtime exposes `send_message`, a running worker may send one concise message to `/root` only for a material mid-task event whose value would materially decrease if delayed until its normal final result:
+Under `plus`, an internal Codex worker may use runtime `send_message` to send one concise message to `/root` only for a material mid-task event whose value would materially decrease if delayed until its normal final result:
 
 - `BLOCKER` — the worker cannot make useful progress without a Main-owned decision or missing input.
 - `COURSE_CHANGE` — evidence invalidates, cancels, or materially changes work currently being performed by Main or another worker.
 - `CRITICAL_PARTIAL` — an immediately actionable partial result where delaying delivery is likely to cause significant wasted work or an incorrect orchestration decision.
 
-Use `EVENT_TYPE | Task ID | essential fact or blocker | requested action`. Do not use `send_message` for routine progress, heartbeats, ETA, "still working", status chatter, ordinary partial findings, or normal completion. Do not resend an unchanged event. Normal completion stays on the standard worker final-result/status path. After sending, continue any independent useful work; wait only when genuinely blocked. Prefer worker-to-`/root`; direct sibling messaging is exceptional and allowed only when the event materially affects that sibling's active task and routing it through Main would create unnecessary delay or wasted work.
+Use `EVENT_TYPE | Task ID | essential fact or blocker | requested action`. Do not use `send_message` for routine progress, heartbeats, ETA, "still working", status chatter, ordinary partial findings, or normal completion. Do not resend an unchanged event. Normal completion stays on the standard worker final-result/status path and returns directly to Main. After sending, continue any independent useful work; wait only when genuinely blocked. Route all material events to `/root`/Main; direct sibling messaging is not part of the workflow contract.
 
-Under `muse-max`, the six Muse-backed roles do not have the Codex `send_message` channel. Each bounded Muse turn ends at process completion or failure even when its logical session remains reusable; do not emulate material-event push with polling or unmanaged background processes. Companion remains internal and follows the policy above.
 
 ## Proportionate Documentation Read
 

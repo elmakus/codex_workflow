@@ -11,21 +11,25 @@ commit `414a5d301ff17ca6e655330474c8346863d0d5d0`. Keep
 `codex_workflow/operate/VERSION`, the marker in
 `codex_workflow/operate/user_AGENTS.md`, README, and this document synchronized.
 
-This release line contains the experimental mixed-harness `muse-max` profile.
-Main remains the user-selected Codex model. Companion remains one persistent
-internal Codex GPT-5.6 Luna XHigh worker; the six other workflow roles route
-through native Muse Code with `muse-spark-1.3-contributor` and `max` reasoning.
-Each Muse role is still a fresh bounded one-shot process. Project Workflow/Main
-may concurrently await already-authorized independent lanes through the managed
-adapter helper, while executor/tester/repair order remains sequential inside a
-lane.
+This release line supports exactly two compute profiles: `plus` and
+`muse-max`. Main remains the user-selected Codex model. The supported worker
+set is Explorer, Investigator, Default Executor, Senior Executor, Tester, and
+Archivist.
 
-The existing `plus`, `luna-xhigh`, and `pro-x5` Codex-backed profiles remain
-available and retain their existing allocations. The six Muse-assigned role
-TOMLs remain canonical semantic contracts and `runtime/muse_worker.py` supplies
-the external harness. On the current unprivileged workstation Docker boundary,
-the nested Muse bubblewrap sandbox is disabled with `--disable-sandbox`; Docker
-remains the outer isolation boundary. The runner does not use `--yolo`.
+Under `plus`, all six workflow workers use the internal Codex worker lifecycle.
+Under `muse-max`, all six route through native Muse Code with
+`muse-spark-1.3-contributor` and `max` reasoning via
+`runtime/muse_worker.py`. Muse workers use the retained logical-session/process
+lifecycle: fresh independent boundaries receive distinct logical sessions, while
+safe bounded follow-up or repair may resume the same retained session. Managed
+batching is only for already-authorized independent lanes with isolated
+workspaces; executor/tester/repair ordering remains sequential where the
+workflow contract requires it.
+
+The six role TOMLs remain canonical semantic contracts. On the current
+unprivileged workstation Docker boundary, nested Muse bubblewrap cannot run, so
+the Muse path uses `--disable-sandbox` and Docker remains the outer isolation
+boundary. The runner does not use `--yolo`.
 
 Only publish a release from a reviewed commit intended for this fork's `main`.
 Do not publish a candidate branch merely to make the updater see it.
@@ -80,8 +84,6 @@ After updating, choose the desired global compute profile explicitly:
 ```text
 codex_workflow --profile
 codex_workflow --profile plus
-codex_workflow --profile luna-xhigh
-codex_workflow --profile pro-x5
 codex_workflow --profile muse-max
 ```
 

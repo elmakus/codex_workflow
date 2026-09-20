@@ -64,6 +64,7 @@ from runtime.lifecycle import (
     plan_enable,
     plan_personalize,
     plan_project_install,
+    plan_project_only_update,
     plan_remove,
     plan_update,
 )
@@ -73,6 +74,7 @@ from runtime.markers import (
     USER_MANAGED,
     extract,
     render_project_entry,
+    replace,
 )
 from runtime.plan import OperationPlan, read_string_list, resolve_owned_runtime_path
 from runtime.release import parse_semver
@@ -1027,11 +1029,13 @@ class LifecycleIntegrationTests(unittest.TestCase):
         self.assertTrue((self.runtime.runtime / "templates" / "AGENTS.md").is_file())
         self.assertTrue((self.runtime.agents / "default_executor.toml").is_file())
         self.assertTrue((self.runtime.agents / "senior_executor.toml").is_file())
+        self.assertTrue((self.runtime.agents / "explorer.toml").is_file())
         self.assertTrue((self.runtime.agents / "investigator.toml").is_file())
         self.assertFalse((self.runtime.agents / "wave_barrier.toml").exists())
         self.assertFalse((self.runtime.agents / "executor_terra.toml").exists())
         self.assertTrue((self.runtime.agents / "archivist.toml").is_file())
-        self.assertTrue((self.runtime.agents / "companion.toml").is_file())
+        self.assertFalse((self.runtime.agents / "companion.toml").exists())
+        self.assertFalse((self.runtime.agents / "micro_executor.toml").exists())
         self.assertFalse(self.runtime.skills.exists())
         self.assertFalse((self.runtime.runtime / "templates" / "skills").exists())
         self.assertNotIn(
@@ -1067,6 +1071,47 @@ class LifecycleIntegrationTests(unittest.TestCase):
         self.assertEqual(
             set(repeated.agent_actions[0]["recovery_files"]),
             set(repeated.agent_actions[0]["framework"]),
+        )
+
+    def test_bootstrap_requires_review_for_missing_legacy_route(self) -> None:
+        self.project.active.write_text(
+            "# Project policy\nRead `agent_docs/workflows/heavy_route.md`.\n",
+            encoding="utf-8",
+        )
+        with self.assertRaisesRegex(ValidationError, "missing legacy workflow route"):
+            plan_bootstrap(self.package, self.runtime, self.project)
+        with self.assertRaisesRegex(
+            ValidationError, "reviewed project-local instructions still reference missing files"
+        ):
+            plan_bootstrap(
+                self.package,
+                self.runtime,
+                self.project,
+                legacy_local_instructions="Read `agent_docs/workflows/heavy_route.md`.",
+            )
+
+        reviewed = self.root / "reviewed-bootstrap-local.md"
+        reviewed.write_text("# Project policy\nKeep this rule.\n", encoding="utf-8")
+        output = io.StringIO()
+        argv = [
+            "workflow.py",
+            "bootstrap",
+            "--package-root",
+            str(PACKAGE),
+            "--codex-home",
+            str(self.codex_home),
+            "--project",
+            str(self.project_root),
+            "--legacy-local-instructions",
+            str(reviewed),
+            "--json",
+        ]
+        with mock.patch.object(sys, "argv", argv), contextlib.redirect_stdout(output):
+            self.assertEqual(workflow_cli.main(), 0)
+        self.assertTrue(json.loads(output.getvalue())["applied"])
+        self.assertEqual(
+            extract(self.project.active.read_text(encoding="utf-8"), PROJECT_LOCAL),
+            "# Project policy\nKeep this rule.",
         )
 
     def test_legacy_private_artifact_migrates_layout_and_preserves_user_state(self) -> None:
@@ -1383,6 +1428,61 @@ class LifecycleIntegrationTests(unittest.TestCase):
             "",
         )
 
+    def test_install_requires_review_for_missing_legacy_route(self) -> None:
+        self.bootstrap()
+        installed = PackageLayout.resolve(self.runtime.runtime)
+        second_root = self.root / "install-project"
+        second_root.mkdir()
+        second = ProjectPaths(second_root)
+        second.active.write_text(
+            "Read `agent_docs/workflows/medium_route.md`.\n", encoding="utf-8"
+        )
+        with self.assertRaisesRegex(ValidationError, "missing legacy workflow route"):
+            plan_project_install(installed, second)
+
+        reviewed = self.root / "reviewed-install-local.md"
+        reviewed.write_text("Install-local policy.\n", encoding="utf-8")
+        output = io.StringIO()
+        argv = [
+            "workflow.py",
+            "install",
+            "--codex-home",
+            str(self.codex_home),
+            "--project",
+            str(second_root),
+            "--legacy-local-instructions",
+            str(reviewed),
+            "--json",
+        ]
+        with mock.patch.object(sys, "argv", argv), contextlib.redirect_stdout(output):
+            self.assertEqual(workflow_cli.main(), 0)
+        self.assertTrue(json.loads(output.getvalue())["applied"])
+        self.assertEqual(
+            extract(second.active.read_text(encoding="utf-8"), PROJECT_LOCAL),
+            "Install-local policy.",
+        )
+
+        empty_root = self.root / "empty-install-project"
+        empty_root.mkdir()
+        output = io.StringIO()
+        argv = [
+            "workflow.py",
+            "install",
+            "--codex-home",
+            str(self.codex_home),
+            "--project",
+            str(empty_root),
+            "--legacy-local-instructions",
+            str(reviewed),
+            "--json",
+        ]
+        with mock.patch.object(sys, "argv", argv), contextlib.redirect_stdout(output):
+            self.assertEqual(workflow_cli.main(), 1)
+        self.assertIn(
+            "requires an existing project entry point",
+            json.loads(output.getvalue())["error"],
+        )
+
     def test_install_rejects_personalization_resource_drift(self) -> None:
         self.bootstrap()
         resource = self.project.personalization.read_text(encoding="utf-8")
@@ -1395,6 +1495,32 @@ class LifecycleIntegrationTests(unittest.TestCase):
         )
         with self.assertRaises(ValidationError):
             plan_project_install(self.package, self.project)
+
+    def test_update_repairs_missing_legacy_route_in_local_region(self) -> None:
+        self.bootstrap(existing_agents="Project policy.\n")
+        entry = self.project.active.read_text(encoding="utf-8")
+        self.project.active.write_text(
+            replace(
+                entry,
+                PROJECT_LOCAL,
+                "Read `agent_docs/workflows/heavy_route.md`.",
+            ),
+            encoding="utf-8",
+        )
+        incoming = self.incoming_package("legacy-route-incoming", NEXT_PACKAGE_VERSION)
+        with self.assertRaisesRegex(ValidationError, "missing legacy workflow route"):
+            plan_update(incoming, self.runtime, self.project)
+
+        plan_update(
+            incoming,
+            self.runtime,
+            self.project,
+            legacy_local_instructions="Project policy.",
+        ).apply()
+        self.assertEqual(
+            extract(self.project.active.read_text(encoding="utf-8"), PROJECT_LOCAL),
+            "Project policy.",
+        )
 
     def test_update_restores_workers_and_preserves_project_state(self) -> None:
         self.bootstrap(existing_agents="Local policy.\n")
@@ -1580,6 +1706,157 @@ class LifecycleIntegrationTests(unittest.TestCase):
         self.assertEqual(summary["status"], "already current")
         self.assertEqual(summary["details"]["project_from_version"], NEXT_PACKAGE_VERSION)
 
+    def test_project_only_plan_scopes_backup_and_preserves_shared_runtime(self) -> None:
+        self.bootstrap()
+        second_root = self.root / "second-project"
+        second_root.mkdir()
+        second = ProjectPaths(second_root)
+        plan_project_install(self.package, second).apply()
+
+        incoming = self.incoming_package("project-only-scoped", NEXT_PACKAGE_VERSION)
+        plan_update(incoming, self.runtime, self.project).apply()
+        installed = PackageLayout.resolve(self.runtime.runtime)
+
+        shared_paths = [
+            self.runtime.user_agents,
+            self.runtime.config_toml,
+            self.runtime.runtime / "install_state.json",
+            *sorted(self.runtime.agents.glob("*.toml")),
+        ]
+        shared_before = {
+            str(path): path.read_bytes() for path in shared_paths if path.is_file()
+        }
+        plan = plan_project_only_update(installed, self.runtime, second)
+        backup_root = Path(str(plan.details["backup"]))
+        project_targets = {
+            mutation.path
+            for mutation in plan.mutations
+            if mutation.path == second_root or second_root in mutation.path.parents
+        }
+        backup_targets = {
+            mutation.path
+            for mutation in plan.mutations
+            if backup_root == mutation.path or backup_root in mutation.path.parents
+        }
+        self.assertEqual(
+            backup_targets,
+            {
+                backup_root / "project" / path.relative_to(second_root)
+                for path in project_targets
+                if path.is_file()
+            },
+        )
+        plan.apply()
+        shared_after = {
+            str(path): path.read_bytes() for path in shared_paths if path.is_file()
+        }
+        self.assertEqual(shared_after, shared_before)
+
+        no_op = plan_project_only_update(installed, self.runtime, second)
+        self.assertEqual(no_op.mutations, [])
+        self.assertIsNone(no_op.details["backup"])
+
+    def test_equal_selected_release_reuses_installed_source_without_acquire(self) -> None:
+        self.bootstrap()
+        second_root = self.root / "second-project"
+        second_root.mkdir()
+        second = ProjectPaths(second_root)
+        plan_project_install(self.package, second).apply()
+        incoming = self.incoming_package("project-only-no-acquire", NEXT_PACKAGE_VERSION)
+        plan_update(incoming, self.runtime, self.project).apply()
+
+        output = io.StringIO()
+        argv = [
+            "workflow.py",
+            "update",
+            "--codex-home",
+            str(self.codex_home),
+            "--project",
+            str(second_root),
+            "--json",
+        ]
+        selected = mock.Mock(version=parse_semver(NEXT_PACKAGE_VERSION))
+        with (
+            mock.patch.object(sys, "argv", argv),
+            mock.patch.object(workflow_cli, "select_latest", return_value=selected),
+            mock.patch.object(
+                workflow_cli,
+                "acquire",
+                side_effect=AssertionError("equal release must not be acquired"),
+            ) as acquire_release,
+            contextlib.redirect_stdout(output),
+        ):
+            self.assertEqual(workflow_cli.main(), 0)
+        acquire_release.assert_not_called()
+        summary = json.loads(output.getvalue())
+        self.assertTrue(summary["applied"])
+        self.assertEqual(summary["operation"], "project-update")
+        self.assertEqual(summary["details"]["project_from_version"], PACKAGE_VERSION)
+        self.assertEqual(
+            json.loads(second.state.read_text(encoding="utf-8"))["workflow_version"],
+            NEXT_PACKAGE_VERSION,
+        )
+
+    def test_project_only_update_fails_closed_without_historical_source(self) -> None:
+        self.bootstrap()
+        second_root = self.root / "second-project"
+        second_root.mkdir()
+        second = ProjectPaths(second_root)
+        plan_project_install(self.package, second).apply()
+        incoming = self.incoming_package("missing-history", NEXT_PACKAGE_VERSION)
+        plan_update(incoming, self.runtime, self.project).apply()
+        shutil.rmtree(self.runtime.runtime / ".source_backup" / PACKAGE_VERSION)
+
+        installed = PackageLayout.resolve(self.runtime.runtime)
+        before = second.active.read_bytes()
+        with self.assertRaisesRegex(ValidationError, "historical workflow source"):
+            plan_project_only_update(installed, self.runtime, second)
+        self.assertEqual(second.active.read_bytes(), before)
+
+    def test_project_only_downgrade_requires_explicit_approval(self) -> None:
+        self.bootstrap()
+        second_root = self.root / "newer-project"
+        second_root.mkdir()
+        second = ProjectPaths(second_root)
+        newer = self.incoming_package("newer-project-source", NEXT_PACKAGE_VERSION)
+        plan_project_install(newer, second).apply()
+        historical = self.runtime.runtime / ".source_backup" / NEXT_PACKAGE_VERSION
+        historical.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copytree(newer.root, historical)
+        before = second.active.read_bytes()
+
+        base_argv = [
+            "workflow.py",
+            "update",
+            "--source",
+            str(self.package.root),
+            "--codex-home",
+            str(self.codex_home),
+            "--project",
+            str(second_root),
+            "--json",
+        ]
+        output = io.StringIO()
+        with mock.patch.object(sys, "argv", base_argv), contextlib.redirect_stdout(output):
+            self.assertEqual(workflow_cli.main(), 1)
+        self.assertIn(
+            "target project was installed from a newer workflow version",
+            json.loads(output.getvalue())["error"],
+        )
+        self.assertEqual(second.active.read_bytes(), before)
+
+        output = io.StringIO()
+        with (
+            mock.patch.object(sys, "argv", base_argv + ["--allow-downgrade"]),
+            contextlib.redirect_stdout(output),
+        ):
+            self.assertEqual(workflow_cli.main(), 0)
+        self.assertTrue(json.loads(output.getvalue())["applied"])
+        self.assertEqual(
+            json.loads(second.state.read_text(encoding="utf-8"))["workflow_version"],
+            PACKAGE_VERSION,
+        )
+
     def test_approved_public_downgrade_catches_up_a_second_project(self) -> None:
         public_package = self.incoming_package("public-source", "1.1.14")
         plan_bootstrap(public_package, self.runtime, self.project).apply()
@@ -1636,7 +1913,8 @@ class LifecycleIntegrationTests(unittest.TestCase):
             "executor_luna",
             "executor_sol",
             "executor_terra",
-            "explorer",
+            "companion",
+            "micro_executor",
             "end_of_session",
             "wave_barrier",
         ):
@@ -1658,7 +1936,8 @@ class LifecycleIntegrationTests(unittest.TestCase):
             "executor_luna",
             "executor_sol",
             "executor_terra",
-            "explorer",
+            "companion",
+            "micro_executor",
             "end_of_session",
             "wave_barrier",
         ):
