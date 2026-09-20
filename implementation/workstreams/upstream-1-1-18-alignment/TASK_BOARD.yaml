@@ -33,7 +33,7 @@ cards:
     depends_on: []
     openspec_change: "openspec/changes/m01-project-only-update/"
     contract: "implementation/workstreams/upstream-1-1-18-alignment/cards/M01-T01.md"
-    review_state: "pending"
+    review_state: "in_progress"
     review_subject: "a3f848ede935a8dc39e22eecbd8255dfee262c05"
     review_evidence: null
     result_commit: "a3f848ede935a8dc39e22eecbd8255dfee262c05"
