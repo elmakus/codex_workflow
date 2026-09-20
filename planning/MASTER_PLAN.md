@@ -1,7 +1,7 @@
 # Master Plan — codex_workflow upstream 1.1.18 selective alignment
 
 Revision: `R2`
-Status: `draft`
+Status: `approved`
 Updated: `2026-09-20`
 Independent plan review: `RECOMMENDED`
 
