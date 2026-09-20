@@ -38,5 +38,5 @@ branch_cleanup:
   verified_head: null
   evidence: null
 
-pr: null
+pr: 7
 result: null
