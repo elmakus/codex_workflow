@@ -2,7 +2,7 @@
 
 Milestone: `M03 — two-profile execution and communication semantics`
 Status: GREEN
-Implementation checkpoint: `b07e93a29aa70f97e585bbdaf5b41e8a44d1ea5e`
+Implementation checkpoint: `3e6f86cb78b54c8690b386d8575fc2647465eed3`
 
 ## Achieved state
 
@@ -12,6 +12,7 @@ Implementation checkpoint: `b07e93a29aa70f97e585bbdaf5b41e8a44d1ea5e`
 - Active `muse-max` policy contains no unavailable-push/emulation pseudo-contract.
 - Direct sibling messaging remains excluded; final/normal reports return to Main.
 - Proportionate documentation intake and bounded Explorer discovery remain authoritative.
+- Installed operator command dispatch exposes only the two supported profile forms.
 - Workflow-owned `multi_agent_v2` timeout ownership remains absent.
 - VERSION remains `1.1.17-private.12`; no release/publication action occurred.
 
@@ -26,9 +27,9 @@ Implementation checkpoint: `b07e93a29aa70f97e585bbdaf5b41e8a44d1ea5e`
 ## Verification
 
 - `M03-T01`: terminal GREEN with REQUIRED independent review.
-- `M03-T02`: terminal GREEN with REQUIRED independent review.
+- `M03-T02`: terminal GREEN with REQUIRED independent re-review of corrected subject.
 - Integrated M03 acceptance: GREEN at `implementation/workstreams/upstream-1-1-18-alignment/evidence/M03-acceptance.md`.
-- Final M03 subject is covered by GitHub Actions Tests run #142 plus exact-subject static contract readback.
+- Final M03 subject is covered by GitHub Actions Tests run #155 plus exact-subject source/contract readback.
 
 ## Material exceptions / deferred work
 
