@@ -6,7 +6,7 @@ current_milestone: "M03"
 execution_ref:
   branch: "feat/upstream-1.1.18-alignment"
   pr: 7
-  head: "b07e93a29aa70f97e585bbdaf5b41e8a44d1ea5e"
+  head: "3e6f86cb78b54c8690b386d8575fc2647465eed3"
 
 research_obligation: null
 
@@ -138,10 +138,10 @@ cards:
       - "M03-T01"
     openspec_change: null
     contract: "implementation/workstreams/upstream-1-1-18-alignment/cards/M03-T02.md"
-    review_state: "red"
-    review_subject: "b07e93a29aa70f97e585bbdaf5b41e8a44d1ea5e"
-    review_evidence: "implementation/workstreams/upstream-1-1-18-alignment/evidence/M03-T02-review-recovery.md"
-    result_commit: "b07e93a29aa70f97e585bbdaf5b41e8a44d1ea5e"
+    review_state: "pending"
+    review_subject: "3e6f86cb78b54c8690b386d8575fc2647465eed3"
+    review_evidence: null
+    result_commit: "3e6f86cb78b54c8690b386d8575fc2647465eed3"
     result_pr: 7
-    evidence: "implementation/workstreams/upstream-1-1-18-alignment/evidence/M03-T02.md"
-    tests_summary: "GREEN: PR #7 Tests run #142 on exact subject; runtime 97/97; Muse adapter 33/33; Muse Max 7/7; compile/package validate/build/archive verify GREEN; two-profile plus-only Material Event Push contract; static active-surface and whitespace/conflict scans clean; VERSION unchanged"
+    evidence: "implementation/workstreams/upstream-1-1-18-alignment/evidence/M03-T02-correction.md"
+    tests_summary: "GREEN: PR #7 Tests run #155 on exact corrected subject; runtime 97/97; Muse adapter 33/33; Muse Max 7/7; compile/package validate/build/archive verify GREEN; retired luna-xhigh/pro-x5 command dispatch forms removed and guarded; VERSION unchanged"
