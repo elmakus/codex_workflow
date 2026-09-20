@@ -94,7 +94,7 @@ cards:
     result_commit: "1c4c91edb0e72b1a906ee422481f3498095dfc7d"
     result_pr: 7
     evidence: "implementation/workstreams/upstream-1-1-18-alignment/evidence/M02-T01.md"
-    tests_summary: "GREEN: PR #7 Tests run #90 on exact subject; runtime 97/97; Muse adapter 33/33; compile; Muse Max 7/7; package validate/build/archive verify; exact six-agent static readback; VERSION unchanged; whitespace/conflict scan clean"
+    tests_summary: "GREEN: PR #7 Tests run #90 on exact subject; runtime 97/97; Muse adapter 33/33; compile; Muse Max 7/7; package validate/build/archive verify; exact six-agent static readback; VERSION unchanged; whitespace/static scan clean"
   - id: "M02-T02"
     title: "Six-role orchestration and Investigator contract"
     milestone: "M02"
@@ -138,7 +138,7 @@ cards:
       - "M03-T01"
     openspec_change: null
     contract: "implementation/workstreams/upstream-1-1-18-alignment/cards/M03-T02.md"
-    review_state: "pending"
+    review_state: "in_progress"
     review_subject: "b07e93a29aa70f97e585bbdaf5b41e8a44d1ea5e"
     review_evidence: null
     result_commit: "b07e93a29aa70f97e585bbdaf5b41e8a44d1ea5e"
