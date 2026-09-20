@@ -47,7 +47,7 @@ milestones:
     review_evidence: "implementation/workstreams/upstream-1-1-18-alignment/evidence/M03-acceptance.md"
   M04:
     decision_state: "accepted"
-    execution_status: "ready"
+    execution_status: "in_progress"
     contract: "planning/MASTER_PLAN.md#M04--documentation-packaging-and-integrated-regression-closure"
     checkpoint: null
     implementation_head: null
@@ -160,7 +160,7 @@ cards:
     title: "Canonical workflow documentation and adapted upstream docs"
     milestone: "M04"
     decision_state: "accepted"
-    execution_status: "ready"
+    execution_status: "in_progress"
     executor: "chatgpt"
     depends_on:
       - "M03-T02"
