@@ -1,7 +1,7 @@
 project: "codex_workflow"
 workstream_id: "feature-muse-main-orchestration-efficiency"
 plan_revision: "R3"
-current_milestone: "M05"
+current_milestone: "M06"
 
 execution_ref:
   branch: "feat/muse-main-orchestration-efficiency"
@@ -13,7 +13,15 @@ research_obligation: null
 milestones:
   M05:
     contract: "planning/MASTER_PLAN.md#M05 — event-driven Muse wait boundary"
-    execution_status: "in_progress"
+    execution_status: "done"
+    checkpoint: "commit:b689a310ba3ff54e7121427f8b63bdcac9f9ddbd"
+    implementation_head: "1c0c0bf073308b8e87c009652e1192422445862c"
+    acceptance_evidence: "implementation/workstreams/feature-muse-main-orchestration-efficiency/evidence/M05-acceptance.md"
+    handoff: "implementation/workstreams/feature-muse-main-orchestration-efficiency/handoffs/M05_HANDOFF.md"
+
+  M06:
+    contract: "planning/MASTER_PLAN.md#M06 — quiet milestone communication and integrated acceptance"
+    execution_status: "planned"
     checkpoint: null
     implementation_head: null
     acceptance_evidence: null
