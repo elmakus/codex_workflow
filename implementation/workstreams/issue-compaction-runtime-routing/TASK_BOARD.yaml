@@ -1,0 +1,31 @@
+project: "codex_workflow"
+workstream_id: "issue-compaction-runtime-routing"
+plan_revision: "micro-fix"
+current_milestone: "micro-fix"
+
+execution_ref:
+  branch: "fix/compaction-runtime-routing"
+  pr: 13
+  head: "e8b553403fc4af36c9fc9da9fbca00d31ea7868c"
+
+research_obligation: null
+
+milestones: {}
+
+cards:
+  - id: "MF-T01"
+    title: "Fail closed on post-compaction worker misrouting"
+    milestone: "micro-fix"
+    decision_state: accepted
+    execution_status: done
+    executor: chatgpt
+    depends_on: []
+    openspec_change: null
+    contract: "implementation/workstreams/issue-compaction-runtime-routing/cards/MF-T01.md"
+    review_state: green
+    review_subject: "e8b553403fc4af36c9fc9da9fbca00d31ea7868c"
+    review_evidence: "implementation/workstreams/issue-compaction-runtime-routing/evidence/MF-T01-review-e8b5534.md"
+    result_commit: "e8b553403fc4af36c9fc9da9fbca00d31ea7868c"
+    result_pr: 13
+    evidence: "implementation/workstreams/issue-compaction-runtime-routing/evidence/MF-T01-implementation.md"
+    tests_summary: "GREEN on exact corrected subject e8b553403fc4af36c9fc9da9fbca00d31ea7868c: workflow runtime 99/99; muse profile 7/7; muse adapter 39/39; package validate; Python compile probe; git diff --check. muse-max rejects both flat features.multi_agent_v2=true and documented [features.multi_agent_v2] enabled=true before mutation; agents.enabled remains profile-aware; compact global pre-dispatch settings.toml revalidation invariant remains unchanged."

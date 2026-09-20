@@ -1,0 +1,45 @@
+id: "issue-compaction-runtime-routing"
+kind: "issue"
+status: "ready"
+
+branch: "fix/compaction-runtime-routing"
+base_ref: "8130efb340ea2c6308e33c96dbff2a53bc98fc49"
+integration_target: "main"
+
+parent_workstream: null
+parent_branch: null
+parent_dependency: null
+
+intake:
+  state: complete
+  record: "implementation/workstreams/issue-compaction-runtime-routing/INTAKE.md"
+
+routing:
+  exploratory_scope: null
+  research_obligation: null
+  plan_review: null
+
+task_board: "implementation/workstreams/issue-compaction-runtime-routing/TASK_BOARD.yaml"
+
+authority:
+  requirements: "requirements/REQUIREMENTS.md"
+  decisions:
+    - "decisions/DEC-002-compute-profiles.md"
+    - "decisions/DEC-003-communication-context.md"
+  plan: null
+
+review:
+  requirement: "RECOMMENDED"
+  state: "green"
+  subject: "e8b553403fc4af36c9fc9da9fbca00d31ea7868c"
+  evidence: "implementation/workstreams/issue-compaction-runtime-routing/evidence/MF-T01-review-e8b5534.md"
+  covered_by: "task_board:MF-T01"
+
+branch_cleanup:
+  state: null
+  ref: null
+  verified_head: null
+  evidence: null
+
+pr: 13
+result: null
