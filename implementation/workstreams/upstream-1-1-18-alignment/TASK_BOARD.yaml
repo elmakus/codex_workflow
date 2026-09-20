@@ -140,8 +140,8 @@ cards:
     contract: "implementation/workstreams/upstream-1-1-18-alignment/cards/M03-T02.md"
     review_state: "pending"
     review_subject: "b07e93a29aa70f97e585bbdaf5b41e8a44d1ea5e"
-    review_evidence: "implementation/workstreams/upstream-1-1-18-alignment/evidence/M03-T02.md"
+    review_evidence: null
     result_commit: "b07e93a29aa70f97e585bbdaf5b41e8a44d1ea5e"
     result_pr: 7
-    evidence: null
+    evidence: "implementation/workstreams/upstream-1-1-18-alignment/evidence/M03-T02.md"
     tests_summary: "GREEN: PR #7 Tests run #142 on exact subject; runtime 97/97; Muse adapter 33/33; Muse Max 7/7; compile/package validate/build/archive verify GREEN; two-profile plus-only Material Event Push contract; static active-surface and whitespace/conflict scans clean; VERSION unchanged"
