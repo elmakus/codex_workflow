@@ -6,7 +6,7 @@ current_milestone: "M01"
 execution_ref:
   branch: "feat/upstream-1.1.18-alignment"
   pr: null
-  head: "a3f848ede935a8dc39e22eecbd8255dfee262c05"
+  head: "6662e330cde546914012369fffca8043ed5cf0aa"
 
 research_obligation: null
 
@@ -44,8 +44,8 @@ cards:
     title: "Fail-closed legacy local-instruction migration"
     milestone: "M01"
     decision_state: "accepted"
-    execution_status: "ready"
-    executor: null
+    execution_status: "in_progress"
+    executor: "chatgpt"
     depends_on: []
     openspec_change: "openspec/changes/m01-legacy-local-instructions/"
     contract: "implementation/workstreams/upstream-1-1-18-alignment/cards/M01-T02.md"
