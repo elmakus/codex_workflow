@@ -6,7 +6,7 @@ current_milestone: "M04"
 execution_ref:
   branch: "feat/upstream-1.1.18-alignment"
   pr: 7
-  head: "53ca7664b625b6467ffdc13d5d5f9a99675a5269"
+  head: "42fce30b8118a20f628eb2d0afb3b7252958fcb1"
 
 research_obligation: null
 
@@ -177,8 +177,8 @@ cards:
     title: "Integrated regression and residual reference closure"
     milestone: "M04"
     decision_state: "accepted"
-    execution_status: "ready"
-    executor: null
+    execution_status: "in_progress"
+    executor: "chatgpt"
     depends_on:
       - "M04-T01"
     openspec_change: null
