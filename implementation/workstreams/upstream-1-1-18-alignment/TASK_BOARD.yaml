@@ -87,7 +87,7 @@ cards:
     title: "Six-role orchestration and Investigator contract"
     milestone: "M02"
     decision_state: "accepted"
-    execution_status: "planned"
+    execution_status: "ready"
     executor: "chatgpt"
     depends_on:
       - "M02-T01"
