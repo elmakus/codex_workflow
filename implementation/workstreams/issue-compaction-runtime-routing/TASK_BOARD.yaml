@@ -6,7 +6,7 @@ current_milestone: "micro-fix"
 execution_ref:
   branch: "fix/compaction-runtime-routing"
   pr: null
-  head: "9a736774f6f2e027b2ce2bd8c5340c3180a9c381"
+  head: "c9bc33af8862ec1142cd014cc75833c6d731b378"
 
 research_obligation: null
 
