@@ -29,9 +29,9 @@ authority:
 
 review:
   requirement: "RECOMMENDED"
-  state: "red"
-  subject: "c5c6b268bb07fbba78bbc398e72c0ff85c71cbce"
-  evidence: "implementation/workstreams/feature-muse-main-orchestration-efficiency/evidence/final-integration-review-c5c6b268.md"
+  state: "pending"
+  subject: "c8b18d9ac9844d81d3879f62e690f52344ae0183"
+  evidence: null
   covered_by: null
 
 branch_cleanup:
