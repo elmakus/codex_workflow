@@ -22,9 +22,9 @@ cards:
     depends_on: []
     openspec_change: null
     contract: "implementation/workstreams/issue-compaction-runtime-routing/cards/MF-T01.md"
-    review_state: in_progress
+    review_state: red
     review_subject: "408dec625109d923938dc3e77ee22ac251a65ad0"
-    review_evidence: null
+    review_evidence: "implementation/workstreams/issue-compaction-runtime-routing/evidence/MF-T01-review.md"
     result_commit: "408dec625109d923938dc3e77ee22ac251a65ad0"
     result_pr: null
     evidence: "implementation/workstreams/issue-compaction-runtime-routing/evidence/MF-T01-implementation.md"
