@@ -6,7 +6,7 @@ current_milestone: "M05"
 execution_ref:
   branch: "feat/muse-main-orchestration-efficiency"
   pr: null
-  head: "8f0f2d466c4e706d607e026a8957da113b278f6d"
+  head: "b2769668be5881deb75d286c905c4c3fc0097716"
 
 research_obligation: null
 
@@ -26,13 +26,13 @@ cards:
     dependencies: []
     execution_status: "in_progress"
     executor: "chatgpt"
-    result_commit: null
+    result_commit: "b2769668be5881deb75d286c905c4c3fc0097716"
     result_pr: null
-    evidence: null
-    tests_summary: null
+    evidence: "implementation/workstreams/feature-muse-main-orchestration-efficiency/evidence/M05-T01.md"
+    tests_summary: "GREEN native host feasibility: one Code Mode exec owned a 125s wait; Codex-LB had exactly 2 Sol Medium requests with zero intervening healthy-wait sampling; rollout showed internal exec_command/write_stdin ownership; separate SIGINT probe removed controlled root+child; no production runtime/profile source changed. Full real-Muse M05 acceptance remains downstream."
     openspec: null
     blocker: null
     review_requirement: "RECOMMENDED"
-    review_state: null
-    review_subject: null
-    review_evidence: null
+    review_state: "pending"
+    review_subject: "commit:b2769668be5881deb75d286c905c4c3fc0097716"
+    review_evidence: "implementation/workstreams/feature-muse-main-orchestration-efficiency/evidence/M05-T01.md"
