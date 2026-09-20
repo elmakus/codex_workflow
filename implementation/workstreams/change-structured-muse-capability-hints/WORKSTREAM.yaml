@@ -1,6 +1,6 @@
 id: "change-structured-muse-capability-hints"
 kind: "change"
-status: "review"
+status: "ready"
 
 branch: "work/structured-muse-capability-hints"
 base_ref: "738ac89eeaa0522348f175eb5e936bda02a3de8c"
@@ -30,10 +30,10 @@ authority:
 
 review:
   requirement: "RECOMMENDED"
-  state: null
-  subject: null
-  evidence: null
-  covered_by: null
+  state: "green"
+  subject: "c8fc2d2c60a395bc20562d3f81efc844ee9a7405"
+  evidence: "implementation/workstreams/change-structured-muse-capability-hints/evidence/M02-close.md"
+  covered_by: "implementation/workstreams/change-structured-muse-capability-hints/evidence/M02-T01-review.md"
 
 branch_cleanup:
   state: null
