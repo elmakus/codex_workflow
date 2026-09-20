@@ -15,10 +15,10 @@ milestones:
     decision_state: accepted
     execution_status: in_progress
     contract: "planning/MASTER_PLAN.md#4-milestones"
-    checkpoint: null
-    implementation_head: null
-    handoff: null
-    acceptance_evidence: null
+    checkpoint: "8336e6efe68dd12de8836e5e36ef667594d48754"
+    implementation_head: "8336e6efe68dd12de8836e5e36ef667594d48754"
+    handoff: "implementation/workstreams/change-release-1-1-18-private-2/handoffs/M04_HANDOFF.md"
+    acceptance_evidence: "implementation/workstreams/change-release-1-1-18-private-2/evidence/M04-acceptance.md"
     review_state: null
     review_subject: null
     review_evidence: null
