@@ -223,7 +223,8 @@ def _test_current_private_contract(self: unittest.TestCase) -> None:
 
     self.assertIn("## Deep dive: orchestration design", workflow_map)
     self.assertIn("exactly three independent Investigator lanes", " ".join(workflow_map.split()))
-    self.assertIn("initial case study", benchmark_guide)
+    benchmark_guide_flat = " ".join(benchmark_guide.split())
+    self.assertIn("initial case study", benchmark_guide_flat)
     self.assertIn("`plus`", benchmark_guide)
     self.assertIn("`muse-max`", benchmark_guide)
     self.assertNotIn("luna-xhigh", benchmark_guide)
