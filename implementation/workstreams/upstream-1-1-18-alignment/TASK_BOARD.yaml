@@ -173,4 +173,21 @@ cards:
     result_pr: 7
     evidence: "implementation/workstreams/upstream-1-1-18-alignment/evidence/M04-T01.md"
     tests_summary: "GREEN: PR #7 run #174 on exact subject; runtime 97/97 and all remaining CI/package steps GREEN; canonical filename verified; VERSION unchanged"
+  - id: "M04-T02"
+    title: "Integrated regression and residual reference closure"
+    milestone: "M04"
+    decision_state: "accepted"
+    execution_status: "ready"
+    executor: null
+    depends_on:
+      - "M04-T01"
+    openspec_change: null
+    contract: "implementation/workstreams/upstream-1-1-18-alignment/cards/M04-T02.md"
+    review_state: null
+    review_subject: null
+    review_evidence: null
+    result_commit: null
+    result_pr: null
+    evidence: null
+    tests_summary: null
 
