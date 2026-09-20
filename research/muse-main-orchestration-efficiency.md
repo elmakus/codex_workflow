@@ -6,12 +6,12 @@ Research question: `Which current codex_workflow/Main/Muse paths cause repeated 
 ## Durable continuation metadata — policy-activated only
 
 Research ID: `R-MUSE-MAIN-ORCH-01`
-Status: `complete`
+Status: `consumed`
 Origin role: `brainstorming`
 Origin subject: `muse-main-orchestration-efficiency@R1`
 Return target: `brainstorming:muse-main-orchestration-efficiency@R1`
-Return reconciliation: `pending`
-Return reconciliation result: `none`
+Return reconciliation: `applied`
+Return reconciliation result: `brainstorming/muse-main-orchestration-efficiency.md — muse-main-orchestration-efficiency@R1 ready_for_definition`
 
 ## Scope
 
@@ -133,9 +133,7 @@ The policy intent survived, but the Muse transport does not currently realize th
 
 ### F7 — Communication suppression and inference suppression are separate controls
 
-Current `muse-max` renders:
-
-> normal concise commentary with relevant progress updates at meaningful milestones.
+Current `muse-max` renders normal concise commentary with relevant progress updates at meaningful milestones.
 
 Historical `luna-xhigh` strict silent orchestration prohibited essentially every mid-task progress/status/intermediate update except a blocking user decision, immediate risk/authorization need, an explicit progress request, or the final response.
 

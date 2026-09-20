@@ -3,80 +3,90 @@
 Date: `2026-09-20`
 Scope ID: `muse-main-orchestration-efficiency`
 Revision: `R1`
-Status: `tentative`
+Status: `ready_for_definition`
 
 ## Problem / goal
 
-The `muse-max` profile currently allows normal concise orchestration updates from Main. In observed live use, Main (Sol Medium) can be re-entered repeatedly while Muse work/recovery is in progress, with large mostly-cached contexts and non-trivial per-turn cost.
+The `muse-max` profile currently allows normal concise orchestration updates from Main. Live evidence proves that Main can also be re-entered repeatedly while one healthy Muse worker is still running, causing repeated large-context Sol Medium requests.
 
-The feature goal is to reduce unnecessary Main turns without making the UI as silent as the historical strict `luna-xhigh` mode.
+The feature goal is to eliminate periodic Main inference while waiting for healthy Muse work and make user-visible orchestration materially quieter without restoring the historical hard-silent mode.
 
 ## Current understanding
 
 ### Verified facts
 
 - Current `heavy_route.md` still forbids routine polling for internal Codex workers and retains long event-driven `wait_agent` behavior.
-- Current `muse-max` uses external bounded Muse invocations through `runtime/muse_worker.py`, with logical-session resume and adapter-owned timeout/cancellation.
-- Current `muse-max` communication policy is normal concise milestone updates, not historical strict silent orchestration.
-- Live Codex LB evidence supplied by the user shows repeated Main requests with roughly 175–196k input tokens, almost entirely cached, and around USD 0.08–0.12 per request during active orchestration/recovery.
+- Current `muse-max` uses external Muse invocations through `runtime/muse_worker.py`; the adapter itself stays alive and synchronously waits for its Muse child.
+- The dominant repeated Sol cost occurs **above** `muse_worker.py`: Main cycles through Code-Mode command-session `exec/write_stdin/wait` boundaries while the same Muse process remains healthy.
+- In the observed healthy Executor interval, 24 repeated Sol Medium requests cost USD 1.934; cached input was 99.82%, and most requests performed almost no reasoning.
+- Live Codex logs show 13 roughly 31-second `exec` waits interleaved with 12 roughly 25-second Code-Mode `wait` calls.
+- A requested 60-second terminal yield still crossed the Code-Mode foreground boundary after roughly 31 seconds; increasing `yield_time_ms` alone is not sufficient.
+- The initial interrupted-worker `session_busy` path caused legitimate recovery work but does not explain the continuing periodic requests during the healthy replacement worker.
+- Current `muse-max` communication is normal concise milestone commentary. Historical `luna-xhigh` strict silent orchestration suppressed essentially all mid-task progress except blockers/risks/user-requested updates.
+- Communication suppression alone cannot solve the cost issue; the wait transport must suppress Main sampling as well.
 
 ### Existing accepted decisions
 
-No existing accepted requirement or decision authorizes this feature yet. Existing accepted behavior is the current `muse-max` orchestration model on `main`.
+No existing accepted requirement or decision authorizes this feature yet. Existing accepted behavior is the current `muse-max` orchestration/runtime model on `main`.
 
-### Assumptions to verify
+### Implementation-time facts still to prove
 
-- Whether repeated Sol turns come primarily from user-visible progress/update policy, from tool/invocation boundaries, from recovery/reconciliation paths, or a combination.
-- Whether a healthy long-running Muse invocation can remain one blocking tool/process boundary from Main's perspective in the current workstation/runtime.
-- Which exact progress events can be suppressed without hiding meaningful milestones or blockers.
+- Which exact Codex-host primitive can provide the smallest reliable long-lived terminal/material-event wait boundary.
+- Whether that primitive can live wholly inside `codex_workflow` or requires a narrowly scoped host integration dependency.
+
+These are implementation feasibility questions, not unresolved product choices.
 
 ## Ideas / alternatives considered
 
 ### Option A — communication-only reduction
 
-Reduce Main's user-visible update cadence but leave runtime/tool lifecycle unchanged.
+Rejected as incomplete: it can reduce narration but leaves periodic Main sampling untouched.
 
-Trade-off: low implementation risk, but may not reduce Codex LB requests if hidden Main turns still occur.
+### Option B — managed event-driven Muse boundary plus moderated quiet mode
 
-### Option B — blocking/event-driven Muse boundary plus moderated quiet mode
+Selected exploratory direction and now supported by Research.
 
-Keep each healthy Muse invocation as one long/blocking boundary from Main's perspective, forbid routine status/recovery checks without a terminal/material signal, and reduce routine user-visible orchestration updates substantially while retaining meaningful milestones.
-
-This is the currently preferred direction.
+One bounded Muse turn should remain runtime-owned until terminal/material completion without Main polling. User-visible communication becomes a quiet milestone mode rather than historical hard silence.
 
 ### Option C — restore historical strict silent orchestration
 
-Reapply the old `luna-xhigh` strict-silent policy.
-
-Rejected by user preference: desired behavior is intentionally less strict, approximately halfway between current `muse-max` concise updates and the historical strict-silent mode.
+Rejected by explicit user preference. The desired communication policy is intentionally less strict.
 
 ## Trade-offs / questions
 
-The key design constraint is to distinguish **communication suppression** from **inference suppression**. Hiding text is insufficient if Main is still re-entered for status checks.
+The key design constraint is the separation between **communication suppression** and **inference suppression**.
 
-## Research needed
+The feature should not trade away existing stateful Muse correctness: timeout/cancel cleanup, session binding, fail-closed resume/replacement, Executor/Tester independence and private raw artifacts remain protected.
 
-Research must establish:
-1. the exact current Main/Muse execution and recovery paths that can produce repeated Main turns;
-2. whether those turns are required by runtime/tool semantics or are workflow-induced;
-3. the minimal contract/runtime changes needed for a healthy Muse call to remain a single long/blocking event-driven boundary;
-4. a concrete moderated communication policy that is materially quieter than current `muse-max` but not as strict as historical silent orchestration;
-5. regression/acceptance signals that prove both reduced wake-ups and preserved blocker/milestone visibility.
+## Research outcome
+
+Completed Research: `research/muse-main-orchestration-efficiency.md` / `R-MUSE-MAIN-ORCH-01`.
+
+Evidence supports these Definition candidates:
+
+- no periodic Main/model sampling solely to observe a healthy running Muse worker;
+- managed terminal/material-event wait boundary instead of Main-driven terminal/session polling;
+- quiet milestone communication for `muse-max`: suppress routine operational narration but allow concise user-meaningful phase transitions;
+- no timer-based Main wake-up solely to say work is still running;
+- live acceptance using Codex-LB and Codex rollout evidence;
+- preserve current Muse safety/session/review guarantees and leave `plus` unchanged.
 
 ## Open questions
 
-No unresolved user/product decision currently blocks Research. Exact implementation boundaries are evidence questions for Research.
+No material user/product/strategic question blocks Project Definition.
+
+The exact managed wait implementation remains to be proven in Planning/Execution Prep and must fail closed to a bounded dependency if the host cannot support the required event-driven boundary.
 
 ## Outcome of this session
 
-- Tentative conclusions: pursue Option B.
+- Tentative conclusions: proceed with the combined event-driven-wait + quiet-milestone feature.
 - Explicit user/product choices to promote through Project Definition:
   - introduce both the long/blocking event-driven Muse boundary behavior and a quieter `muse-max` orchestration communication policy;
-  - the communication policy should be roughly halfway toward the former strict-silent behavior, not a full restoration.
-- Research still needed: exact wake-up causes, runtime/workflow ownership boundary, and measurable acceptance.
-- Open questions: none requiring user input before Research.
-- Next phase/action: `research`
+  - the communication policy is approximately halfway toward former strict silent in spirit: meaningful phase transitions stay visible, routine operational narration does not.
+- Research still needed: none before Definition.
+- Open questions: no user decision required before Definition.
+- Next phase/action: `ready for definition`
 - Definition promotion authorization: `pending`
 - Definition promotion subject: `none`
 
-> Nothing in this file becomes accepted requirement/decision authority by itself. Project Definition owns promotion into canonical `requirements/` and `decisions/`.
+> Nothing in this file becomes accepted requirement/decision authority by itself. Project Definition owns promotion into canonical `requirements/` and `decisions/`. Explicit user promotion is still required.
