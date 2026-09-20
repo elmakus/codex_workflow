@@ -6,14 +6,14 @@ current_milestone: "M04"
 execution_ref:
   branch: "work/release-1-1-18-private-2"
   pr: null
-  head: "1118ff9bfd0340d275f92b93472d8f3129d7a628"
+  head: "76caa9c38148b47c2dba01866670106077f19dd7"
 
 research_obligation: null
 
 milestones:
   M04:
     decision_state: accepted
-    execution_status: ready
+    execution_status: in_progress
     contract: "planning/MASTER_PLAN.md#4-milestones"
     checkpoint: null
     implementation_head: null
@@ -28,8 +28,8 @@ cards:
     title: "Prepare owner release 1.1.18-private.2"
     milestone: "M04"
     decision_state: accepted
-    execution_status: ready
-    executor: null
+    execution_status: in_progress
+    executor: chatgpt
     depends_on: []
     openspec_change: null
     contract: "implementation/workstreams/change-release-1-1-18-private-2/cards/M04-T01.md"
