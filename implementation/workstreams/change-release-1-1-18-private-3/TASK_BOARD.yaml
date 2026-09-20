@@ -33,7 +33,7 @@ cards:
     depends_on: []
     openspec_change: null
     contract: "implementation/workstreams/change-release-1-1-18-private-3/cards/M04-T01.md"
-    review_state: pending
+    review_state: in_progress
     review_subject: "1d63028c7e1afca58fb1f0d432b5c0a40d8c03d5"
     review_evidence: null
     result_commit: "1d63028c7e1afca58fb1f0d432b5c0a40d8c03d5"
