@@ -1,0 +1,42 @@
+project: "codex_workflow"
+workstream_id: "change-release-1-1-18-private-2"
+plan_revision: "R2"
+current_milestone: "M04"
+
+execution_ref:
+  branch: "work/release-1-1-18-private-2"
+  pr: null
+  head: "1118ff9bfd0340d275f92b93472d8f3129d7a628"
+
+research_obligation: null
+
+milestones:
+  M04:
+    decision_state: accepted
+    execution_status: ready
+    contract: "planning/MASTER_PLAN.md#4-milestones"
+    checkpoint: null
+    implementation_head: null
+    handoff: null
+    acceptance_evidence: null
+    review_state: null
+    review_subject: null
+    review_evidence: null
+
+cards:
+  - id: "M04-T01"
+    title: "Prepare owner release 1.1.18-private.2"
+    milestone: "M04"
+    decision_state: accepted
+    execution_status: ready
+    executor: null
+    depends_on: []
+    openspec_change: null
+    contract: "implementation/workstreams/change-release-1-1-18-private-2/cards/M04-T01.md"
+    review_state: null
+    review_subject: null
+    review_evidence: null
+    result_commit: null
+    result_pr: null
+    evidence: null
+    tests_summary: null
