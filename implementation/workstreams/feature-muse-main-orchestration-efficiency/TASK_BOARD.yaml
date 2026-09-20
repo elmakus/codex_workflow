@@ -21,7 +21,7 @@ milestones:
 
   M06:
     contract: "planning/MASTER_PLAN.md#M06 — quiet milestone communication and integrated acceptance"
-    execution_status: "planned"
+    execution_status: "ready"
     checkpoint: null
     implementation_head: null
     acceptance_evidence: null
@@ -61,3 +61,20 @@ cards:
     review_state: "green"
     review_subject: "commit:1c0c0bf073308b8e87c009652e1192422445862c"
     review_evidence: "implementation/workstreams/feature-muse-main-orchestration-efficiency/evidence/M05-T02-review.md"
+
+  - id: "M06-T01"
+    contract: "implementation/workstreams/feature-muse-main-orchestration-efficiency/cards/M06-T01.md"
+    milestone: "M06"
+    dependencies: ["M05-T02"]
+    execution_status: "ready"
+    executor: null
+    result_commit: null
+    result_pr: null
+    evidence: null
+    tests_summary: null
+    openspec: null
+    blocker: null
+    review_requirement: "RECOMMENDED"
+    review_state: null
+    review_subject: null
+    review_evidence: null
