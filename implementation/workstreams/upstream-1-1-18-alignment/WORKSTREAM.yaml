@@ -1,6 +1,6 @@
 id: "upstream-1-1-18-alignment"
 kind: "maintenance"
-status: "blocked"
+status: "done"
 
 branch: "feat/upstream-1.1.18-alignment"
 base_ref: "a4754147e436784972538bad664dde6e866e52a2"
@@ -39,4 +39,4 @@ branch_cleanup:
   evidence: null
 
 pr: 7
-result: null
+result: "4f34a9bc9484f908caa70c506c44d9dc447c5944"
