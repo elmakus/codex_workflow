@@ -1,7 +1,7 @@
 # Owner workflow ownership and layout
 
 This guide describes the current fork architecture at packaged version
-`1.1.17-private.12`. It incorporates selected upstream 1.1.18 behavior while
+`1.1.17-private.13`. It incorporates selected upstream 1.1.18 behavior while
 keeping the fork-specific Muse lifecycle and accepted orchestration decisions
 authoritative.
 
