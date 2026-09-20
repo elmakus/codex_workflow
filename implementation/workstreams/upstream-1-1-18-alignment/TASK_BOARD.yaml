@@ -1,12 +1,12 @@
 project: "codex_workflow"
 workstream_id: "upstream-1-1-18-alignment"
 plan_revision: "R2"
-current_milestone: "M01"
+current_milestone: "M02"
 
 execution_ref:
   branch: "feat/upstream-1.1.18-alignment"
   pr: 7
-  head: "3f7aa3c67a564216a6095b5ad92a3db2589ef8a1"
+  head: "7cfe5d6738c6fd67602cf0f873133a4ff010ec73"
 
 research_obligation: null
 
@@ -22,6 +22,17 @@ milestones:
     review_state: "green"
     review_subject: "3f7aa3c67a564216a6095b5ad92a3db2589ef8a1"
     review_evidence: "implementation/workstreams/upstream-1-1-18-alignment/evidence/M01-acceptance.md"
+  M02:
+    decision_state: "accepted"
+    execution_status: "planned"
+    contract: "planning/MASTER_PLAN.md#M02--six-role-worker-topology-and-investigation-contract"
+    checkpoint: null
+    implementation_head: null
+    handoff: null
+    acceptance_evidence: null
+    review_state: null
+    review_subject: null
+    review_evidence: null
 
 cards:
   - id: "M01-T01"
@@ -56,3 +67,36 @@ cards:
     result_pr: 7
     evidence: "implementation/workstreams/upstream-1-1-18-alignment/evidence/M01-T02.md"
     tests_summary: "GREEN: PR #7 run #67 on exact review subject; runtime 97/97 including bootstrap/install/update stale-route migration regressions; Muse 33/33; Muse Max 7/7; compile/package validate/build/archive verify GREEN; VERSION unchanged"
+  - id: "M02-T01"
+    title: "Six-role worker/package baseline"
+    milestone: "M02"
+    decision_state: "accepted"
+    execution_status: "ready"
+    executor: "chatgpt"
+    depends_on: []
+    openspec_change: null
+    contract: "implementation/workstreams/upstream-1-1-18-alignment/cards/M02-T01.md"
+    review_state: null
+    review_subject: null
+    review_evidence: null
+    result_commit: null
+    result_pr: 7
+    evidence: null
+    tests_summary: null
+  - id: "M02-T02"
+    title: "Six-role orchestration and Investigator contract"
+    milestone: "M02"
+    decision_state: "accepted"
+    execution_status: "planned"
+    executor: "chatgpt"
+    depends_on:
+      - "M02-T01"
+    openspec_change: null
+    contract: "implementation/workstreams/upstream-1-1-18-alignment/cards/M02-T02.md"
+    review_state: null
+    review_subject: null
+    review_evidence: null
+    result_commit: null
+    result_pr: 7
+    evidence: null
+    tests_summary: null
