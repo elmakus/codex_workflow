@@ -44,10 +44,10 @@ cards:
     title: "Fail-closed legacy local-instruction migration"
     milestone: "M01"
     decision_state: "accepted"
-    execution_status: "planned"
+    execution_status: "ready"
     executor: null
     depends_on: []
-    openspec_change: null
+    openspec_change: "openspec/changes/m01-legacy-local-instructions/"
     contract: "implementation/workstreams/upstream-1-1-18-alignment/cards/M01-T02.md"
     review_state: null
     review_subject: null
