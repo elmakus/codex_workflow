@@ -36,15 +36,15 @@ milestones:
 
   M03:
     decision_state: "accepted"
-    execution_status: "in_progress"
+    execution_status: "done"
     contract: "planning/MASTER_PLAN.md#M03--two-profile-execution-and-communication-semantics"
-    checkpoint: null
-    implementation_head: "b07e93a29aa70f97e585bbdaf5b41e8a44d1ea5e"
-    handoff: null
-    acceptance_evidence: null
-    review_state: null
-    review_subject: null
-    review_evidence: null
+    checkpoint: "3e6f86cb78b54c8690b386d8575fc2647465eed3"
+    implementation_head: "3e6f86cb78b54c8690b386d8575fc2647465eed3"
+    handoff: "implementation/workstreams/upstream-1-1-18-alignment/handoffs/M03_HANDOFF.md"
+    acceptance_evidence: "implementation/workstreams/upstream-1-1-18-alignment/evidence/M03-acceptance.md"
+    review_state: "green"
+    review_subject: "3e6f86cb78b54c8690b386d8575fc2647465eed3"
+    review_evidence: "implementation/workstreams/upstream-1-1-18-alignment/evidence/M03-acceptance.md"
 
 cards:
   - id: "M01-T01"
