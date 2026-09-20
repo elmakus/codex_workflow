@@ -33,6 +33,6 @@ cards:
     openspec: null
     blocker: null
     review_requirement: "RECOMMENDED"
-    review_state: "in_progress"
+    review_state: "green"
     review_subject: "commit:b2769668be5881deb75d286c905c4c3fc0097716"
-    review_evidence: "implementation/workstreams/feature-muse-main-orchestration-efficiency/evidence/M05-T01.md"
+    review_evidence: "implementation/workstreams/feature-muse-main-orchestration-efficiency/evidence/M05-T01-review.md"
