@@ -35,6 +35,12 @@ def _test_private_version_and_user_marker_are_synchronized(self: unittest.TestCa
     self.assertIn("codex_workflow --profile muse-max", user_agents)
     self.assertNotIn("codex_workflow --profile luna-xhigh", user_agents)
     self.assertNotIn("codex_workflow --profile pro-x5", user_agents)
+    self.assertIn("immediately before every worker", user_agents)
+    self.assertIn("settings.toml", user_agents)
+    self.assertIn("context\ncompaction", user_agents)
+    self.assertIn("all six workflow roles", user_agents)
+    self.assertIn("runtime/muse_worker.py", user_agents)
+    self.assertIn("stale long-lived session still exposes them", user_agents)
     self.assertGreater(base.parse_semver("1.1.18-private.2"), base.parse_semver("1.1.17-private.13"))
     self.assertEqual(base.NEXT_PACKAGE_VERSION, "1.1.18-private.3")
 
@@ -326,6 +332,9 @@ class ComputeProfileTests(unittest.TestCase):
             _installed_worker_models(self.runtime),
             _expected_profile_models("plus"),
         )
+        config = tomllib.loads(self.runtime.config_toml.read_text(encoding="utf-8"))
+        self.assertTrue(config["agents"]["enabled"])
+        self.assertTrue(config["features"]["multi_agent"])
 
     def test_missing_pre_profile_settings_are_backward_compatible_plus(self) -> None:
         self.runtime.compute_settings.unlink()
@@ -342,23 +351,77 @@ class ComputeProfileTests(unittest.TestCase):
                     plan_compute_profile(self.runtime, removed)
 
     def test_switches_between_supported_profiles(self) -> None:
-        plan_compute_profile(self.runtime, "muse-max").apply()
+        with self.runtime.config_toml.open("a", encoding="utf-8") as handle:
+            handle.write('\n[unrelated]\nkeep = "yes"\n')
+
+        muse_plan = plan_compute_profile(self.runtime, "muse-max")
+        self.assertEqual(muse_plan.details["internal_codex_agents"], "disabled")
+        muse_plan.apply()
         self.assertEqual(read_compute_profile(self.runtime), "muse-max")
         heavy = (self.runtime.runtime / "heavy_route.md").read_text(encoding="utf-8")
-        self.assertIn("live Muse-worker experiment", heavy)
+        self.assertIn("quiet milestone orchestration", heavy)
+        config = tomllib.loads(self.runtime.config_toml.read_text(encoding="utf-8"))
+        self.assertFalse(config["agents"]["enabled"])
+        self.assertTrue(config["features"]["multi_agent"])
+        self.assertEqual(config["unrelated"]["keep"], "yes")
 
-        plan_compute_profile(self.runtime, "plus").apply()
+        plus_plan = plan_compute_profile(self.runtime, "plus")
+        self.assertEqual(plus_plan.details["internal_codex_agents"], "enabled")
+        plus_plan.apply()
         self.assertEqual(read_compute_profile(self.runtime), "plus")
         self.assertEqual(
             _installed_worker_models(self.runtime),
             _expected_profile_models("plus"),
         )
+        config = tomllib.loads(self.runtime.config_toml.read_text(encoding="utf-8"))
+        self.assertTrue(config["agents"]["enabled"])
+        self.assertTrue(config["features"]["multi_agent"])
+        self.assertEqual(config["unrelated"]["keep"], "yes")
+
+    def test_muse_max_rejects_external_multi_agent_v2_override(self) -> None:
+        original = self.runtime.config_toml.read_text(encoding="utf-8")
+        conflicting = original.replace(
+            "[features]\n",
+            "[features]\nmulti_agent_v2 = true\n",
+            1,
+        )
+        self.runtime.config_toml.write_text(conflicting, encoding="utf-8")
+        before = self.runtime.config_toml.read_bytes()
+
+        with self.assertRaisesRegex(
+            ValidationError,
+            "multi_agent_v2 is enabled",
+        ):
+            plan_compute_profile(self.runtime, "muse-max")
+
+        self.assertEqual(read_compute_profile(self.runtime), "plus")
+        self.assertEqual(self.runtime.config_toml.read_bytes(), before)
+
+    def test_muse_max_rejects_external_multi_agent_v2_table_override(self) -> None:
+        original = self.runtime.config_toml.read_text(encoding="utf-8")
+        conflicting = (
+            original
+            + "\n[features.multi_agent_v2]\n"
+            + "enabled = true\n"
+            + "max_wait_timeout_ms = 1800000\n"
+        )
+        self.runtime.config_toml.write_text(conflicting, encoding="utf-8")
+        before = self.runtime.config_toml.read_bytes()
+
+        with self.assertRaisesRegex(
+            ValidationError,
+            "multi_agent_v2 is enabled",
+        ):
+            plan_compute_profile(self.runtime, "muse-max")
+
+        self.assertEqual(read_compute_profile(self.runtime), "plus")
+        self.assertEqual(self.runtime.config_toml.read_bytes(), before)
 
     def test_profile_switch_renders_distinct_communication_policies(self) -> None:
         heavy_path = self.runtime.runtime / "heavy_route.md"
         expected = {
-            "plus": ("restrained and outcome-oriented", "live Muse-worker experiment"),
-            "muse-max": ("live Muse-worker experiment", "restrained and outcome-oriented"),
+            "plus": ("restrained and outcome-oriented", "quiet milestone orchestration"),
+            "muse-max": ("quiet milestone orchestration", "restrained and outcome-oriented"),
         }
         for profile, (present, absent) in expected.items():
             plan_compute_profile(self.runtime, profile).apply()
@@ -424,7 +487,10 @@ class ComputeProfileTests(unittest.TestCase):
         plan_update(incoming, self.runtime, self.project).apply()
         self.assertEqual(read_compute_profile(self.runtime), "muse-max")
         heavy = (self.runtime.runtime / "heavy_route.md").read_text(encoding="utf-8")
-        self.assertIn("live Muse-worker experiment", heavy)
+        self.assertIn("quiet milestone orchestration", heavy)
+        config = tomllib.loads(self.runtime.config_toml.read_text(encoding="utf-8"))
+        self.assertFalse(config["agents"]["enabled"])
+        self.assertTrue(config["features"]["multi_agent"])
 
 
 

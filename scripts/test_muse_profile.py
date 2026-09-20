@@ -82,22 +82,34 @@ class MuseMaxProfileTests(unittest.TestCase):
             project = ProjectPaths(root / "project")
             package = PackageLayout.resolve(PACKAGE)
             plan_bootstrap(package, runtime, project).apply()
+            plus_config = tomllib.loads(runtime.config_toml.read_text(encoding="utf-8"))
+            self.assertTrue(plus_config["agents"]["enabled"])
+            self.assertTrue(plus_config["features"]["multi_agent"])
 
             plan = plan_compute_profile(runtime, "muse-max")
             self.assertEqual(plan.details["main_agent"], "unchanged")
             self.assertEqual(plan.details["worker_harnesses"], ["muse-code"])
+            self.assertEqual(plan.details["internal_codex_agents"], "disabled")
             plan.apply()
             self.assertEqual(read_compute_profile(runtime), "muse-max")
             self.assertEqual(
                 {path.stem for path in runtime.agents.glob("*.toml")},
                 MUSE_ROLES,
             )
+            muse_config = tomllib.loads(runtime.config_toml.read_text(encoding="utf-8"))
+            self.assertFalse(muse_config["agents"]["enabled"])
+            self.assertTrue(muse_config["features"]["multi_agent"])
             heavy = (runtime.runtime / "heavy_route.md").read_text(encoding="utf-8")
             self.assertIn("quiet milestone orchestration", heavy)
             self.assertIn("routine worker starts", heavy)
             self.assertIn("must not by themselves wake Main", heavy)
             self.assertNotIn("normal concise commentary", heavy)
             self.assertNotIn("## Silent Orchestration", heavy)
+
+            plan_compute_profile(runtime, "plus").apply()
+            restored = tomllib.loads(runtime.config_toml.read_text(encoding="utf-8"))
+            self.assertTrue(restored["agents"]["enabled"])
+            self.assertTrue(restored["features"]["multi_agent"])
 
     def test_profile_communication_policies_are_distinct(self) -> None:
         source = (PACKAGE / "heavy_route.md").read_text(encoding="utf-8")

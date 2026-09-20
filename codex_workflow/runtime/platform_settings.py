@@ -8,16 +8,34 @@ from ._toml import tomllib
 from .errors import ValidationError
 
 
-def patch_codex_settings(text: str) -> str:
-    """Apply the workflow's fixed platform settings without replacing user settings."""
+def patch_codex_settings(
+    text: str, *, internal_agents_enabled: bool = True
+) -> str:
+    """Apply fixed platform settings while preserving unrelated user settings."""
 
+    parsed = {}
     if text.strip():
         try:
-            tomllib.loads(text)
+            parsed = tomllib.loads(text)
         except tomllib.TOMLDecodeError as error:
             raise ValidationError(f"existing Codex config is invalid TOML: {error}") from error
+    features = parsed.get("features")
+    multi_agent_v2 = (
+        features.get("multi_agent_v2") if isinstance(features, dict) else None
+    )
+    multi_agent_v2_enabled = multi_agent_v2 is True or (
+        isinstance(multi_agent_v2, dict) and multi_agent_v2.get("enabled") is True
+    )
+    if not internal_agents_enabled and multi_agent_v2_enabled:
+        raise ValidationError(
+            "muse-max cannot disable internal Codex agents while "
+            "[features].multi_agent_v2 is enabled; disable that external override first"
+        )
+    enabled = "true" if internal_agents_enabled else "false"
     sections: dict[str, dict[str, str]] = {
-        "agents": {"enabled": "true"},
+        "agents": {"enabled": enabled},
+        # DEC-002 retains the fork's standing ownership of multi_agent=true.
+        # agents.enabled is the profile-aware fail-closed worker-surface gate.
         "features": {"multi_agent": "true"},
     }
     lines = _remove_owned_keys(text.splitlines(), _LEGACY_OWNED_KEYS)
