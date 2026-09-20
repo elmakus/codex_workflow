@@ -1,6 +1,6 @@
 id: "change-release-1-1-18-private-2"
 kind: "change"
-status: "review"
+status: "done"
 
 branch: "work/release-1-1-18-private-2"
 base_ref: "760a595125335411288cf3a673356ccdd8ea47af"
@@ -31,7 +31,7 @@ review:
   requirement: "RECOMMENDED"
   state: green
   subject: "8336e6efe68dd12de8836e5e36ef667594d48754"
-  evidence: "implementation/workstreams/change-release-1-1-18-private-2/evidence/final-integration-refresh.md"
+  evidence: "implementation/workstreams/change-release-1-1-18-private-2/evidence/M04-close.md"
   covered_by: "implementation/workstreams/change-release-1-1-18-private-2/evidence/M04-T01-review.md"
 
 branch_cleanup:
@@ -41,4 +41,4 @@ branch_cleanup:
   evidence: null
 
 pr: 11
-result: null
+result: "72f821dbc3afb7a6d580bf3fe6661bc88985149c"
