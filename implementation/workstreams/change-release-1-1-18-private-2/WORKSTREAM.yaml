@@ -1,6 +1,6 @@
 id: "change-release-1-1-18-private-2"
 kind: "change"
-status: "review"
+status: "done"
 
 branch: "work/release-1-1-18-private-2"
 base_ref: "760a595125335411288cf3a673356ccdd8ea47af"
@@ -41,4 +41,4 @@ branch_cleanup:
   evidence: null
 
 pr: 11
-result: null
+result: "72f821dbc3afb7a6d580bf3fe6661bc88985149c"
