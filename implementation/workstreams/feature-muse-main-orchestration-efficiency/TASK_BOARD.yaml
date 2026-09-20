@@ -6,7 +6,7 @@ current_milestone: "M06"
 execution_ref:
   branch: "feat/muse-main-orchestration-efficiency"
   pr: null
-  head: "1c0c0bf073308b8e87c009652e1192422445862c"
+  head: "3114bcc1c732adebf16efc9876301f98cae77d85"
 
 research_obligation: null
 
@@ -68,13 +68,13 @@ cards:
     dependencies: ["M05-T02"]
     execution_status: "in_progress"
     executor: "chatgpt"
-    result_commit: null
+    result_commit: "3114bcc1c732adebf16efc9876301f98cae77d85"
     result_pr: null
-    evidence: null
-    tests_summary: null
+    evidence: "implementation/workstreams/feature-muse-main-orchestration-efficiency/evidence/M06-T01.md"
+    tests_summary: "GREEN exact subject 3114bcc1: test_muse_profile 9/9, test_muse_adapter 39/39; rendered muse-max quiet policy retains M05 one-cell wait; real M06-T01-A1 completed foreground sleep 190 with M06_REAL_MUSE_WAIT_OK; accepted outer cell 220.0s with no other top-level call; Codex-LB flat ~225.06s between 129367 and 129372; repo clean and no surviving worker."
     openspec: null
     blocker: null
     review_requirement: "RECOMMENDED"
-    review_state: null
-    review_subject: null
-    review_evidence: null
+    review_state: "pending"
+    review_subject: "commit:3114bcc1c732adebf16efc9876301f98cae77d85"
+    review_evidence: "implementation/workstreams/feature-muse-main-orchestration-efficiency/evidence/M06-T01.md"
