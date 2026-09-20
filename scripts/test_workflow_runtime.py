@@ -90,7 +90,11 @@ def _test_current_private_contract(self: unittest.TestCase) -> None:
     archivist_contract = (PACKAGE / "archivist.md").read_text(encoding="utf-8")
     repo_root = PACKAGE.parent
     readme = (repo_root / "README.md").read_text(encoding="utf-8")
-    workflow_map = (repo_root / "workflow_break_down.md").read_text(encoding="utf-8")
+    workflow_map_path = repo_root / "workflow_breakdown.md"
+    self.assertTrue(workflow_map_path.is_file())
+    self.assertFalse((repo_root / "workflow_break_down.md").exists())
+    workflow_map = workflow_map_path.read_text(encoding="utf-8")
+    benchmark_guide = (repo_root / "benchmarks" / "README.md").read_text(encoding="utf-8")
     heavy_flat = " ".join(heavy.split())
     delegation_flat = " ".join(delegation.split())
     active_contracts = "\n".join((agents, heavy, delegation))
@@ -216,6 +220,16 @@ def _test_current_private_contract(self: unittest.TestCase) -> None:
         self.assertNotIn("Companion", public_doc)
         self.assertNotIn("Micro Executor", public_doc)
         self.assertIn("settings.toml", public_doc)
+
+    self.assertIn("## Deep dive: orchestration design", workflow_map)
+    self.assertIn("exactly three independent Investigator lanes", workflow_map)
+    self.assertIn("initial case study", benchmark_guide)
+    self.assertIn("`plus`", benchmark_guide)
+    self.assertIn("`muse-max`", benchmark_guide)
+    self.assertNotIn("luna-xhigh", benchmark_guide)
+    self.assertNotIn("pro-x5", benchmark_guide)
+    self.assertNotIn("Companion", benchmark_guide)
+    self.assertNotIn("Micro Executor", benchmark_guide)
 
     self.assertIn("## Work Packages", delegation)
     self.assertIn("## Fresh and Independent Contexts", delegation)
