@@ -6,7 +6,7 @@
 - Repository: `elmakus/codex_workflow`
 - Lifecycle: `active`
 - High-level goal: Maintain and evolve the forked Codex workflow/runtime with fork-specific Muse orchestration and selectively adopted upstream improvements.
-- High-level status: Definition R1 and Master Plan R2 were implemented; upstream-1.1.18 alignment is integrated. Release-generation numbering correction to `1.1.18-private.1` is authorized and in progress; `1.1.17-private.13` remains historical provenance until superseded.
+- High-level status: Definition R1 and Master Plan R2 were implemented; upstream-1.1.18 alignment is integrated, released and deployed as `1.1.18-private.1`. Historical `1.1.17-private.13` is superseded; no scope obligation remains.
 
 ## Execution policy
 
