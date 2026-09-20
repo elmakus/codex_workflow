@@ -6,7 +6,7 @@ current_milestone: "M01"
 execution_ref:
   branch: "feat/upstream-1.1.18-alignment"
   pr: 7
-  head: "6662e330cde546914012369fffca8043ed5cf0aa"
+  head: "3f7aa3c67a564216a6095b5ad92a3db2589ef8a1"
 
 research_obligation: null
 
@@ -16,7 +16,7 @@ milestones:
     execution_status: "in_progress"
     contract: "planning/MASTER_PLAN.md#M01--project-only-update-and-legacy-migration-hardening"
     checkpoint: null
-    implementation_head: "a3f848ede935a8dc39e22eecbd8255dfee262c05"
+    implementation_head: "3f7aa3c67a564216a6095b5ad92a3db2589ef8a1"
     handoff: null
     acceptance_evidence: null
     review_state: null
@@ -49,10 +49,10 @@ cards:
     depends_on: []
     openspec_change: "openspec/changes/m01-legacy-local-instructions/"
     contract: "implementation/workstreams/upstream-1-1-18-alignment/cards/M01-T02.md"
-    review_state: null
-    review_subject: null
+    review_state: "pending"
+    review_subject: "3f7aa3c67a564216a6095b5ad92a3db2589ef8a1"
     review_evidence: null
-    result_commit: null
-    result_pr: null
-    evidence: null
-    tests_summary: null
+    result_commit: "3f7aa3c67a564216a6095b5ad92a3db2589ef8a1"
+    result_pr: 7
+    evidence: "implementation/workstreams/upstream-1-1-18-alignment/evidence/M01-T02.md"
+    tests_summary: "GREEN: PR #7 run #67 on exact review subject; runtime 97/97 including bootstrap/install/update stale-route migration regressions; Muse 33/33; Muse Max 7/7; compile/package validate/build/archive verify GREEN; VERSION unchanged"
