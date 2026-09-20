@@ -1,6 +1,6 @@
 id: "feature-muse-main-orchestration-efficiency"
 kind: "feature"
-status: "ready"
+status: "in_progress"
 
 branch: "feat/muse-main-orchestration-efficiency"
 base_ref: "8130efb340ea2c6308e33c96dbff2a53bc98fc49"
