@@ -15,12 +15,12 @@ Implementation checkpoint: `9a0761f8b0159e63d8c12a95660d5874007b790a`
 - Documentation intake remains proportionate, with Explorer for bounded broader-context discovery.
 - Project-only equal-version update, historical-source catch-up, downgrade protection and fail-closed legacy-local-instruction migration remain GREEN.
 - Medium route, Deployment Token Report and workflow-owned `multi_agent_v2` timeout ownership remain absent.
-- The implementation/integration checkpoint kept VERSION at `1.1.17-private.12`; release publication was authorized and completed afterward as `1.1.17-private.13` (see Release and live deployment below).
+- The implementation/integration checkpoint kept VERSION at `1.1.17-private.12`. An initial post-integration release `1.1.17-private.13` was later superseded by the corrected aligned-generation release `1.1.18-private.1` under DEC-005 (see Release and live deployment below).
 
 ## Authority now satisfied
 
 - approved `requirements/REQUIREMENTS.md` REQ-001 through REQ-021
-- accepted DEC-001 through DEC-004
+- accepted DEC-001 through DEC-005
 - `planning/MASTER_PLAN.md` M01 through M04
 
 ## Verification
@@ -41,12 +41,15 @@ Implementation checkpoint: `9a0761f8b0159e63d8c12a95660d5874007b790a`
 
 ## Release and live deployment
 
-- Explicit user authorization was subsequently provided for release publication and live deployment.
-- Version `1.1.17-private.13` was published as prerelease `v1.1.17-private.13` from the reviewed/integrated result plus release-only metadata/test maintenance.
-- The Release workflow completed GREEN and published exactly the versioned ZIP plus `SHA256SUMS`.
-- The `chatgpt-ce-workstation` shared runtime and the selected `ogolny` project wrapper were updated from `1.1.17-private.12` to `1.1.17-private.13`.
+- Explicit user authorization was provided for release publication and live deployment.
+- The first post-integration prerelease, `v1.1.17-private.13`, remains immutable historical provenance; exact evidence is retained at `implementation/workstreams/upstream-1-1-18-alignment/evidence/release-1.1.17-private.13.md`.
+- DEC-005 established that the SemVer core tracks the deliberately aligned upstream generation. The completed 1.1.18 alignment therefore uses `1.1.18-private.1`.
+- PR #9 corrected release metadata/provenance and passed full CI before merge.
+- Release workflow #11 completed GREEN and published `v1.1.18-private.1` with exactly the versioned ZIP plus `SHA256SUMS`.
+- The `chatgpt-ce-workstation` shared runtime and selected `ogolny` project wrapper were updated from `1.1.17-private.13` to `1.1.18-private.1`.
 - `muse-max` remained selected and installed-package validation is GREEN.
-- Exact publication/deployment provenance: `implementation/workstreams/upstream-1-1-18-alignment/evidence/release-1.1.17-private.13.md`.
+- `v1.1.17-private.13` is superseded, not rewritten or deleted.
+- Current publication/deployment provenance: `implementation/workstreams/upstream-1-1-18-alignment/evidence/release-1.1.18-private.1.md`.
 
 ## Material exceptions / deferred work
 
