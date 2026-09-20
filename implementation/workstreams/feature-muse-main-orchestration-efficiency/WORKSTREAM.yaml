@@ -29,7 +29,7 @@ authority:
 
 review:
   requirement: "RECOMMENDED"
-  state: "pending"
+  state: "in_progress"
   subject: "c5c6b268bb07fbba78bbc398e72c0ff85c71cbce"
   evidence: null
   covered_by: null
