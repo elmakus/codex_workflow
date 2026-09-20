@@ -29,8 +29,8 @@ authority:
 
 review:
   requirement: "RECOMMENDED"
-  state: null
-  subject: null
+  state: "pending"
+  subject: "c5c6b268bb07fbba78bbc398e72c0ff85c71cbce"
   evidence: null
   covered_by: null
 

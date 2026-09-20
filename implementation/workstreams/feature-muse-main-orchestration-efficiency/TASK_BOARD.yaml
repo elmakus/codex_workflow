@@ -6,7 +6,7 @@ current_milestone: "M06"
 execution_ref:
   branch: "feat/muse-main-orchestration-efficiency"
   pr: null
-  head: "3114bcc1c732adebf16efc9876301f98cae77d85"
+  head: "c5c6b268bb07fbba78bbc398e72c0ff85c71cbce"
 
 research_obligation: null
 
