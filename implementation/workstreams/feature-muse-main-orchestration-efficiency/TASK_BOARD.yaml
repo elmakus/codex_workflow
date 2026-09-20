@@ -50,6 +50,6 @@ cards:
     openspec: null
     blocker: null
     review_requirement: "RECOMMENDED"
-    review_state: "pending"
+    review_state: "in_progress"
     review_subject: "commit:1c0c0bf073308b8e87c009652e1192422445862c"
     review_evidence: "implementation/workstreams/feature-muse-main-orchestration-efficiency/evidence/M05-T02.md"
