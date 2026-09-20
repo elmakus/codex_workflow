@@ -191,7 +191,13 @@ def plan_platform_and_workers(
         else ""
     )
     mutations.append(
-        text_mutation(runtime.config_toml, patch_codex_settings(config_text))
+        text_mutation(
+            runtime.config_toml,
+            patch_codex_settings(
+                config_text,
+                internal_agents_enabled=profile == "plus",
+            ),
+        )
     )
     return mutations
 
@@ -381,3 +387,5 @@ def plan_runtime_remove(
         )
 
     return mutations, cleanup_dirs, warnings
+
+[executed on device: Tower (b030638f-5714-4775-aa64-5babf6677db4)]

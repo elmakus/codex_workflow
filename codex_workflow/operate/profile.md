@@ -58,6 +58,12 @@ The profiles are:
   sessions with bounded per-turn invocations; the caller owns lane and
   higher-level workflow policy.
 
+`muse-max` also disables the workflow-owned internal Codex multi-agent
+surface as a fail-closed routing guard; `plus` enables it. A long-lived session
+may still display a stale internal-agent surface after a profile/workflow change,
+but the always-injected dispatch invariant forbids using that stale surface under
+`muse-max`.
+
 `muse-max` requires the `muse` CLI on `PATH`, a completed `muse login`, and
 access to Muse Spark 1.3 Contributor Max. The profile switch itself does not
 install or authenticate Muse. Before the first production worker, a smoke test
@@ -74,3 +80,5 @@ python3 ~/.codex/codex_workflow/runtime/muse_worker.py \
 Profile state is global to this Codex home and is preserved by workflow updates.
 A pre-profile installation with no settings file is interpreted as `plus`, and
 the next bootstrap/update/profile operation materializes that default explicitly.
+
+[executed on device: Tower (b030638f-5714-4775-aa64-5babf6677db4)]

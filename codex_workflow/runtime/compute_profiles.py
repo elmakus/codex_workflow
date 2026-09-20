@@ -9,6 +9,7 @@ from ._toml import tomllib
 from .errors import ValidationError
 from .layout import BUILTIN_WORKERS, WORKER_MARKER, PackageLayout, RuntimePaths
 from .plan import OperationPlan, deduplicate, text_mutation
+from .platform_settings import patch_codex_settings
 
 
 DEFAULT_COMPUTE_PROFILE = "plus"
@@ -206,6 +207,24 @@ def plan_compute_profile(runtime: RuntimePaths, profile: str) -> OperationPlan:
         rendered = render_worker_for_profile(target_text, worker, profile)
         mutations.append(text_mutation(target, rendered))
     mutations.append(text_mutation(runtime.compute_settings, render_compute_settings(profile)))
+    if runtime.config_toml.is_symlink() or (
+        runtime.config_toml.exists() and not runtime.config_toml.is_file()
+    ):
+        raise ValidationError(f"Codex config path is not a regular file: {runtime.config_toml}")
+    config_text = (
+        runtime.config_toml.read_text(encoding="utf-8")
+        if runtime.config_toml.is_file()
+        else ""
+    )
+    mutations.append(
+        text_mutation(
+            runtime.config_toml,
+            patch_codex_settings(
+                config_text,
+                internal_agents_enabled=profile == "plus",
+            ),
+        )
+    )
     heavy_route = runtime.runtime / "heavy_route.md"
     if heavy_route.is_symlink() or not heavy_route.is_file():
         raise ValidationError(f"installed heavy route is missing or invalid: {heavy_route}")
@@ -228,6 +247,9 @@ def plan_compute_profile(runtime: RuntimePaths, profile: str) -> OperationPlan:
             "workers": profile_summary(profile),
             "worker_harnesses": harnesses,
             "communication_policy": profile,
+            "internal_codex_agents": "enabled" if profile == "plus" else "disabled",
             "main_agent": "unchanged",
         },
     )
+
+[executed on device: Tower (b030638f-5714-4775-aa64-5babf6677db4)]
