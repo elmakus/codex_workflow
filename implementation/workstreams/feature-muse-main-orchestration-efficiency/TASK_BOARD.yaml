@@ -1,0 +1,38 @@
+project: "codex_workflow"
+workstream_id: "feature-muse-main-orchestration-efficiency"
+plan_revision: "R3"
+current_milestone: "M05"
+
+execution_ref:
+  branch: "feat/muse-main-orchestration-efficiency"
+  pr: null
+  head: "cd2139d144cd4230f8a1c53700f2b53e9e7bef03"
+
+research_obligation: null
+
+milestones:
+  M05:
+    contract: "planning/MASTER_PLAN.md#M05 — event-driven Muse wait boundary"
+    execution_status: "ready"
+    checkpoint: null
+    implementation_head: null
+    acceptance_evidence: null
+    handoff: null
+
+cards:
+  - id: "M05-T01"
+    contract: "implementation/workstreams/feature-muse-main-orchestration-efficiency/cards/M05-T01.md"
+    milestone: "M05"
+    dependencies: []
+    execution_status: "ready"
+    executor: null
+    result_commit: null
+    result_pr: null
+    evidence: null
+    tests_summary: null
+    openspec: null
+    blocker: null
+    review_requirement: "RECOMMENDED"
+    review_state: null
+    review_subject: null
+    review_evidence: null
