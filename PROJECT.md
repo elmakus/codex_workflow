@@ -6,7 +6,7 @@
 - Repository: `elmakus/codex_workflow`
 - Lifecycle: `active`
 - High-level goal: Maintain and evolve the forked Codex workflow/runtime with fork-specific Muse orchestration and selectively adopted upstream improvements.
-- High-level status: Definition R2 is approved for Muse Main-orchestration efficiency on top of the integrated/released `1.1.18-private.1` baseline. Strategic Planning is the current next phase for workstream `feature-muse-main-orchestration-efficiency`.
+- High-level status: Definition R2 is approved. Master Plan R3 for `feature-muse-main-orchestration-efficiency` is drafted and frozen for independent review; implementation has not started.
 
 ## Execution policy
 
@@ -19,7 +19,7 @@ Changing execution policy requires an explicit user decision.
 - Active exploratory scope: `none`
 - Active research obligation: `none`
 - Requirements: `requirements/REQUIREMENTS.md`
-- Approved plan: `planning/MASTER_PLAN.md` (R2)
+- Current plan: `planning/MASTER_PLAN.md` (R3 draft; independent review pending)
 - Task Board: `none`
 - Workstream root: `implementation/workstreams/ | none`
 - Latest cumulative handoff: `none`

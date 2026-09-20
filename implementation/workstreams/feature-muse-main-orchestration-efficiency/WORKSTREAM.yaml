@@ -17,7 +17,7 @@ intake:
 routing:
   exploratory_scope: null
   research_obligation: null
-  plan_review: null
+  plan_review: "planning/reviews/R3.md"
 
 task_board: null
 
@@ -25,7 +25,7 @@ authority:
   requirements: "requirements/REQUIREMENTS.md"
   decisions:
     - "decisions/DEC-006-muse-event-driven-waiting.md"
-  plan: null
+  plan: "planning/MASTER_PLAN.md"
 
 review:
   requirement: null

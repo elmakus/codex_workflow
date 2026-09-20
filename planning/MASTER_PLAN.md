@@ -1,274 +1,197 @@
-# Master Plan — codex_workflow upstream 1.1.18 selective alignment
+# Master Plan — Muse Main orchestration efficiency
 
-Revision: `R2`
-Status: `approved`
+Revision: `R3`
+Status: `draft`
 Updated: `2026-09-20`
 Independent plan review: `RECOMMENDED`
 
-> Planning organizes the already-approved Project Definition in `requirements/REQUIREMENTS.md`. Accepted requirements/decisions remain authoritative.
+> Planning organizes the approved Project Definition in `requirements/REQUIREMENTS.md` Revision R2. Accepted requirements and decisions remain authoritative.
 
 ## 1. Accepted target / canonical inputs
 
-- Requirements: `requirements/REQUIREMENTS.md` — Revision R1, `approved`
-- Accepted decisions:
+- Requirements: `requirements/REQUIREMENTS.md` — Revision R2, `approved`
+- Accepted current-scope decision:
+  - `decisions/DEC-006-muse-event-driven-waiting.md`
+- Inherited accepted decisions:
   - `decisions/DEC-001-worker-topology.md`
   - `decisions/DEC-002-compute-profiles.md`
   - `decisions/DEC-003-communication-context.md`
   - `decisions/DEC-004-selective-upstream-adoption.md`
-- Relevant research/evidence: `research/upstream-1.1.18-audit.md`
-- Promotion provenance: `brainstorming/upstream-1.1.18-alignment.md`
-- Project baseline: fork `1.1.17-private.12` with Muse runtime/session lifecycle, owner-release updater, historical source backups, and existing multi-project update regression coverage.
+  - `decisions/DEC-005-fork-release-version-generation.md`
+- Current-scope research: `research/muse-main-orchestration-efficiency.md` / `R-MUSE-MAIN-ORCH-01`
+- Promotion provenance: `brainstorming/muse-main-orchestration-efficiency.md` — `muse-main-orchestration-efficiency@R1`
+- Workstream: `feature-muse-main-orchestration-efficiency`
+- Baseline: integrated/released `1.1.18-private.1` architecture with six supported worker roles and two supported compute profiles.
 
-## 2. Execution baseline
+Historical requirements REQ-001 through REQ-021 and their R2 milestone history remain accepted and are not reopened by this plan. R3 adds execution strategy for REQ-022 through REQ-029.
 
-The current fork already:
-- resolves older project workflow versions through historical `.source_backup/<version>`;
-- can migrate multiple projects against their recorded historical source;
-- has compute profiles `plus`, `luna-xhigh`, `pro-x5`, `muse-max`;
-- has Companion and Micro Executor roles;
-- routes most `muse-max` worker roles through the Muse adapter while Companion remains internal Codex;
-- enables `[features] multi_agent = true` and intentionally removes workflow-owned `multi_agent_v2` settings;
-- has Medium route and Deployment Token Report removed.
+## 2. Verified execution baseline
 
-Execution must adapt selected upstream semantics to this baseline instead of importing upstream commits wholesale.
+Research established:
 
-## 3. Inherited non-goals / invariants / external constraints
+- `muse_worker.py` already waits synchronously for Muse and is not itself responsible for Sol polling.
+- The repeated Main cost occurs above the adapter in the current Code Mode command/session wait path.
+- In one healthy roughly fourteen-minute Muse Executor run, the observed wait interval produced 24 additional GPT-5.6 Sol Medium requests costing about USD 1.934, with 99.82% aggregate cached input and minimal reasoning.
+- Current unified `exec_command` initial yield is effectively capped around 30 seconds.
+- Code Mode provides an outer long-lived cell abstraction, per-cell yield control and separate waits for running nested tools.
+- Public prior art in Codex, Claude Code and MCP Tasks confirms that long-running tool waits should be owned by the harness/runtime rather than by repeated model polling.
 
-- Do not introduce upstream `multi_agent_v2` timeout ownership.
-- Do not reintroduce Medium route or Deployment Token Report.
-- Do not preserve supported compatibility for Companion, Micro Executor, `luna-xhigh` or `pro-x5`.
-- Preserve Muse process/session safety properties and owner-release update behavior.
-- Preserve explicit downgrade protection and unrelated user-owned state.
-- Worker correctness must not depend on sibling messaging.
-- Documentation intake remains proportionate rather than mandatory-full-framework.
-- Implementation is selective semantic adoption, not a wholesale upstream merge.
+## 3. Inherited non-goals / invariants / constraints
+
+- Preserve all accepted REQ-001 through REQ-021 behavior.
+- Preserve six-role topology and two-profile model.
+- Preserve Muse timeout/cancel, logical-session binding, fail-closed resume/replacement, Executor/Tester independence and private raw-artifact isolation.
+- Do not change `plus` semantics.
+- Do not restore the historical hard-silent `luna-xhigh` communication policy.
+- Do not treat hidden user-visible text as proof of inference suppression.
+- Do not use an unmanaged background process plus Main polling as a substitute for event-driven waiting.
+- Do not change release-triggering VERSION metadata or publish/release as part of this work without separate explicit authorization.
 
 ## 4. Milestones
 
-### M01 — project-only update and legacy-migration hardening
+### M05 — event-driven Muse wait boundary
 
-- Outcome: equal-version updates use a bounded project-only path and stale legacy route imports fail closed.
-- Checkpoint: runtime/update lifecycle supports current-runtime project catch-up without replacing shared runtime state.
-- Acceptance:
-  - same installed/selected runtime version does not require release re-download when the installed source is authoritative;
-  - older target project is updated from its recorded historical source;
-  - only changed target-project files are backed up/mutated on project-only update;
-  - already-current project returns a true no-op without creating a backup;
-  - project-newer-than-incoming still requires explicit downgrade approval;
-  - stale removed-route references in protected/local instruction input fail closed unless reviewed local instructions are supplied;
-  - reviewed local-instruction override is accepted consistently by bootstrap/install/update;
-  - historical-source and existing multi-project regression behavior remains GREEN.
-- Requirement coverage: REQ-001, REQ-002, REQ-003, REQ-004, REQ-016, REQ-021.
-- Dependencies: none.
-- Inherited constraints / rationale: DEC-004; upstream behavior is adapted, not copied blindly.
+- Outcome: one healthy `muse-max` worker invocation can remain runtime-owned for a multi-minute execution interval without periodic Main-model sampling.
+- Requirement coverage: REQ-022, REQ-023, REQ-024, REQ-027, REQ-028.
+- Dependencies: approved Definition R2 / DEC-006.
 - Planned work packages:
-  - isolate project-only planning/backup behavior from shared-runtime update planning;
-  - reconcile launcher equal-version flow so installed source can be reused safely;
-  - extend local-instruction review plumbing and stale-reference validation;
-  - add/adjust focused regression coverage for equal-version, downgrade, backup and stale-route behavior.
-- JIT decomposition / deferred-detail trigger: exact Card split after Execution Prep reads current runtime/update tests and CLI call graph.
-- Planning re-evaluation trigger: evidence shows project-only semantics cannot be isolated without changing accepted shared-runtime/update contract.
-- Definition re-open trigger: required behavior would change owner-release source policy, downgrade authority, or historical-source guarantees.
-- Boundary gate / explicit user authorization: none.
+  - build an isolated live probe for one long-lived Code Mode `exec` cell that launches and awaits a controlled long-running command;
+  - prove that nested terminal-session waits can repeat inside that same cell without returning control to Main;
+  - prove cancellation/interrupt teardown remains safe;
+  - if the native probe is GREEN, implement the smallest `codex_workflow` orchestration surface that keeps the whole Muse launch/await lifecycle inside one Code Mode cell;
+  - if the native probe is RED for a host/runtime limitation, activate the DEC-006 fallback: the smallest dedicated managed wait/tool/broker surface that exposes only terminal/material events to Main;
+  - preserve existing Muse adapter/session/recovery behavior and add regressions for the chosen path.
+- Stable acceptance:
+  - an isolated healthy wait lasts at least two minutes with no Main request increase during the wait interval;
+  - a real Muse worker run lasting at least several minutes shows flat Codex-LB Main request count from dispatch until terminal/material event, excluding explicit user input;
+  - rollout evidence contains no recurring Main-driven terminal/session liveness loop;
+  - the worker completes normally through the same logical Muse runtime contract;
+  - timeout, cancellation and session-busy/fail-closed recovery remain GREEN;
+  - no unrelated `plus` path changes.
+- JIT trigger: if the native one-cell feasibility gate is RED, Execution Prep may materialize the accepted managed-wait fallback Cards from the exact failure evidence without returning to Definition, provided external behavior/invariants remain unchanged.
+- Planning re-evaluation trigger: fallback requires materially different milestone ordering, a new cross-repository delivery dependency or a broader deployment strategy.
+- Definition re-open trigger: eliminating periodic Main sampling would require changing accepted Muse safety semantics, `plus` behavior or the user-visible orchestration contract.
+- Boundary gate: none for repository-local implementation/testing; external deployment or release remains separately gated.
 
-### M02 — six-role worker topology and investigation contract
+### M06 — quiet milestone communication and integrated acceptance
 
-- Outcome: active workflow/package topology contains only Explorer, Investigator, Default Executor, Senior Executor, Tester and Archivist, with direct reports to Main.
-- Checkpoint: worker definitions, route/delegation contracts and package validation agree on one six-role topology.
-- Acceptance:
-  - Companion and Micro Executor are absent from active worker/package/route contracts;
-  - Explorer exists and owns bounded project-context discovery/mapping/evidence retrieval;
-  - Investigator owns fault/solution/feasibility/prior-art research;
-  - every qualifying bounded Investigator problem requires exactly three independent lanes with shared Problem ID, distinct Task IDs and complementary angles;
-  - Main compares returned evidence/disagreements rather than voting;
-  - hard report word ceilings are removed in favor of smallest complete evidence-linked reports;
-  - worker final results return directly to Main;
-  - no active contract requires or permits direct sibling messaging;
-  - Senior Executor, Tester and Archivist remain supported;
-  - Medium route and Deployment Token Report remain absent.
-- Requirement coverage: REQ-005, REQ-006, REQ-007, REQ-008, REQ-009, REQ-010, REQ-020, REQ-021.
-- Dependencies: M01 checkpoint.
-- Inherited constraints / rationale: DEC-001, DEC-004.
+- Outcome: `muse-max` becomes materially quieter for users while preserving useful phase visibility and proving the wait-cost invariant end to end.
+- Requirement coverage: REQ-025, REQ-026, REQ-027, REQ-029 plus integrated acceptance for REQ-022 through REQ-028.
+- Dependencies: M05 GREEN event-driven wait path.
 - Planned work packages:
-  - add Explorer worker and package ownership;
-  - remove Companion/Micro worker definitions and all topology references;
-  - rewrite Investigator and worker reporting contracts;
-  - reconcile Heavy/delegation/AGENTS/package validation/tests around the six-role topology.
-- JIT decomposition / deferred-detail trigger: after M01 result, inspect exact worker/package reference graph and split non-overlapping cleanup from contract changes.
-- Planning re-evaluation trigger: removal reveals a fork runtime dependency on Companion/Micro not represented in accepted baseline.
-- Definition re-open trigger: preserving runtime correctness would require keeping either removed role as a supported concept.
-- Boundary gate / explicit user authorization: none.
-
-### M03 — two-profile execution and communication semantics
-
-- Outcome: only `plus` and `muse-max` remain, each with one coherent worker-runtime/communication contract.
-- Checkpoint: profile rendering, CLI, routing and tests expose no supported-path behavior for removed profiles.
-- Acceptance:
-  - `plus` and `muse-max` are the only selectable/supported compute profiles;
-  - `luna-xhigh` and `pro-x5` code/tests/docs/commands are removed;
-  - under `plus`, all workflow workers use internal Codex worker lifecycle;
-  - under `muse-max`, all six supported worker roles use retained Muse logical-session/process lifecycle;
-  - no internal Companion/profile exception remains;
-  - Material Event Push exists only in the `plus` internal-worker contract for BLOCKER / COURSE_CHANGE / CRITICAL_PARTIAL and routes only worker → Main;
-  - `muse-max` has no Material Event Push contract or emulation language;
-  - proportionate documentation intake remains authoritative and Explorer is the bounded broader-context mechanism;
-  - generated platform configuration continues to avoid workflow-owned `multi_agent_v2` timeout settings.
-- Requirement coverage: REQ-008, REQ-011, REQ-012, REQ-013, REQ-014, REQ-015, REQ-019, REQ-021.
-- Dependencies: M02 checkpoint.
-- Inherited constraints / rationale: DEC-002, DEC-003.
-- Planned work packages:
-  - reduce compute profile registry/rendering/CLI to two profiles;
-  - reconcile Muse role mapping/session adapter expectations for the six-role set;
-  - remove obsolete profile-specific branches and regressions;
-  - rewrite communication/context policy to plus-only material events and direct Main routing;
-  - preserve platform-settings regression that rejects workflow-owned V2 timeout configuration.
-- JIT decomposition / deferred-detail trigger: after M02 establishes final worker set, resolve exact profile maps and Muse adapter role enumeration.
-- Planning re-evaluation trigger: retained Muse adapter cannot support Explorer or another accepted role without changing milestone ordering.
-- Definition re-open trigger: correctness requires retaining a removed profile or introducing a new supported profile/communication model.
-- Boundary gate / explicit user authorization: none.
-
-### M04 — documentation, packaging and integrated regression closure
-
-- Outcome: repository naming/docs/package metadata describe the resulting architecture and integrated regression evidence is GREEN.
-- Checkpoint: canonical docs/package/test surface has no stale architecture references and the repository is ready for normal release preparation.
-- Acceptance:
-  - `workflow_breakdown.md` is the canonical filename and stale references to `workflow_break_down.md` are reconciled;
-  - useful upstream benchmark/deep-dive documentation is present only in architecture-correct adapted form;
-  - README/releasing/runtime architecture and package validation describe only the final six roles/two profiles;
-  - no active documentation claims Companion, Micro Executor, removed profiles, sibling messaging, mandatory full-doc intake, Medium route, Deployment Token Report, or V2 timeout ownership as supported;
-  - focused M01–M03 regressions plus full project CI/regression suites are GREEN;
-  - release/package validation succeeds with the resulting worker set and docs layout using non-publishing verification;
-  - `codex_workflow/operate/VERSION` and synchronized release-version markers remain unchanged during automatic implementation/integration unless explicit user authorization for release publication has already been obtained;
-  - no unrelated user-owned/runtime behavior is removed.
-- Requirement coverage: REQ-017, REQ-018, REQ-020, REQ-021 plus integrated acceptance for REQ-001 through REQ-019.
-- Dependencies: M03 checkpoint.
-- Inherited constraints / rationale: all accepted decisions.
-- Planned work packages:
-  - rename/reconcile architecture document references;
-  - adapt upstream benchmark/deep-dive material to fork architecture;
-  - clean public/operator/runtime documentation without changing release-triggering version metadata;
-  - run integrated package/schema/runtime/Muse/update/profile regression coverage and fix only defects inside accepted Definition.
-- JIT decomposition / deferred-detail trigger: after M03, use actual final diff/reference search to define documentation and residual-cleanup Cards.
-- Planning re-evaluation trigger: integrated testing reveals a sequencing problem across M01–M03 while Definition remains valid.
-- Definition re-open trigger: integrated evidence contradicts an accepted target-state requirement/decision.
-- Boundary gate / explicit user authorization: GitHub Release/tag/publication is outside this plan's automatic authority and requires explicit user authorization. Because `.github/workflows/release.yml` automatically publishes on a `main` push that changes `codex_workflow/operate/VERSION`, any VERSION bump or equivalent release-triggering change is itself behind this gate and must not be included in automatic final integration.
+  - replace current normal-concise `muse-max` commentary with quiet milestone semantics;
+  - suppress worker-start, waiting, session/recovery bookkeeping, Git bookkeeping, liveness-only and other routine operational narration;
+  - retain concise user-meaningful phase transitions such as implementation-complete → independent-review and RED-review → repair;
+  - retain mandatory blocker/risk/authorization/material-scope communication and normal final results;
+  - ensure no timer-based progress message wakes Main solely for liveness;
+  - reconcile README/profile/delegation/heavy-route/runtime guidance and focused tests;
+  - run integrated Muse runtime/profile/regression coverage and the live Codex-LB/rollout acceptance run.
+- Stable acceptance:
+  - communication tests distinguish quiet milestone behavior from both current routine commentary and historical hard silence;
+  - routine waiting/status/session/Git narration is absent;
+  - meaningful phase-boundary, blocker/risk/authorization and final communication remain available;
+  - no liveness timer creates a Main turn;
+  - M05 live no-periodic-sampling gate remains GREEN under the final communication policy;
+  - full affected `muse-max` runtime/profile tests and unchanged-`plus` regressions are GREEN.
+- JIT trigger: exact Card split follows M05 result so documentation/profile changes target the actual selected wait surface.
+- Planning re-evaluation trigger: integrated evidence shows the communication policy and runtime wait implementation must be sequenced differently while Definition remains valid.
+- Definition re-open trigger: useful user visibility requires a materially different communication contract than DEC-006.
+- Boundary gate: none for repository-local implementation/testing; external deployment or release remains separately gated.
 
 ## 5. Requirement coverage matrix
 
-| Requirement | Owner milestone | Planned work package or JIT trigger | OpenSpec candidate |
-|---|---|---|---|
-| REQ-001 | M01 | historical-source regression preservation | no |
-| REQ-002 | M01 | project-only equal-version planner/launcher path | yes |
-| REQ-003 | M01 | scoped backup/no-op/update tests | yes |
-| REQ-004 | M01 | preserve/extend downgrade guard | yes |
-| REQ-005 | M02 | six-role package/topology reconciliation | no |
-| REQ-006 | M02 | Explorer/Investigator role contracts | no |
-| REQ-007 | M02 | three-lane Investigator dispatch contract | no |
-| REQ-008 | M02/M03 | direct Main reporting + profile communication cleanup | no |
-| REQ-009 | M02 | worker report contract rewrite | no |
-| REQ-010 | M02 | retained role/package regression | no |
-| REQ-011 | M03 | two-profile registry/CLI/docs cleanup | no |
-| REQ-012 | M03 | plus internal-worker contract | no |
-| REQ-013 | M03 | muse-max six-role Muse mapping | yes |
-| REQ-014 | M03 | plus-only Material Event Push | no |
-| REQ-015 | M03 | proportionate intake + Explorer routing | no |
-| REQ-016 | M01 | stale-route/local-instruction migration guard | yes |
-| REQ-017 | M04 | architecture file rename/reference cleanup | no |
-| REQ-018 | M04 | adapted upstream benchmark/deep-dive docs | no |
-| REQ-019 | M03 | platform-settings regression preserving no V2 timeout ownership | no |
-| REQ-020 | M02/M04 | absence guards + integrated reference scan | no |
-| REQ-021 | M01–M04 | selective adaptation boundary enforced throughout | no |
-
-OpenSpec candidates are resolved just-in-time only if Execution Prep confirms that the affected CLI/state/runtime contract merits a dedicated behavior contract.
+| Requirement | Coverage |
+|---|---|
+| REQ-001–REQ-021 | Historical accepted R2 milestones M01–M04; preserve as inherited regression authority, not reopened |
+| REQ-022 | M05 — eliminate periodic Main sampling during healthy Muse wait |
+| REQ-023 | M05 — managed terminal/material-event boundary |
+| REQ-024 | M05 — preserve Muse safety/session/recovery invariants |
+| REQ-025 | M06 — quiet milestone communication |
+| REQ-026 | M06 — preserve meaningful phase/blocker/risk/final visibility |
+| REQ-027 | M05/M06 — no timer/liveness-only Main wake |
+| REQ-028 | M05/M06 — live Codex-LB + rollout acceptance |
+| REQ-029 | M05/M06 — unchanged `plus` behavior |
 
 ## 6. Dependency / execution order
 
-`M01 → M02 → M03 → M04`.
+`M05 → M06`.
 
-M01 is isolated first because it changes update/migration mechanics independently of worker topology. M02 establishes the final role set before profile/runtime mapping is simplified in M03. M04 intentionally follows the functional milestones so public documentation and integrated package verification describe actual final behavior rather than speculative intermediate state.
+M05 establishes the actual wait transport before M06 rewrites communication and final integrated documentation/tests around it. The conditional native-first/fallback branch is already accepted by DEC-006 and therefore does not require a new product decision when triggered by exact feasibility evidence.
 
-Execution Prep may split independent work inside a milestone when ownership is non-overlapping, but one selected ChatGPT-only Task Board still permits only one `in_progress` Card at a time.
-
-## 7. Deployment / migration / rollback strategy
-
-- Perform implementation on a branch-isolated ChatGPT-only workstream created during Execution Prep; do not use `main` as the mutable implementation lane.
-- Preserve coherent commits per bounded Card/logical slice.
-- Runtime/update changes require regression evidence against both current project and older-project catch-up scenarios before later milestones rely on them.
-- Role/profile removal must be ownership-aware: remove only workflow-owned definitions/settings/docs and preserve unrelated user-owned workers/settings/files.
-- The repository Release workflow automatically creates a tag and prerelease when a `main` push changes `codex_workflow/operate/VERSION`. Therefore automatic implementation/final integration in this scope must keep VERSION and its synchronized release-version markers unchanged; release readiness is verified with non-publishing package/validation commands. Any version bump/publication is a separate explicitly user-authorized operation.
-- Rollback before integration is branch/commit based; update lifecycle changes must also retain transactional/backup guarantees defined by existing runtime behavior.
-
-## 8. System verification strategy
+## 7. Verification strategy
 
 Verification is layered:
-1. focused unit/regression tests for the current milestone;
-2. exact package/schema/worker/profile validation affected by the milestone;
-3. Muse adapter/session regressions after final worker/profile mapping exists;
-4. update lifecycle/owner-release regressions after M01 and again at integrated closure;
-5. full repository CI/regression suite at M04;
-6. static reference scan for removed roles/profiles/routes/features;
-7. independent Task Card/milestone review per ChatGPT-only workflow before accepted implementation closure.
 
-Tester acceptance must remain independent from the implementing worker for the reviewed scope.
+1. isolated Code Mode long-cell probe;
+2. cancellation/interrupt probe;
+3. focused runtime/unit regressions for the selected wait path;
+4. Muse session/recovery regressions;
+5. profile/rendering/communication tests;
+6. live multi-minute Muse invocation with Codex-LB request-count evidence;
+7. matching Codex rollout/tool evidence proving absence of model-driven liveness polling;
+8. unchanged-`plus` regression;
+9. integrated repository test suite materially affected by the change.
 
-## 9. Idempotency / data-integrity / security strategy
+Absolute USD cost is diagnostic evidence, not the pass/fail criterion. The pass/fail invariant is absence of periodic Main inference while healthy Muse work is merely still running.
 
-- Equal-version project update must be idempotent and must not produce unnecessary backup/write churn.
-- Historical-source lookup remains version-bound and fail-closed on missing/mismatched sources.
-- Downgrade remains explicit-authority only.
-- Legacy local-instruction migration never infers user intent from stale workflow-owned route text.
-- Removing workers/profiles/settings must be ownership-scoped and preserve unrelated user state.
-- Muse session/workspace safety behavior is preserved unless exact regression evidence shows an implementation detail must change inside accepted authority.
+## 8. Data integrity / idempotency / cancellation strategy
 
-## 10. Explicit authorization boundaries
+- One logical Muse worker invocation remains bound to one accepted session identity according to the existing registry contract.
+- Repeated execution/recovery must not create duplicate workers merely to repair a wait transport.
+- Cancellation must tear down the active runtime-owned wait and preserve existing process-tree cleanup.
+- Session-busy and interrupted-worker reconciliation remain fail-closed.
+- Raw Muse trajectory/log artifacts remain private and out of Main context.
+- Communication suppression must not suppress a blocker/risk/authorization event that requires user action.
 
-No additional user authorization is required for repository planning, implementation, testing, review, or PR preparation inside this accepted scope.
+## 9. Explicit authorization boundaries
 
-Explicit user authorization is required before:
-- changing `codex_workflow/operate/VERSION` (or making an equivalent release-triggering change) for integration to `main`, because the current Release workflow automatically creates the tag and prerelease from that push;
-- publishing a GitHub Release or tag by any other path;
-- performing any other external/live deployment not already implied by repository-local verification.
+Current feature authority covers repository-local design, implementation, tests, live local workstation verification and PR preparation.
 
-Until that authorization exists, release readiness may be tested only through non-publishing repository/package validation.
+Separate explicit user authorization remains required before:
 
-## 11. JIT / deferred decomposition map
+- changing release-triggering VERSION metadata for main integration;
+- creating/publishing a tag or GitHub Release;
+- any external/live deployment not already part of local verification.
 
-- M01 Cards: materialize from current lifecycle/workflow/project_ops/backup regression surface.
-- M02 Cards: materialize after M01 GREEN from actual worker/package/reference graph.
-- M03 Cards: materialize after M02 GREEN from final six-role profile/Muse mapping.
-- M04 Cards: materialize after M03 GREEN from residual reference scan, documentation delta and integrated-test needs.
+## 10. OpenSpec / contract candidates
 
-Do not create speculative future Card IDs before their predecessor evidence exists.
+Execution Prep should consider one bounded behavior contract for the Main-facing Muse wait semantics if implementation spans multiple runtime surfaces or if the native/fallback mechanism creates a stable interface worth preserving.
 
-## 12. Fresh-context boundaries
+Do not create a contract merely for documentation wording.
 
-Independent plan review requires a fresh normal ChatGPT chat because this chat authored R2.
+## 11. JIT / deferred decomposition
 
-Later fresh-context boundaries follow the runtime Context Health Gate and independent implementation-review requirements. Do not create extra session boundaries solely by milestone count.
+- M05 first Cards: isolated long-cell feasibility probe + cancellation proof.
+- M05 later Cards: chosen wait-path implementation/regression, materialized only after the feasibility result.
+- M06 Cards: communication/profile/docs + integrated live acceptance after M05 result is durable.
+- No speculative fallback implementation Card is created before the native-path gate is known.
+
+## 12. Fresh-context / review boundaries
+
+This R3 plan materially changes execution strategy and adds new runtime behavior, so independent plan review is RECOMMENDED and practical.
+
+The authoring chat must stop after freezing the exact R3 draft and pending review record. A fresh normal ChatGPT chat performs the independent plan review. GREEN returns to Planning for deterministic approval, then Execution Prep proceeds automatically because implementation is already authorized by the active feature workstream.
 
 ## 13. Pre-implementation planning audit
 
-- Definition Complete still GREEN: yes; requirements R1 are approved and all strategic choices needed by this plan are accepted.
-- False assumptions / P0/P1 risks: primary risks are stale role/profile references, project-only downgrade regression, Muse role-map drift, and accidental release publication through the VERSION-triggered GitHub Actions workflow; each now has milestone/gate coverage.
-- Milestone boundaries/order: coherent; update mechanics precede topology, topology precedes profile mapping, docs/integration follow final behavior.
-- Dependency completeness: GREEN; M03 depends on final M02 role set and M04 on M03.
-- Outcome-level acceptance: explicit for all four milestones.
-- Requirement coverage: all REQ-001 through REQ-021 mapped.
-- Migration/rollback: branch isolation + ownership-aware removal + existing transactional update semantics; automatic integration excludes VERSION/release-trigger changes, so publication remains gated.
-- System verification: focused + integrated regressions defined.
-- Data integrity/idempotency/security: project-update idempotency, historical source validation, downgrade guard and fail-closed local instruction handling explicitly covered.
-- Authorization gates: GREEN; the actual VERSION-on-main auto-release trigger is explicitly gated in addition to direct tag/release publication.
-- OpenSpec boundaries: only candidate contracts identified; exact need deferred to Execution Prep.
-- Overengineering/premature detail: no Task Cards or low-level implementation interface frozen before predecessor evidence.
-- R1 independent-review correction: resolved the false assumption that release publication is non-automatic by explicitly gating the VERSION-triggered release workflow and keeping verification non-publishing.
-- Remaining blockers: none.
+- Definition Complete: GREEN — requirements R2 approved; DEC-006 accepted.
+- User/product blockers: none.
+- Research uncertainty: native one-cell feasibility remains implementation evidence, but DEC-006 provides an accepted fallback so it does not block milestone architecture.
+- Milestone structure: M05 establishes transport first; M06 layers communication and integrated acceptance.
+- Requirement coverage: all REQ-022 through REQ-029 directly mapped; REQ-001 through REQ-021 retained as inherited regression authority.
+- Safety: Muse session/cancel/recovery invariants are explicit acceptance gates.
+- Cost metric: request-count flatness is authoritative; dollar cost is not.
+- Overengineering: new broker/MCP infrastructure is not planned unless the smaller native path fails live.
+- Authorization gates: repository-local work authorized; release/deployment remains gated.
+- OpenSpec: deferred to Execution Prep based on actual selected surface.
+- Remaining planning blocker: independent R3 plan review only.
 
 ## 14. Workflow references
 
 - Workflow repository: `elmakus/chatgpt-codex-project-workflow`
 - Workflow ref: `main`
 - Policy: `chatgpt_only`
-- Project Definition authority: `requirements/REQUIREMENTS.md` + `decisions/`
+- Project Definition authority: `requirements/REQUIREMENTS.md` R2 + `decisions/DEC-006-muse-event-driven-waiting.md`
 - Plan review lifecycle: `workflow/chatgpt_only/PLAN_REVIEW.md`
 
-The Master Plan is not the live task tracker. Mutable execution state will be created only after plan approval through Execution Prep.
+The Master Plan is not the live task tracker. Mutable execution state begins only after plan approval through Execution Prep.
