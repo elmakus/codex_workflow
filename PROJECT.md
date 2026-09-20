@@ -6,7 +6,7 @@
 - Repository: `elmakus/codex_workflow`
 - Lifecycle: `active`
 - High-level goal: Maintain and evolve the forked Codex workflow/runtime with fork-specific Muse orchestration and selectively adopted upstream improvements.
-- High-level status: Project Workflow initialized; upstream 1.1.18 alignment Definition R1 approved; strategic planning pending.
+- High-level status: Project Workflow initialized; Definition R1 approved; Master Plan R1 drafted and pending independent review.
 
 ## Execution policy
 
