@@ -37,6 +37,7 @@ from runtime.muse_sessions import (
 
 ROLE_RE = re.compile(r"^[A-Za-z0-9_-]+$")
 TASK_ID_RE = re.compile(r"^[A-Za-z0-9_.:-]{1,128}$")
+CAPABILITY_ID_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._:/@+-]{0,127}$")
 RESULT_SCHEMA_VERSION = "1"
 TERMINAL_TYPES = {"run.terminal.completed", "run.terminal.failed"}
 VERDICTS = {"GREEN", "RED", "INCONCLUSIVE"}
@@ -72,6 +73,120 @@ class MuseWorkerError(RuntimeError):
     pass
 
 
+
+def _normalize_hint_values(values: Any, *, category: str) -> tuple[str, ...]:
+    if values is None:
+        return ()
+    if isinstance(values, str):
+        values = (values,)
+    try:
+        items = tuple(values)
+    except TypeError as error:
+        raise MuseWorkerError(f"{category} must be an iterable of capability identifiers") from error
+
+    normalized: list[str] = []
+    seen: set[str] = set()
+    for value in items:
+        if not isinstance(value, str) or not CAPABILITY_ID_RE.fullmatch(value):
+            raise MuseWorkerError(
+                f"{category} entries must be 1-128 character opaque identifiers using "
+                "letters, digits, '.', '_', ':', '/', '@', '+', or '-', starting "
+                f"with a letter or digit: {value!r}"
+            )
+        if value in seen:
+            continue
+        seen.add(value)
+        normalized.append(value)
+    return tuple(normalized)
+
+
+@dataclass(frozen=True, slots=True)
+class MuseCapabilityHints:
+    """Complete capability guidance for one Muse invocation."""
+
+    required_skills: tuple[str, ...] = ()
+    relevant_skills: tuple[str, ...] = ()
+    required_capabilities: tuple[str, ...] = ()
+    suggested_capabilities: tuple[str, ...] = ()
+
+    def __post_init__(self) -> None:
+        required_skills = _normalize_hint_values(
+            self.required_skills,
+            category="required_skills",
+        )
+        relevant_skills = _normalize_hint_values(
+            self.relevant_skills,
+            category="relevant_skills",
+        )
+        required_capabilities = _normalize_hint_values(
+            self.required_capabilities,
+            category="required_capabilities",
+        )
+        suggested_capabilities = _normalize_hint_values(
+            self.suggested_capabilities,
+            category="suggested_capabilities",
+        )
+
+        required_skill_set = set(required_skills)
+        required_capability_set = set(required_capabilities)
+        relevant_skills = tuple(
+            value for value in relevant_skills if value not in required_skill_set
+        )
+        suggested_capabilities = tuple(
+            value
+            for value in suggested_capabilities
+            if value not in required_capability_set
+        )
+
+        object.__setattr__(self, "required_skills", required_skills)
+        object.__setattr__(self, "relevant_skills", relevant_skills)
+        object.__setattr__(self, "required_capabilities", required_capabilities)
+        object.__setattr__(self, "suggested_capabilities", suggested_capabilities)
+
+    def as_dict(self) -> dict[str, list[str]]:
+        return {
+            "required_skills": list(self.required_skills),
+            "relevant_skills": list(self.relevant_skills),
+            "required_capabilities": list(self.required_capabilities),
+            "suggested_capabilities": list(self.suggested_capabilities),
+        }
+
+
+def _capability_hints(value: MuseCapabilityHints | None) -> MuseCapabilityHints:
+    if value is None:
+        return MuseCapabilityHints()
+    if not isinstance(value, MuseCapabilityHints):
+        raise MuseWorkerError("capability_hints must be a MuseCapabilityHints value")
+    return value
+
+
+def _format_hint_values(values: tuple[str, ...]) -> str:
+    return ", ".join(values) if values else "(none)"
+
+
+def _render_capability_hints(hints: MuseCapabilityHints) -> str:
+    return "\n".join(
+        [
+            "CURRENT MUSE CAPABILITY HINTS",
+            "This is the complete authoritative capability-hint set for this invocation.",
+            "It supersedes all capability hints from prior turns, including resumed logical "
+            "sessions; hints not repeated here are no longer authoritative.",
+            f"Required skills: {_format_hint_values(hints.required_skills)}",
+            f"Relevant skills: {_format_hint_values(hints.relevant_skills)}",
+            f"Required capabilities: {_format_hint_values(hints.required_capabilities)}",
+            f"Suggested capabilities: {_format_hint_values(hints.suggested_capabilities)}",
+            "Capability semantics:",
+            "- If a required skill or capability is unavailable, report that fact fail-visibly "
+            "to Main.",
+            "- Relevant skills and suggested capabilities are advisory; their absence is "
+            "non-blocking.",
+            "- Do not install, configure, authenticate, update, or remove any capability merely "
+            "because it appears in these hints.",
+            "- Muse remains responsible for native skill loading and MCP/tool execution.",
+        ]
+    )
+
+
 @dataclass(frozen=True, slots=True)
 class MuseWorkerInvocation:
     """One already-authorized Muse invocation against an assigned workspace.
@@ -92,6 +207,7 @@ class MuseWorkerInvocation:
     logical_worker_id: str | None = None
     caller_scope: str | None = None
     resume: bool = False
+    capability_hints: MuseCapabilityHints = MuseCapabilityHints()
     invocation_id: str | None = None
     run_id: str | None = None
 
@@ -221,8 +337,16 @@ def worker_report_schema(role: str, task_id: str) -> dict[str, Any]:
     }
 
 
-def build_prompt(role: str, task_id: str, task: str, runtime: RuntimePaths) -> str:
+def build_prompt(
+    role: str,
+    task_id: str,
+    task: str,
+    runtime: RuntimePaths,
+    capability_hints: MuseCapabilityHints | None = None,
+) -> str:
     contract = _worker_contract(role, runtime)
+    hints = _capability_hints(capability_hints)
+    capability_block = _render_capability_hints(hints)
     verdict_rule = (
         "Set verdict to exactly GREEN, RED, or INCONCLUSIVE."
         if role == "tester"
@@ -232,6 +356,8 @@ def build_prompt(role: str, task_id: str, task: str, runtime: RuntimePaths) -> s
 
 ROLE CONTRACT
 {contract}
+
+{capability_block}
 
 TASK CAPSULE
 Logical Task ID: {task_id}
@@ -397,8 +523,7 @@ def enforce_retention(
             try:
                 too_old = now - run_dir.stat().st_mtime > max_age_seconds
             except FileNotFoundError:
-                runs.remove(run_dir)
-                continue
+                runs.remove(run_dir)                continue
             if too_old and run_dir.resolve() not in preserve:
                 shutil.rmtree(run_dir, ignore_errors=True)
                 runs.remove(run_dir)
@@ -797,8 +922,7 @@ def _validate_report(
 
 def _redact_text(text: str) -> str:
     value = text
-    for pattern in _SECRET_PATTERNS:
-        if pattern.pattern.startswith("(?i)(authorization"):
+    for pattern in _SECRET_PATTERNS:        if pattern.pattern.startswith("(?i)(authorization"):
             value = pattern.sub(r"\1[REDACTED]", value)
         elif pattern.pattern.startswith("(?i)\b(api"):
             value = pattern.sub(r"\1=[REDACTED]", value)
@@ -1087,6 +1211,7 @@ def execute_worker(
     logical_worker_id: str | None = None,
     caller_scope: str | None = None,
     resume: bool = False,
+    capability_hints: MuseCapabilityHints | None = None,
     invocation_id: str | None = None,
     run_id: str | None = None,
     retention_preserve: set[Path] | None = None,
@@ -1098,7 +1223,14 @@ def execute_worker(
     workspace = _workspace(workspace_arg)
     task_path, task = _task(task_file)
     logical_task_id = _logical_task_id(task_id, task_path)
-    prompt = build_prompt(role, logical_task_id, task, runtime)
+    hints = _capability_hints(capability_hints)
+    prompt = build_prompt(
+        role,
+        logical_task_id,
+        task,
+        runtime,
+        capability_hints=hints,
+    )
 
     runs_root = _runs_root(runtime)
     _ensure_private_dir(runs_root)
@@ -1198,7 +1330,6 @@ def execute_worker(
             _persist_result(run_dir, result)
             enforce_retention(runs_root, preserve={run_dir, *(retention_preserve or set())})
             return result
-
     prompt_path: Path | None = None
     schema_path: Path | None = None
     return_code: int | None = None
@@ -1456,6 +1587,7 @@ def execute_workers_concurrently(
                     logical_worker_id=invocation.logical_worker_id,
                     caller_scope=invocation.caller_scope,
                     resume=invocation.resume,
+                    capability_hints=invocation.capability_hints,
                     invocation_id=resolved_invocation_id,
                     retention_preserve=preserve,
                 )
@@ -1487,6 +1619,7 @@ def run(
     logical_worker_id: str | None = None,
     caller_scope: str | None = None,
     resume: bool = False,
+    capability_hints: MuseCapabilityHints | None = None,
     invocation_id: str | None = None,
 ) -> int:
     runtime = _runtime_paths()
@@ -1494,6 +1627,7 @@ def run(
     workspace = _workspace(workspace_arg)
     task_path, _ = _task(task_file)
     logical_task_id = _logical_task_id(task_id, task_path)
+    hints = _capability_hints(capability_hints)
     muse = shutil.which("muse")
 
     if dry_run:
@@ -1525,6 +1659,7 @@ def run(
                     "logical_worker_id": logical_worker_id,
                     "caller_scope": caller_scope,
                     "session_mode": "resume" if resume else "create",
+                    "capability_hints": hints.as_dict(),
                     "invocation_id": invocation_id,
                     "command": command,
                 },
@@ -1544,6 +1679,7 @@ def run(
         logical_worker_id=logical_worker_id,
         caller_scope=caller_scope,
         resume=resume,
+        capability_hints=hints,
         invocation_id=invocation_id,
     )
     print(json.dumps(result, sort_keys=True, separators=(",", ":")))
@@ -1561,6 +1697,10 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--logical-worker-id")
     parser.add_argument("--caller-scope")
     parser.add_argument("--resume", action="store_true")
+    parser.add_argument("--required-skill", action="append", default=[])
+    parser.add_argument("--relevant-skill", action="append", default=[])
+    parser.add_argument("--required-capability", action="append", default=[])
+    parser.add_argument("--suggested-capability", action="append", default=[])
     parser.add_argument("--invocation-id")
     parser.add_argument(
         "--timeout-seconds",
@@ -1570,6 +1710,12 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--dry-run", action="store_true")
     args = parser.parse_args(argv)
     try:
+        capability_hints = MuseCapabilityHints(
+            required_skills=tuple(args.required_skill),
+            relevant_skills=tuple(args.relevant_skill),
+            required_capabilities=tuple(args.required_capability),
+            suggested_capabilities=tuple(args.suggested_capability),
+        )
         return run(
             args.role,
             args.workspace,
@@ -1580,6 +1726,7 @@ def main(argv: list[str] | None = None) -> int:
             logical_worker_id=args.logical_worker_id,
             caller_scope=args.caller_scope,
             resume=args.resume,
+            capability_hints=capability_hints,
             invocation_id=args.invocation_id,
         )
     except MuseWorkerError as error:

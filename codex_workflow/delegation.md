@@ -26,6 +26,24 @@ When an external caller/Main has already declared multiple lanes independent and
 
 For `plus`, all six supported roles use the normal internal Codex lifecycle described below. Senior uses Sol Medium; Explorer, Investigator, Default Executor, Tester, and Archivist use Luna Max. Under `muse-max`, all six roles use Muse Spark 1.3 Contributor Max.
 
+
+## Muse capability hints
+
+Muse workers run in a separate capability plane from Main. When a `muse-max` invocation needs Muse-side skills or external capabilities, Main should populate the structured per-invocation `MuseCapabilityHints` contract instead of copying skill bodies, credentials, connector state, or installation instructions into the task capsule.
+
+The four v1 categories are:
+
+- `required_skills`: Muse-side skills the worker needs to complete the current invocation;
+- `relevant_skills`: advisory Muse-side skills that may help but must not block the invocation when unavailable;
+- `required_capabilities`: external Muse-side capabilities/MCP surfaces the current invocation requires;
+- `suggested_capabilities`: advisory external capabilities that may help but are non-blocking.
+
+Python callers attach the value to `MuseWorkerInvocation.capability_hints`. Normal CLI dispatch provides equivalent repeatable `--required-skill`, `--relevant-skill`, `--required-capability`, and `--suggested-capability` flags.
+
+Each invocation supplies the complete current hint set. A resumed logical Muse session receives a fresh block and the new set replaces all prior-turn capability hints; omitted hints are no longer authoritative. Required entries must be reported fail-visibly when unavailable. Relevant/suggested entries remain advisory.
+
+Capability hints are identifiers only. They never authorize installation, configuration, authentication, update, removal, provider selection, or secret access. A worker reporting a required capability missing is an execution signal for Main, not capability-mutation authority. Capability administration remains a separate Main-owned flow under its own accepted authority. Muse still owns native skill loading and MCP/tool execution.
+
 ## Work Packages
 
 Start each initial package with **Task ID**, a logical identifier unique within the deployment. Then use only the capsule for that role:
