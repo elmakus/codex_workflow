@@ -4,8 +4,6 @@ Use this procedure only when the user's trimmed message is exactly one of:
 
     codex_workflow --profile
     codex_workflow --profile plus
-    codex_workflow --profile luna-xhigh
-    codex_workflow --profile pro-x5
     codex_workflow --profile muse-max
 
 Compute profile is user-runtime state, not project personalization. It applies to
@@ -34,8 +32,7 @@ mutate anything.
 
 ## Switch profile
 
-For `plus`, `luna-xhigh`, `pro-x5`, or `muse-max`, run exactly one complete
-profile transaction:
+For `plus` or `muse-max`, run exactly one complete profile transaction:
 
 ```text
 python3 ~/.codex/codex_workflow/runtime/workflow.py profile <profile> --json
@@ -49,28 +46,22 @@ transaction, so a failure must not leave a partial profile switch.
 
 The profiles are:
 
-- `plus`: preserves the historical worker allocation. Micro fallback is GPT-5.6
-  Luna / high; Default, Tester, Companion, Investigator and Archivist use GPT-5.6
-  Luna / max; Senior uses GPT-5.6 Sol / medium. User-visible communication is
-  restrained to meaningful milestones and avoids routine orchestration chatter.
-- `luna-xhigh`: Micro, Default, Tester, Companion, Investigator and Archivist use
-  GPT-5.6 Luna / xhigh; Senior stays GPT-5.6 Sol / medium. Orchestration remains
-  strictly silent except for blockers, required approvals, or requested updates.
-- `pro-x5`: Micro fallback, Default, Tester, Companion, Investigator and Archivist
-  use GPT-5.6 Sol / low; Senior stays GPT-5.6 Sol / medium. Main may use normal
-  concise progress and skill announcements without internal meta-reasoning.
-- `muse-max`: mixed-harness profile. Main remains the user-selected Codex
-  model. Companion remains one persistent internal Codex worker on GPT-5.6 Luna
-  XHigh. Micro, Default, Senior, Tester, Investigator and Archivist are routed
-  through the native Muse Code harness using `muse-spark-1.3-contributor` with
-  `max` reasoning. User-visible orchestration uses normal concise milestone
-  updates rather than silent orchestration. Muse-backed roles use stable bound
-  logical sessions with bounded per-turn invocations; the caller owns lane and
+- `plus`: all six supported roles — Explorer, Investigator, Default Executor,
+  Senior Executor, Tester and Archivist — use the internal Codex worker
+  lifecycle. Explorer, Investigator, Default Executor, Tester and Archivist use
+  GPT-5.6 Luna / max; Senior uses GPT-5.6 Sol / medium. User-visible
+  orchestration is restrained to meaningful milestones and avoids routine
+  orchestration chatter.
+- `muse-max`: all six supported roles run through the native Muse Code harness
+  using `muse-spark-1.3-contributor` with `max` reasoning. Main remains the
+  user-selected Codex model. Muse-backed roles use stable bound logical
+  sessions with bounded per-turn invocations; the caller owns lane and
   higher-level workflow policy.
 
-`muse-max` requires the `muse` CLI on `PATH`, a completed `muse login`, and access
-to Muse Spark 1.3 Contributor Max. The profile switch itself does not install or
-authenticate Muse. Before the first production worker, a smoke test may invoke:
+`muse-max` requires the `muse` CLI on `PATH`, a completed `muse login`, and
+access to Muse Spark 1.3 Contributor Max. The profile switch itself does not
+install or authenticate Muse. Before the first production worker, a smoke test
+may invoke:
 
 ```text
 python3 ~/.codex/codex_workflow/runtime/muse_worker.py \
@@ -79,12 +70,6 @@ python3 ~/.codex/codex_workflow/runtime/muse_worker.py \
   --task-file <capsule-file> \
   --dry-run
 ```
-
-Micro's optional GPT-5.3-Codex-Spark / high override remains an acceleration path
-for `plus` and `pro-x5` when the current runtime exposes and accepts model
-overrides. In `luna-xhigh`, do not use the Spark override: Micro follows the
-installed Luna XHigh worker. In `muse-max`, do not use the Codex Spark override:
-Micro is one of the six roles using Muse Spark 1.3 Contributor Max through Muse Code.
 
 Profile state is global to this Codex home and is preserved by workflow updates.
 A pre-profile installation with no settings file is interpreted as `plus`, and
