@@ -166,7 +166,7 @@ cards:
       - "M03-T02"
     openspec_change: null
     contract: "implementation/workstreams/upstream-1-1-18-alignment/cards/M04-T01.md"
-    review_state: "pending"
+    review_state: "in_progress"
     review_subject: "53ca7664b625b6467ffdc13d5d5f9a99675a5269"
     review_evidence: null
     result_commit: "53ca7664b625b6467ffdc13d5d5f9a99675a5269"
