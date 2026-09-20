@@ -74,6 +74,7 @@ from runtime.markers import (
     USER_MANAGED,
     extract,
     render_project_entry,
+    replace,
 )
 from runtime.plan import OperationPlan, read_string_list, resolve_owned_runtime_path
 from runtime.release import parse_semver
@@ -1070,6 +1071,47 @@ class LifecycleIntegrationTests(unittest.TestCase):
             set(repeated.agent_actions[0]["framework"]),
         )
 
+    def test_bootstrap_requires_review_for_missing_legacy_route(self) -> None:
+        self.project.active.write_text(
+            "# Project policy\nRead `agent_docs/workflows/heavy_route.md`.\n",
+            encoding="utf-8",
+        )
+        with self.assertRaisesRegex(ValidationError, "missing legacy workflow route"):
+            plan_bootstrap(self.package, self.runtime, self.project)
+        with self.assertRaisesRegex(
+            ValidationError, "reviewed project-local instructions still reference missing files"
+        ):
+            plan_bootstrap(
+                self.package,
+                self.runtime,
+                self.project,
+                legacy_local_instructions="Read `agent_docs/workflows/heavy_route.md`.",
+            )
+
+        reviewed = self.root / "reviewed-bootstrap-local.md"
+        reviewed.write_text("# Project policy\nKeep this rule.\n", encoding="utf-8")
+        output = io.StringIO()
+        argv = [
+            "workflow.py",
+            "bootstrap",
+            "--package-root",
+            str(PACKAGE),
+            "--codex-home",
+            str(self.codex_home),
+            "--project",
+            str(self.project_root),
+            "--legacy-local-instructions",
+            str(reviewed),
+            "--json",
+        ]
+        with mock.patch.object(sys, "argv", argv), contextlib.redirect_stdout(output):
+            self.assertEqual(workflow_cli.main(), 0)
+        self.assertTrue(json.loads(output.getvalue())["applied"])
+        self.assertEqual(
+            extract(self.project.active.read_text(encoding="utf-8"), PROJECT_LOCAL),
+            "# Project policy\nKeep this rule.",
+        )
+
     def test_legacy_private_artifact_migrates_layout_and_preserves_user_state(self) -> None:
         if not LEGACY_ARTIFACT.is_file():
             self.skipTest(f"legacy migration fixture is unavailable: {LEGACY_ARTIFACT}")
@@ -1384,6 +1426,61 @@ class LifecycleIntegrationTests(unittest.TestCase):
             "",
         )
 
+    def test_install_requires_review_for_missing_legacy_route(self) -> None:
+        self.bootstrap()
+        installed = PackageLayout.resolve(self.runtime.runtime)
+        second_root = self.root / "install-project"
+        second_root.mkdir()
+        second = ProjectPaths(second_root)
+        second.active.write_text(
+            "Read `agent_docs/workflows/medium_route.md`.\n", encoding="utf-8"
+        )
+        with self.assertRaisesRegex(ValidationError, "missing legacy workflow route"):
+            plan_project_install(installed, second)
+
+        reviewed = self.root / "reviewed-install-local.md"
+        reviewed.write_text("Install-local policy.\n", encoding="utf-8")
+        output = io.StringIO()
+        argv = [
+            "workflow.py",
+            "install",
+            "--codex-home",
+            str(self.codex_home),
+            "--project",
+            str(second_root),
+            "--legacy-local-instructions",
+            str(reviewed),
+            "--json",
+        ]
+        with mock.patch.object(sys, "argv", argv), contextlib.redirect_stdout(output):
+            self.assertEqual(workflow_cli.main(), 0)
+        self.assertTrue(json.loads(output.getvalue())["applied"])
+        self.assertEqual(
+            extract(second.active.read_text(encoding="utf-8"), PROJECT_LOCAL),
+            "Install-local policy.",
+        )
+
+        empty_root = self.root / "empty-install-project"
+        empty_root.mkdir()
+        output = io.StringIO()
+        argv = [
+            "workflow.py",
+            "install",
+            "--codex-home",
+            str(self.codex_home),
+            "--project",
+            str(empty_root),
+            "--legacy-local-instructions",
+            str(reviewed),
+            "--json",
+        ]
+        with mock.patch.object(sys, "argv", argv), contextlib.redirect_stdout(output):
+            self.assertEqual(workflow_cli.main(), 1)
+        self.assertIn(
+            "requires an existing project entry point",
+            json.loads(output.getvalue())["error"],
+        )
+
     def test_install_rejects_personalization_resource_drift(self) -> None:
         self.bootstrap()
         resource = self.project.personalization.read_text(encoding="utf-8")
@@ -1396,6 +1493,32 @@ class LifecycleIntegrationTests(unittest.TestCase):
         )
         with self.assertRaises(ValidationError):
             plan_project_install(self.package, self.project)
+
+    def test_update_repairs_missing_legacy_route_in_local_region(self) -> None:
+        self.bootstrap(existing_agents="Project policy.\n")
+        entry = self.project.active.read_text(encoding="utf-8")
+        self.project.active.write_text(
+            replace(
+                entry,
+                PROJECT_LOCAL,
+                "Read `agent_docs/workflows/heavy_route.md`.",
+            ),
+            encoding="utf-8",
+        )
+        incoming = self.incoming_package("legacy-route-incoming", NEXT_PACKAGE_VERSION)
+        with self.assertRaisesRegex(ValidationError, "missing legacy workflow route"):
+            plan_update(incoming, self.runtime, self.project)
+
+        plan_update(
+            incoming,
+            self.runtime,
+            self.project,
+            legacy_local_instructions="Project policy.",
+        ).apply()
+        self.assertEqual(
+            extract(self.project.active.read_text(encoding="utf-8"), PROJECT_LOCAL),
+            "Project policy.",
+        )
 
     def test_update_restores_workers_and_preserves_project_state(self) -> None:
         self.bootstrap(existing_agents="Local policy.\n")
