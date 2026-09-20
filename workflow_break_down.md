@@ -10,73 +10,49 @@ bounded actions work directly from `AGENTS.md` without workers and without
 loading the Heavy contract. Bounded but nontrivial work enters deployment state
 and loads `heavy_route.md`.
 
-On the first deployment-state entry in a workflow session, Main immediately
-bootstraps one persistent Companion before broad project discovery, planning, or
-other worker dispatch. Its first assignment is built from the current goal and
-already-known context only and stays bounded to directly relevant checkpoints,
-documents, or project surfaces; it does not imply a full `agent_docs/` or
-unrelated-module intake. Main may continue independent Heavy intake and
-orchestration while Companion works and waits only when the Companion result
-gates a decision. The same Companion is reused for later assignments and later
-deployments in the session.
-
-The Heavy contract contains the standing orchestration rules Main needs for the
-whole deployment. Detailed worker-package, Micro Execution, follow-up, and
-recovery instructions live in `delegation.md` and are loaded only when Main is
-actually delegating, following up, routing Micro work, or recovering work.
+Main keeps project-document intake proportionate to the current task and uses
+Explorer for bounded broader project-context discovery, mapping, and evidence
+retrieval. Detailed worker-package, follow-up, and recovery instructions live in
+`delegation.md` and are loaded only when Main actually needs those operations.
 
 Main controls scope, architecture, dependencies, scheduling, acceptance, and
-final claims. In Heavy it is strictly an orchestrator rather than a production executor:
-implementation, broad repository/security analysis, testing, task-level
-Git/GitHub operations, repair, and delegable research stay with the appropriate
-workers. Capacity pressure does not transfer that ownership to Main.
+final claims. In Heavy it is strictly an orchestrator rather than a production
+executor: implementation, broad repository/security analysis, testing,
+task-level Git/GitHub operations, repair, and delegable research stay with the
+appropriate workers. Capacity pressure does not transfer that ownership to Main.
 
 A timeout-only `wait_agent` result with no new evidence is not itself an
 intervention signal. If the worker remains presumed healthy, Main issues another
 long wait instead of polling status. The normal wait is 25 minutes and returns
 early if the worker completes sooner.
 
-Workers may also push one rare material mid-task event to Main with
-`send_message` when the runtime exposes it. Only `BLOCKER`, `COURSE_CHANGE`, and
-`CRITICAL_PARTIAL` qualify; progress, ETA, heartbeats, routine partial findings,
-and normal completion stay silent. Main handles only the affected orchestration
-consequence when such a message is received, including when it wakes an existing
-wait early, then resumes independent work or the long wait. This does not replace
-`wait_agent` or the standard completion path.
+Under `plus`, internal Codex workers may push one rare material mid-task event
+to Main with `send_message`. Only `BLOCKER`, `COURSE_CHANGE`, and
+`CRITICAL_PARTIAL` qualify; progress, ETA, heartbeats, routine partial
+findings, and normal completion stay on the standard worker result path. Material
+events route only worker -> Main and do not replace `wait_agent` or normal
+completion.
 
-User-visible orchestration follows the active profile: restrained meaningful
-milestones in `plus`, strict silence in `luna-xhigh`, and normal concise progress
-and skill announcements in `pro-x5`. Every profile excludes hidden reasoning,
-instruction-conflict narration, and routine worker-state chatter.
-Heavy has no workflow-imposed aggregate active-subagent limit; the Codex platform
-and account determine available concurrency.
+User-visible orchestration follows one of exactly two supported profiles:
+restrained meaningful milestones in `plus`, and normal concise milestone
+updates in `muse-max`. Neither profile exposes hidden reasoning,
+instruction-conflict narration, or routine worker-state chatter.
 
-| Role | `plus` | `luna-xhigh` | `pro-x5` | Responsibility |
-| --- | --- | --- | --- | --- |
-| Micro Executor | Spark/high when available; fallback Luna/high | Luna/xhigh | Spark/high when available; fallback Sol/low | Tiny deterministic implementation subtasks inside an existing Heavy deployment. |
-| Default Executor | Luna/max | Luna/xhigh | Sol/low | Normal bounded implementation and repair. |
-| Senior Executor | Sol/medium | Sol/medium | Sol/medium | Exceptionally difficult bounded production or solution work. |
-| Tester | Luna/max | Luna/xhigh | Sol/low | Independent verification. |
-| Companion | Luna/max | Luna/xhigh | Sol/low | Persistent read-only project context, created once at first deployment entry and reused. |
-| Investigator | Luna/max | Luna/xhigh | Sol/low | Disposable read-only investigation across bounded project evidence, Internet sources, or both. |
-| Archivist | Luna/max | Luna/xhigh | Sol/low | Verified documentation outside Main-owned deployment-state docs and closing handoff. |
-
-Micro Executor is a separate workflow-owned worker below Default Executor. Its
-installed model follows the selected compute profile: Luna High in `plus`, Luna
-XHigh in `luna-xhigh`, and Sol Low in `pro-x5`. When the active profile is
-`plus` or `pro-x5` and the runtime/account exposes GPT-5.3-Codex-Spark plus model
-overrides, Main may spawn the same Micro package with Spark High. Under
-`luna-xhigh`, Main does not use the Spark override, preserving Luna XHigh for
-every non-Senior workflow worker. A package that stops being small and
-deterministic is reclassified directly to Default or Senior Executor.
+| Role | `plus` | `muse-max` | Responsibility |
+| --- | --- | --- | --- |
+| Explorer | Luna/max | Muse Contributor/max | Bounded read-only project-context discovery, mapping, and evidence retrieval. |
+| Investigator | Luna/max | Muse Contributor/max | Bounded fault/solution/feasibility/prior-art research; qualifying problems use exactly three independent lanes. |
+| Default Executor | Luna/max | Muse Contributor/max | Normal bounded implementation and repair. |
+| Senior Executor | Sol/medium | Muse Contributor/max | Exceptionally difficult bounded production or solution work. |
+| Tester | Luna/max | Muse Contributor/max | Independent verification. |
+| Archivist | Luna/max | Muse Contributor/max | Verified documentation outside Main-owned deployment-state docs and closing handoff. |
 
 The compute profile is global user-runtime state, not project personalization.
 It is stored in `~/.codex/codex_workflow/settings.toml`; missing settings on an
-older installation mean `plus`. A profile switch renders model and reasoning
-fields plus the Heavy communication section from central mappings, and changes
-all managed worker files, the Heavy contract, and the settings file in one
-compensating transaction.
-Main is outside this mechanism. The workflow never auto-detects a subscription.
+older installation mean `plus`. Under `plus`, all six roles use the internal
+Codex worker lifecycle. Under `muse-max`, all six roles use the retained Muse
+logical-session/process lifecycle with Muse Spark 1.3 Contributor Max. Main is
+outside this mechanism. The workflow never auto-detects a subscription.
 
 Archivist has no usage-reporting responsibility. This package does not include
 token accounting, deployment counting markers, a reporting skill, or report
