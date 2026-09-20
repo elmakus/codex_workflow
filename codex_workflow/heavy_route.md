@@ -10,9 +10,9 @@ You are the main agent and central knowledge director. Own task direction, archi
 
 Read `~/.codex/codex_workflow/settings.toml` to determine the active compute profile before the first worker package. The active profile selects both compute allocation and, when explicitly defined, the worker harness. Main itself remains the user-selected Codex model.
 
-When the profile is `muse-max`, Companion remains one persistent internal Codex worker on GPT-5.6 Luna XHigh. The six other roles — Micro Executor, Default Executor, Senior Executor, Tester, Investigator, and Archivist — run as logical Muse workers using Muse Spark 1.3 Contributor with `max` reasoning. Read `~/.codex/codex_workflow/delegation.md` before the first worker package and route only those six roles through `runtime/muse_worker.py`; never route Companion through that adapter. Each turn is one bounded native Muse Code process with a unique invocation identity, while the role instance owns a separate stable session identity. Ordinary follow-up, repair, and recheck resume that same bound logical worker when safe; a freshness requirement or unsafe/unavailable resume uses an explicitly new logical worker/session.
+When the profile is `muse-max`, all six supported roles — Explorer, Investigator, Default Executor, Senior Executor, Tester, and Archivist — run as logical Muse workers using Muse Spark 1.3 Contributor with `max` reasoning. Read `~/.codex/codex_workflow/delegation.md` before the first worker package and route those roles through `runtime/muse_worker.py`. Each turn is one bounded native Muse Code process with a unique invocation identity, while the role instance owns a separate stable session identity. Ordinary follow-up, repair, and recheck resume that same bound logical worker when safe; a freshness requirement or unsafe/unavailable resume uses an explicitly new logical worker/session.
 
-For `plus`, `luna-xhigh`, and `pro-x5`, every role uses the internal Codex worker lifecycle described below. Under `muse-max`, that same internal lifecycle applies to Companion while the six Muse-backed roles use the external boundary above.
+For `plus`, `luna-xhigh`, and `pro-x5`, all six supported roles use the internal Codex worker lifecycle described below. Current profile names remain transitional M02 compatibility surface; profile removal belongs to M03.
 
 ## Orchestrator-First Execution
 
@@ -40,31 +40,36 @@ A mid-task question or risk notice is appropriate when execution cannot continue
 
 | Role | Ownership |
 | --- | --- |
-| Companion | The single persistent read-only project-context worker bootstrapped at first deployment entry and reused for bounded context work. |
-| Investigator | Disposable read-only evidence worker for one bounded project or Internet context gap, or a combination of both; Main retains causal, architecture, solution, and acceptance decisions. |
-| Micro Executor | Fast worker below Default Executor for tiny deterministic implementation subtasks whose cause, result, ownership, and edit surface are already clear. |
+| Explorer | Disposable read-only worker for bounded project-context discovery, mapping, and evidence retrieval. |
+| Investigator | Disposable read-only worker for bounded fault hypotheses, solution alternatives, feasibility, and prior-art research. |
 | Default Executor | Production worker for normal bounded implementation using the active compute profile. |
 | Senior Executor | Reserve the stronger Senior production worker for one exceptionally difficult mathematical, logical, architectural, or cross-cutting package. |
 | Tester | Independent verification from intended behavior, risks, boundaries, and evidence. |
 | Archivist | Verified documentation outside the three Main-owned deployment-state documents and the read-only closing handoff under `~/.codex/codex_workflow/archivist.md`. |
 
-Use roles only when they add value and preserve ownership boundaries. Compute profiles change worker harness/model/reasoning allocation, not these role boundaries or Main's routing authority.
+Use roles only when they add value and preserve ownership boundaries. Compute profiles change worker harness/model/reasoning allocation, not these role boundaries or Main's routing authority. Every worker final result returns directly to Main.
 
-### Micro Execution
+## Explorer Discovery
 
-For a tiny deterministic implementation subtask inside an already substantive Heavy deployment, route `micro_executor` according to `~/.codex/codex_workflow/delegation.md`. Under `plus` and `pro-x5`, prefer Spark High when the current runtime exposes and accepts it; otherwise use the installed Micro Executor fallback selected by the active compute profile (Luna High in `plus`, Sol Low in `pro-x5`). Under `luna-xhigh`, do not override Micro with Spark: use the installed Luna XHigh worker so every non-Senior workflow worker remains Luna XHigh. Under `muse-max`, Micro is one of the six Muse-backed roles and is routed through the Muse adapter rather than internal `spawn_agent`. If the task needs exploration, architecture, security judgement, migration reasoning, broader ownership, or materially stronger reasoning, reclassify it to Default Executor or Senior Executor instead of building a Micro reasoning ladder. Do not spawn Micro when the complete user request is itself a trivial leaf task.
+Use Explorer when bounded broader project-context discovery, mapping, or evidence retrieval can reduce Main context load. Explorer is disposable and read-only, receives only the project surface needed for the current decision, and returns exact references plus the smallest complete evidence-linked map to Main. Do not make Explorer a persistent session secretary or use it for fault hypotheses, solution alternatives, feasibility, or external prior-art research.
+
+## Investigator Lanes
+
+Use Investigator for a bounded problem whose unresolved fault hypotheses, solution alternatives, feasibility, or prior-art evidence materially gates a Main-owned decision. Every such qualifying Investigator problem uses exactly three independent lanes.
+
+Give the three lanes one shared **Problem ID**, distinct **Task IDs**, and complementary evidence/search angles. The lanes do not coordinate, message one another, or vote. Each returns its evidence and implications directly to Main. Main compares the three reports, including disagreements and uncertainty, and makes the decision; a majority count is never a decision rule.
+
+If runtime capacity prevents all three lanes from starting together, preserve the exact-three contract and run the missing lane when capacity is available rather than reducing the lane count. Do not invoke Investigator merely to satisfy process when bounded project-context retrieval belongs to Explorer or Main already has sufficient evidence.
 
 ## Proportionate Documentation Read
 
 Read documentation in proportion to the task. When continuing, start from the specified checkpoint. Search `agent_docs/` and read the documents or sections needed to understand the task, its constraints, and dependencies. Expand the read when context is missing. Read the complete set only when the scope of work requires it. A missing unrelated document does not block the task.
 
-## Companion Lifecycle
+## Role-Specific Work Packages
 
-Companion is bootstrapped on first `deployment state` entry under `AGENTS.md`; do not create a second one. Reuse it when a bounded project-context assignment can replace multiple Main reads or tool turns, suppress bulky evidence, or retain reusable context. Combine related context questions when practical and keep later assignments bounded to the decision they support.
+Read the workflow-owned delegation contract at `~/.codex/codex_workflow/delegation.md` only when preparing or following up a worker package or recovering a worker. Do not load it merely to enter Heavy.
 
-The bootstrap does not authorize a full-project intake. Keep Companion focused on the current deployment goal and expand its scope only when a dependency, missing context, or later decision requires it. If Companion is still working but Main has safe independent intake or orchestration to perform, continue that work rather than waiting solely for Companion. Wait for its result only when the result gates a decision.
-
-If bootstrap creation was temporarily unavailable, continue with the proportionate documentation policy rather than broadening Main's intake. Create the single Companion later only if the capability becomes available, then reuse it for the rest of the workflow session.
+Initial packages use **Task ID** and the role-specific capsule defined there. Investigator packages also carry the shared **Problem ID** for their exact three-lane problem. Main retains topology, dependencies, acceptance, and lifecycle. Inspect only controlling evidence for high-risk or final claims. Do not repeat the worker's substantive task.
 
 ## Role-Specific Work Packages
 
@@ -76,7 +81,7 @@ Initial packages use **Task ID** and the role-specific capsule defined there. Ma
 
 Treat project/workflow phrases such as `FRESH CODEX REQUIRED`, `FRESH CODEX RECOMMENDED`, fresh independent review, fresh execution context, or context reset as requirements for an isolated execution context, not for a new top-level Codex App conversation. Create a fresh worker in the active role harness with only the minimal durable handoff and bounded task context required: a new internal worker with `fork_turns="none"` for internal Codex roles, or a new logical Muse worker/session for a Muse-backed `muse-max` role. A merely new Muse OS process does not satisfy a freshness requirement when it resumes an old logical session.
 
-Do not call app-level `create_thread` solely to satisfy freshness, independent review, milestone isolation, or context reset. Use a new Tester for independent review; that Tester must not be the worker that implemented the target. Add a bounded Investigator only when independent evidence gathering materially helps the review.
+Do not call app-level `create_thread` solely to satisfy freshness, independent review, milestone isolation, or context reset. Use a new Tester for independent review; that Tester must not be the worker that implemented the target. If review exposes a bounded problem that qualifies for Investigator, apply the exact three-lane Investigator contract rather than spawning a single research lane.
 
 Use app-level `create_thread` only when the user explicitly asks for a separate top-level application thread/session, or when the assignment requires a capability or isolation property unavailable to the active worker runtime. If that exception is used, do not assume approval, sandbox, network, or permission settings are inherited from the parent; effective child permissions must be treated as separate runtime state.
 
@@ -96,12 +101,12 @@ The standing worker-side `send_message` policy lives in `AGENTS.md`. Keep the lo
 
 When Main receives a material worker message, including when it wakes Main from `wait_agent`, process only the necessary orchestration consequence. Receipt of a material worker message must not cause status polling, repeated worker listings, progress requests, broad check-ins, interruption, or replacement. If the event changes another active package, steer only the affected worker or decision. Then continue independent useful work or return to another long `wait_agent` when idle.
 
-Do not ask workers to send routine progress and do not use `send_message` as a status-request channel. Main should not manually request normal completion notifications; the standard worker final-result/status path already owns completion. Prefer worker-to-Main routing. Direct worker-to-worker messaging is exceptional under the rule in `AGENTS.md`, not the default topology.
+Do not ask workers to send routine progress and do not use `send_message` as a status-request channel. Main should not manually request normal completion notifications; the standard worker final-result/status path already owns completion. All worker results and material events route to Main. Direct worker-to-worker messaging is not part of the workflow contract.
 
 ## Fixed Boundaries
 
 - Heavy does not impose an aggregate active-subagent limit; Main chooses worker count and concurrency. The Codex platform determines the actually available slots.
-- Use one persistent Companion per workflow session and at most one Senior Executor; use one Archivist closure owner. Never create a second Companion.
+- Use at most one Senior Executor and one Archivist closure owner for the same bounded ownership surface.
 - Initial internal Codex workers normally use `fork_turns="none"`; initial Muse-backed `muse-max` role instances create new logical sessions. Later ordinary turns resume the same bound session when safe; replacement/freshness creates a new logical identity explicitly. Create and coordinate every worker directly.
 - Concurrent mutable work requires non-overlapping ownership; preserve unrelated user work and explicit Git authority.
 - Executors own production repair, Testers own independent verification, and Archivists receive verified behavior. Base every passing claim on completed validation evidence.
