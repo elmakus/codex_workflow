@@ -30,10 +30,10 @@ authority:
 
 review:
   requirement: "RECOMMENDED"
-  state: null
-  subject: null
-  evidence: null
-  covered_by: null
+  state: "green"
+  subject: "e8b553403fc4af36c9fc9da9fbca00d31ea7868c"
+  evidence: "implementation/workstreams/issue-compaction-runtime-routing/evidence/MF-T01-review-e8b5534.md"
+  covered_by: "task_board:MF-T01"
 
 branch_cleanup:
   state: null
