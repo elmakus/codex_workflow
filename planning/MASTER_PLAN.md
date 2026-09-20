@@ -1,7 +1,7 @@
 # Master Plan — Muse Main orchestration efficiency
 
 Revision: `R3`
-Status: `draft`
+Status: `approved`
 Updated: `2026-09-20`
 Independent plan review: `RECOMMENDED`
 
@@ -184,7 +184,7 @@ The authoring chat must stop after freezing the exact R3 draft and pending revie
 - Overengineering: new broker/MCP infrastructure is not planned unless the smaller native path fails live.
 - Authorization gates: repository-local work authorized; release/deployment remains gated.
 - OpenSpec: deferred to Execution Prep based on actual selected surface.
-- Remaining planning blocker: independent R3 plan review only.
+- Remaining planning blocker: none.
 
 ## 14. Workflow references
 
