@@ -6,7 +6,7 @@ current_milestone: "M01"
 execution_ref:
   branch: "feat/upstream-1.1.18-alignment"
   pr: null
-  head: "15b642781a6f33d2d6ee3ddce0f765cac68f7b17"
+  head: "a3f848ede935a8dc39e22eecbd8255dfee262c05"
 
 research_obligation: null
 
@@ -16,7 +16,7 @@ milestones:
     execution_status: "in_progress"
     contract: "planning/MASTER_PLAN.md#M01--project-only-update-and-legacy-migration-hardening"
     checkpoint: null
-    implementation_head: null
+    implementation_head: "a3f848ede935a8dc39e22eecbd8255dfee262c05"
     handoff: null
     acceptance_evidence: null
     review_state: null
@@ -33,13 +33,13 @@ cards:
     depends_on: []
     openspec_change: "openspec/changes/m01-project-only-update/"
     contract: "implementation/workstreams/upstream-1-1-18-alignment/cards/M01-T01.md"
-    review_state: null
-    review_subject: null
+    review_state: "pending"
+    review_subject: "a3f848ede935a8dc39e22eecbd8255dfee262c05"
     review_evidence: null
-    result_commit: null
+    result_commit: "a3f848ede935a8dc39e22eecbd8255dfee262c05"
     result_pr: null
-    evidence: null
-    tests_summary: null
+    evidence: "implementation/workstreams/upstream-1-1-18-alignment/evidence/M01-T01.md"
+    tests_summary: "GREEN: focused project-only set 6/6; fork runtime suite 94/94; git show --check clean; VERSION unchanged; tested tree f06e75e4a6caedd536bdd61b415010dcd6efcea3 equals review-subject tree"
   - id: "M01-T02"
     title: "Fail-closed legacy local-instruction migration"
     milestone: "M01"
