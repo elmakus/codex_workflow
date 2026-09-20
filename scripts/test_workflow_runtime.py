@@ -31,6 +31,10 @@ def _test_private_version_and_user_marker_are_synchronized(self: unittest.TestCa
     self.assertEqual(version, "1.1.17-private.12")
     user_agents = (PACKAGE / "operate" / "user_AGENTS.md").read_text(encoding="utf-8")
     self.assertEqual(user_agents.count(f"<!-- codex-workflow-version: {version} -->"), 1)
+    self.assertIn("codex_workflow --profile plus", user_agents)
+    self.assertIn("codex_workflow --profile muse-max", user_agents)
+    self.assertNotIn("codex_workflow --profile luna-xhigh", user_agents)
+    self.assertNotIn("codex_workflow --profile pro-x5", user_agents)
     self.assertGreater(base.parse_semver("1.1.17-private.12"), base.parse_semver("1.1.17-private.11"))
     self.assertEqual(base.NEXT_PACKAGE_VERSION, "1.1.17-private.13")
 
