@@ -1,6 +1,6 @@
 id: "feature-muse-main-orchestration-efficiency"
 kind: "feature"
-status: "discovery"
+status: "planning"
 
 branch: "feat/muse-main-orchestration-efficiency"
 base_ref: "8130efb340ea2c6308e33c96dbff2a53bc98fc49"
@@ -15,15 +15,16 @@ intake:
   record: "implementation/workstreams/feature-muse-main-orchestration-efficiency/INTAKE.md"
 
 routing:
-  exploratory_scope: "brainstorming/muse-main-orchestration-efficiency.md"
+  exploratory_scope: null
   research_obligation: null
   plan_review: null
 
 task_board: null
 
 authority:
-  requirements: null
-  decisions: []
+  requirements: "requirements/REQUIREMENTS.md"
+  decisions:
+    - "decisions/DEC-006-muse-event-driven-waiting.md"
   plan: null
 
 review:
