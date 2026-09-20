@@ -277,3 +277,78 @@ The following are evidence-backed candidates for promotion, not yet accepted aut
 - No timer-based progress update may justify waking Main solely to emit status.
 - Acceptance MUST include live Codex-LB + Codex-rollout evidence demonstrating no periodic Main inference during a multi-minute healthy Muse invocation.
 - `plus` semantics remain unchanged.
+
+
+## Follow-up ecosystem scan — 2026-09-20
+
+The user explicitly asked whether this class of problem is unique. It is not.
+
+### OpenAI Codex itself
+
+Current upstream `openai/codex` source and public issue reports match the observed failure mode closely:
+
+- unified exec intentionally caps the initial shell `exec_command` yield at **30,000 ms**;
+- Code Mode uses a separate outer `exec` cell with a configurable default yield and supports a per-cell first-line `// @exec: {"yield_time_ms": ...}` pragma;
+- an empty `write_stdin` poll can wait much longer than the initial shell call (current schema documents a 5,000–300,000 ms range);
+- upstream issue #38495 reports a Code-Mode long-running command degenerating into full-context model polling and consuming tens of millions of tokens;
+- upstream issue #39596 explicitly asks for a true wait-until-completion path because repeated `write_stdin` round trips cost tokens;
+- issue #22541 documents the same ~30 s initial-yield cap;
+- issue #29865 requests completion/output-driven wake-up rather than explicit model polling.
+
+This confirms the local observation is an upstream orchestration/tool-boundary problem class, not a Muse-specific anomaly.
+
+### Claude Code
+
+Public Claude Code reports show the same class from a different implementation:
+
+- long-running Bash work is backgrounded into a task handle;
+- completion notifications and blocking task-output monitoring are intended to avoid repeated content polling;
+- bug reports explicitly call repeated model-driven polling wasteful and recommend blocking wait or completion notification where possible.
+
+The implementation details differ, but the architectural pattern is the same: keep waiting in the harness/task runtime, not in repeated model turns.
+
+### MCP ecosystem
+
+The MCP Tasks extension standardizes this problem as durable asynchronous work. A server can return a task handle; clients can retrieve status/result and may subscribe to `notifications/tasks` so completion can be delivered without model-driven polling.
+
+Current upstream `openai/codex` source search did not show protocol-native MCP Tasks client support, so this is architectural confirmation rather than the first implementation dependency to choose today.
+
+## Refined implementation hypothesis after ecosystem scan
+
+Before building a new MCP/broker surface, test the smallest native Codex path:
+
+1. Run the whole Muse launch-and-await sequence inside **one Code Mode `exec` cell**.
+2. Give that outer cell a long per-call yield using the existing `// @exec: {"yield_time_ms": ...}` pragma rather than changing the global profile first.
+3. Inside the cell:
+   - launch `muse_worker.py` once;
+   - if shell `exec_command` returns a running session after its unavoidable initial ~30 s cap, loop on empty `write_stdin` waits up to the supported long background wait;
+   - keep that loop entirely inside the JS runtime;
+   - return to Main only when the adapter reaches terminal success/failure/cancel/timeout.
+4. Do not use routine progress notifications to wake Main merely for liveness.
+5. Preserve explicit cancellation/interrupt handling and the adapter's existing process-tree/session reconciliation.
+
+If the outer Code Mode cell can remain pending for a realistic 10–20 minute Muse run, the desired shape is:
+
+```text
+Main sample -> one exec cell
+                 -> exec_command launches muse_worker
+                 -> runtime-only write_stdin waits
+                 -> Muse completes
+             <- one terminal tool result
+Main sample -> orchestration continues
+```
+
+For the observed ~14-minute case this should replace roughly two dozen periodic Main requests with approximately the dispatch turn and the terminal continuation, while leaving the current Muse adapter/session model intact.
+
+Only if this live gate fails should the design move to a dedicated managed tool/MCP/broker. Protocol-native MCP Tasks are the longer-term clean fit once the Codex client supports them.
+
+### New feasibility gate
+
+Before Project Definition freezes a concrete mechanism, run an isolated live probe proving:
+
+- an outer Code Mode `exec` cell with a long per-call yield remains pending beyond the current 30 s default without Main sampling;
+- internal empty `write_stdin` waits can repeat inside that same cell;
+- user interrupt/cancellation still tears down the active cell/adapter safely;
+- Codex-LB shows no Main requests during the healthy wait interval.
+
+This narrows the preferred implementation substantially without changing the already reconciled product scope.

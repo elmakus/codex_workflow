@@ -31,8 +31,9 @@ No existing accepted requirement or decision authorizes this feature yet. Existi
 
 ### Implementation-time facts still to prove
 
-- Which exact Codex-host primitive can provide the smallest reliable long-lived terminal/material-event wait boundary.
-- Whether that primitive can live wholly inside `codex_workflow` or requires a narrowly scoped host integration dependency.
+- First candidate: one long-lived Code Mode `exec` cell using the existing per-cell `// @exec: {"yield_time_ms": ...}` pragma, with shell-session waits performed internally inside that cell so Main is not re-entered.
+- Live proof must confirm that this cell can remain pending for a realistic multi-minute Muse run and that cancellation still works safely.
+- Only if that native path fails should the design add a dedicated managed tool/MCP/broker dependency.
 
 These are implementation feasibility questions, not unresolved product choices.
 
@@ -60,7 +61,7 @@ The feature should not trade away existing stateful Muse correctness: timeout/ca
 
 ## Research outcome
 
-Completed Research: `research/muse-main-orchestration-efficiency.md` / `R-MUSE-MAIN-ORCH-01`.
+Completed Research: `research/muse-main-orchestration-efficiency.md` / `R-MUSE-MAIN-ORCH-01`, including the user-requested ecosystem scan. Upstream Codex, Claude Code and MCP evidence confirms this is a common long-running-tool orchestration problem rather than a Muse-specific anomaly.
 
 Evidence supports these Definition candidates:
 
