@@ -6,14 +6,14 @@ current_milestone: "M01"
 execution_ref:
   branch: "feat/upstream-1.1.18-alignment"
   pr: null
-  head: "a4754147e436784972538bad664dde6e866e52a2"
+  head: "15b642781a6f33d2d6ee3ddce0f765cac68f7b17"
 
 research_obligation: null
 
 milestones:
   M01:
     decision_state: "accepted"
-    execution_status: "ready"
+    execution_status: "in_progress"
     contract: "planning/MASTER_PLAN.md#M01--project-only-update-and-legacy-migration-hardening"
     checkpoint: null
     implementation_head: null
@@ -28,10 +28,10 @@ cards:
     title: "Same-version project-only update path"
     milestone: "M01"
     decision_state: "accepted"
-    execution_status: "ready"
-    executor: null
+    execution_status: "in_progress"
+    executor: "chatgpt"
     depends_on: []
-    openspec_change: null
+    openspec_change: "openspec/changes/m01-project-only-update/"
     contract: "implementation/workstreams/upstream-1-1-18-alignment/cards/M01-T01.md"
     review_state: null
     review_subject: null
