@@ -90,6 +90,7 @@ def _test_current_private_contract(self: unittest.TestCase) -> None:
     archivist_contract = (PACKAGE / "archivist.md").read_text(encoding="utf-8")
     repo_root = PACKAGE.parent
     readme = (repo_root / "README.md").read_text(encoding="utf-8")
+    releasing = (repo_root / "RELEASING.md").read_text(encoding="utf-8")
     workflow_map_path = repo_root / "workflow_breakdown.md"
     self.assertTrue(workflow_map_path.is_file())
     self.assertFalse((repo_root / "workflow_break_down.md").exists())
@@ -231,6 +232,16 @@ def _test_current_private_contract(self: unittest.TestCase) -> None:
     self.assertNotIn("pro-x5", benchmark_guide)
     self.assertNotIn("Companion", benchmark_guide)
     self.assertNotIn("Micro Executor", benchmark_guide)
+
+    self.assertIn("exactly two compute profiles", releasing)
+    self.assertIn("codex_workflow --profile plus", releasing)
+    self.assertIn("codex_workflow --profile muse-max", releasing)
+    self.assertNotIn("codex_workflow --profile luna-xhigh", releasing)
+    self.assertNotIn("codex_workflow --profile pro-x5", releasing)
+    self.assertNotIn("Companion", releasing)
+    self.assertNotIn("Micro Executor", releasing)
+    self.assertNotIn("workflow_break_down.md", releasing)
+    self.assertNotIn("multi_agent_v2", releasing)
 
     self.assertIn("## Work Packages", delegation)
     self.assertIn("## Fresh and Independent Contexts", delegation)
