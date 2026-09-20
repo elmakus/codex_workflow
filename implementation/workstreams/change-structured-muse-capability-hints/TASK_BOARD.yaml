@@ -1,0 +1,42 @@
+project: "codex_workflow"
+workstream_id: "change-structured-muse-capability-hints"
+plan_revision: "MCA-P1"
+current_milestone: "M02"
+
+execution_ref:
+  branch: "work/structured-muse-capability-hints"
+  pr: null
+  head: "0015714a094cf38ac5b996fdebabdc0341410a1f"
+
+research_obligation: null
+
+milestones:
+  M02:
+    decision_state: "accepted"
+    execution_status: "ready"
+    contract: "elmakus/muse-capability-admin@8aecaa42d0ffd40efa2342b5bbace85fcc976d7e:planning/MASTER_PLAN.md#M02"
+    checkpoint: null
+    implementation_head: null
+    handoff: null
+    acceptance_evidence: null
+    review_state: null
+    review_subject: null
+    review_evidence: null
+
+cards:
+  - id: "M02-T01"
+    title: "Structured Muse capability-hint protocol"
+    milestone: "M02"
+    decision_state: "accepted"
+    execution_status: "ready"
+    executor: null
+    depends_on: []
+    openspec_change: "openspec/changes/m02-muse-capability-hints/"
+    contract: "implementation/workstreams/change-structured-muse-capability-hints/cards/M02-T01.md"
+    review_state: null
+    review_subject: null
+    review_evidence: null
+    result_commit: null
+    result_pr: null
+    evidence: null
+    tests_summary: null

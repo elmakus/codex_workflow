@@ -2,7 +2,7 @@
 
 - Workstream ID: `change-structured-muse-capability-hints`
 - Kind: `change`
-- Status: `active`
+- Status: `complete`
 - Branch: `work/structured-muse-capability-hints`
 - Integration target: `main`
 
@@ -23,7 +23,7 @@ All refs above are at `elmakus/muse-capability-admin@8aecaa42d0ffd40efa2342b5bba
 
 ## Pre-creation discovery and dependency classification
 
-- Current `elmakus/codex_workflow/main` baseline: `738ac89eeaa0522348f175eb5e936bda02a3de8c`.
+- Current `elmakus/codex_workflow/main` baseline at intake creation: `738ac89eeaa0522348f175eb5e936bda02a3de8c`.
 - No existing branch or code/workstream locator matching this M02 subject was found.
 - The accepted M02 plan explicitly depends only on Definition authority; it does not depend on M01 or on any unmerged codex_workflow branch.
 - Existing historical implementation branches are therefore not valid parent-only dependencies.
@@ -54,6 +54,11 @@ Excluded:
 
 The strategic Definition and milestone plan are already accepted and immutable for this work package. No new product/architecture decision is required and no Research dependency blocks the generic hint transport.
 
-Planned next route: `execution_prep:MCA-P1-M02`.
+Path: `execution_prep:MCA-P1-M02`.
 
-Before Intake completes, the workstream-local Task Board/Card contract must be materialized so the next route is recoverable without chat history.
+Execution Prep materialized:
+- Task Board: `implementation/workstreams/change-structured-muse-capability-hints/TASK_BOARD.yaml`
+- Card: `implementation/workstreams/change-structured-muse-capability-hints/cards/M02-T01.md`
+- OpenSpec: required JIT at `openspec/changes/m02-muse-capability-hints/`
+
+The workstream is now recoverable without chat history. Router continuation: execute the READY Card.
