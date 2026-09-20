@@ -35,6 +35,11 @@ Implementation checkpoint: `9a0761f8b0159e63d8c12a95660d5874007b790a`
 - Workstream-level final integration remains to be refreshed against current `main`, its distinct manifest review gate must be reconciled, and PR #7 must be integrated only after that gate is satisfied.
 - Release-triggering VERSION changes, tags and GitHub Release publication remain explicitly user-authorized operations and are not part of this integration.
 
+## Active final-integration blocker
+
+- `implementation/workstreams/upstream-1-1-18-alignment/blockers/final-integration-merge.md`
+- The final PR merge is repository-ready but the GitHub connector rejected the immediate merge through its safety/authorization guard. No integration occurred.
+
 ## Next durable starting point
 
 Run the branch-isolated final-integration refresh gate against current `main`. If the refreshed integrated content/behavior and whole acceptance surface remain exactly covered by the independent M04-T02 review, reconcile the manifest final-integration review from that stronger coverage; otherwise freeze a new pending manifest review subject.
