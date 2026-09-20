@@ -1,0 +1,44 @@
+id: "change-release-1-1-18-private-2"
+kind: "change"
+status: "review"
+
+branch: "work/release-1-1-18-private-2"
+base_ref: "760a595125335411288cf3a673356ccdd8ea47af"
+integration_target: "main"
+
+parent_workstream: null
+parent_branch: null
+parent_dependency: null
+
+intake:
+  state: complete
+  record: "implementation/workstreams/change-release-1-1-18-private-2/INTAKE.md"
+
+routing:
+  exploratory_scope: null
+  research_obligation: null
+  plan_review: null
+
+task_board: "implementation/workstreams/change-release-1-1-18-private-2/TASK_BOARD.yaml"
+
+authority:
+  requirements: "requirements/REQUIREMENTS.md"
+  decisions:
+    - "decisions/DEC-005-fork-release-version-generation.md"
+  plan: "planning/MASTER_PLAN.md"
+
+review:
+  requirement: "RECOMMENDED"
+  state: green
+  subject: "8336e6efe68dd12de8836e5e36ef667594d48754"
+  evidence: "implementation/workstreams/change-release-1-1-18-private-2/evidence/final-integration-refresh.md"
+  covered_by: "implementation/workstreams/change-release-1-1-18-private-2/evidence/M04-T01-review.md"
+
+branch_cleanup:
+  state: null
+  ref: null
+  verified_head: null
+  evidence: null
+
+pr: 11
+result: null
