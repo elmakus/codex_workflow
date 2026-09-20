@@ -39,6 +39,7 @@ from runtime.lifecycle import (
     plan_enable,
     plan_personalize,
     plan_project_install,
+    plan_project_only_update,
     plan_remove,
     plan_update,
 )
@@ -380,11 +381,47 @@ def main() -> int:
                 incoming_root = _package_root(args.source)
             else:
                 selected = select_latest()
-                temporary, package_path = acquire(selected)
-                incoming_root = _package_root(package_path)
+                if selected.version == _package_version(runtime.runtime):
+                    # The installed source is already verified and is the
+                    # template authority for projects that lag behind it.
+                    incoming_root = runtime.runtime
+                else:
+                    temporary, package_path = acquire(selected)
+                    incoming_root = _package_root(package_path)
             incoming_version, installed_version = _validate_update_order(
                 incoming_root, runtime, allow_downgrade=args.allow_downgrade
             )
+            if incoming_version == installed_version:
+                legacy_local = (
+                    args.legacy_local_instructions.read_text(encoding="utf-8")
+                    if args.legacy_local_instructions
+                    else None
+                )
+                installed = PackageLayout.resolve(runtime.runtime, allow_legacy=True)
+                plan = plan_project_only_update(
+                    installed,
+                    runtime,
+                    project,
+                    legacy_local_instructions=legacy_local,
+                )
+                project_version = parse_semver(str(plan.details["project_from_version"]))
+                if project_version > incoming_version and not args.allow_downgrade:
+                    raise WorkflowError(
+                        "target project was installed from a newer workflow version; "
+                        "pass --allow-downgrade after approval"
+                    )
+                if not plan.mutations:
+                    summary = plan.summary()
+                    summary["applied"] = False
+                    summary["status"] = (
+                        "no project workflow entry point"
+                        if plan.warnings
+                        else "already current"
+                    )
+                    summary["instruction"] = "No action is required."
+                    _emit(summary, compact=args.json)
+                    return 0
+                return _finish(plan, args)
             if incoming_root != PACKAGE_ROOT:
                 # The incoming runtime owns package validation. An installed
                 # launcher may be older than the package it is updating to and
@@ -396,31 +433,15 @@ def main() -> int:
                 if args.legacy_local_instructions
                 else None
             )
-            plan = plan_update(
-                incoming,
-                runtime,
-                project,
-                legacy_local_instructions=legacy_local,
+            return _finish(
+                plan_update(
+                    incoming,
+                    runtime,
+                    project,
+                    legacy_local_instructions=legacy_local,
+                ),
+                args,
             )
-            if incoming_version == installed_version:
-                project_version = parse_semver(str(plan.details["project_from_version"]))
-                if project_version == incoming_version:
-                    _emit(
-                        {
-                            "applied": False,
-                            "status": "already current",
-                            "instruction": "No action is required.",
-                            "details": plan.details,
-                        },
-                        compact=args.json,
-                    )
-                    return 0
-                if project_version > incoming_version and not args.allow_downgrade:
-                    raise WorkflowError(
-                        "target project was installed from a newer workflow version; "
-                        "pass --allow-downgrade after approval"
-                    )
-            return _finish(plan, args)
         if args.command == "personalize":
             assert project is not None
             resource = args.resource.read_text(encoding="utf-8")

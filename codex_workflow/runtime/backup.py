@@ -60,6 +60,26 @@ def append_backup_mutations(
         mutations.append(Mutation(backup_root / relative, source.read_bytes()))
 
 
+def append_project_backup_mutations(
+    mutations: list[Mutation],
+    backup_root: Path,
+    project: ProjectPaths,
+    project_mutations: list[Mutation],
+) -> None:
+    """Back up only existing project files affected by a project-only update."""
+
+    seen: set[Path] = set()
+    for mutation in project_mutations:
+        source = mutation.path
+        if source in seen or not source.is_file():
+            continue
+        seen.add(source)
+        relative = source.relative_to(project.root)
+        mutations.append(
+            Mutation(backup_root / "project" / relative, source.read_bytes())
+        )
+
+
 def is_relative_to(path: Path, parent: Path) -> bool:
     try:
         path.relative_to(parent)

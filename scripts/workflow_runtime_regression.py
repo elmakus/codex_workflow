@@ -64,6 +64,7 @@ from runtime.lifecycle import (
     plan_enable,
     plan_personalize,
     plan_project_install,
+    plan_project_only_update,
     plan_remove,
     plan_update,
 )
@@ -1579,6 +1580,157 @@ class LifecycleIntegrationTests(unittest.TestCase):
         self.assertFalse(summary["applied"])
         self.assertEqual(summary["status"], "already current")
         self.assertEqual(summary["details"]["project_from_version"], NEXT_PACKAGE_VERSION)
+
+    def test_project_only_plan_scopes_backup_and_preserves_shared_runtime(self) -> None:
+        self.bootstrap()
+        second_root = self.root / "second-project"
+        second_root.mkdir()
+        second = ProjectPaths(second_root)
+        plan_project_install(self.package, second).apply()
+
+        incoming = self.incoming_package("project-only-scoped", NEXT_PACKAGE_VERSION)
+        plan_update(incoming, self.runtime, self.project).apply()
+        installed = PackageLayout.resolve(self.runtime.runtime)
+
+        shared_paths = [
+            self.runtime.user_agents,
+            self.runtime.config_toml,
+            self.runtime.runtime / "install_state.json",
+            *sorted(self.runtime.agents.glob("*.toml")),
+        ]
+        shared_before = {
+            str(path): path.read_bytes() for path in shared_paths if path.is_file()
+        }
+        plan = plan_project_only_update(installed, self.runtime, second)
+        backup_root = Path(str(plan.details["backup"]))
+        project_targets = {
+            mutation.path
+            for mutation in plan.mutations
+            if mutation.path == second_root or second_root in mutation.path.parents
+        }
+        backup_targets = {
+            mutation.path
+            for mutation in plan.mutations
+            if backup_root == mutation.path or backup_root in mutation.path.parents
+        }
+        self.assertEqual(
+            backup_targets,
+            {
+                backup_root / "project" / path.relative_to(second_root)
+                for path in project_targets
+                if path.is_file()
+            },
+        )
+        plan.apply()
+        shared_after = {
+            str(path): path.read_bytes() for path in shared_paths if path.is_file()
+        }
+        self.assertEqual(shared_after, shared_before)
+
+        no_op = plan_project_only_update(installed, self.runtime, second)
+        self.assertEqual(no_op.mutations, [])
+        self.assertIsNone(no_op.details["backup"])
+
+    def test_equal_selected_release_reuses_installed_source_without_acquire(self) -> None:
+        self.bootstrap()
+        second_root = self.root / "second-project"
+        second_root.mkdir()
+        second = ProjectPaths(second_root)
+        plan_project_install(self.package, second).apply()
+        incoming = self.incoming_package("project-only-no-acquire", NEXT_PACKAGE_VERSION)
+        plan_update(incoming, self.runtime, self.project).apply()
+
+        output = io.StringIO()
+        argv = [
+            "workflow.py",
+            "update",
+            "--codex-home",
+            str(self.codex_home),
+            "--project",
+            str(second_root),
+            "--json",
+        ]
+        selected = mock.Mock(version=parse_semver(NEXT_PACKAGE_VERSION))
+        with (
+            mock.patch.object(sys, "argv", argv),
+            mock.patch.object(workflow_cli, "select_latest", return_value=selected),
+            mock.patch.object(
+                workflow_cli,
+                "acquire",
+                side_effect=AssertionError("equal release must not be acquired"),
+            ) as acquire_release,
+            contextlib.redirect_stdout(output),
+        ):
+            self.assertEqual(workflow_cli.main(), 0)
+        acquire_release.assert_not_called()
+        summary = json.loads(output.getvalue())
+        self.assertTrue(summary["applied"])
+        self.assertEqual(summary["operation"], "project-update")
+        self.assertEqual(summary["details"]["project_from_version"], PACKAGE_VERSION)
+        self.assertEqual(
+            json.loads(second.state.read_text(encoding="utf-8"))["workflow_version"],
+            NEXT_PACKAGE_VERSION,
+        )
+
+    def test_project_only_update_fails_closed_without_historical_source(self) -> None:
+        self.bootstrap()
+        second_root = self.root / "second-project"
+        second_root.mkdir()
+        second = ProjectPaths(second_root)
+        plan_project_install(self.package, second).apply()
+        incoming = self.incoming_package("missing-history", NEXT_PACKAGE_VERSION)
+        plan_update(incoming, self.runtime, self.project).apply()
+        shutil.rmtree(self.runtime.runtime / ".source_backup" / PACKAGE_VERSION)
+
+        installed = PackageLayout.resolve(self.runtime.runtime)
+        before = second.active.read_bytes()
+        with self.assertRaisesRegex(ValidationError, "historical workflow source"):
+            plan_project_only_update(installed, self.runtime, second)
+        self.assertEqual(second.active.read_bytes(), before)
+
+    def test_project_only_downgrade_requires_explicit_approval(self) -> None:
+        self.bootstrap()
+        second_root = self.root / "newer-project"
+        second_root.mkdir()
+        second = ProjectPaths(second_root)
+        newer = self.incoming_package("newer-project-source", NEXT_PACKAGE_VERSION)
+        plan_project_install(newer, second).apply()
+        historical = self.runtime.runtime / ".source_backup" / NEXT_PACKAGE_VERSION
+        historical.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copytree(newer.root, historical)
+        before = second.active.read_bytes()
+
+        base_argv = [
+            "workflow.py",
+            "update",
+            "--source",
+            str(self.package.root),
+            "--codex-home",
+            str(self.codex_home),
+            "--project",
+            str(second_root),
+            "--json",
+        ]
+        output = io.StringIO()
+        with mock.patch.object(sys, "argv", base_argv), contextlib.redirect_stdout(output):
+            self.assertEqual(workflow_cli.main(), 1)
+        self.assertIn(
+            "target project was installed from a newer workflow version",
+            json.loads(output.getvalue())["error"],
+        )
+        self.assertEqual(second.active.read_bytes(), before)
+
+        output = io.StringIO()
+        with (
+            mock.patch.object(sys, "argv", base_argv + ["--allow-downgrade"]),
+            contextlib.redirect_stdout(output),
+        ):
+            self.assertEqual(workflow_cli.main(), 0)
+        self.assertTrue(json.loads(output.getvalue())["applied"])
+        self.assertEqual(
+            json.loads(second.state.read_text(encoding="utf-8"))["workflow_version"],
+            PACKAGE_VERSION,
+        )
 
     def test_approved_public_downgrade_catches_up_a_second_project(self) -> None:
         public_package = self.incoming_package("public-source", "1.1.14")
