@@ -1,6 +1,6 @@
 # Master Plan — codex_workflow upstream 1.1.18 selective alignment
 
-Revision: `R1`
+Revision: `R2`
 Status: `draft`
 Updated: `2026-09-20`
 Independent plan review: `RECOMMENDED`
@@ -137,7 +137,8 @@ Execution must adapt selected upstream semantics to this baseline instead of imp
   - README/releasing/runtime architecture and package validation describe only the final six roles/two profiles;
   - no active documentation claims Companion, Micro Executor, removed profiles, sibling messaging, mandatory full-doc intake, Medium route, Deployment Token Report, or V2 timeout ownership as supported;
   - focused M01–M03 regressions plus full project CI/regression suites are GREEN;
-  - release/package validation succeeds with the resulting worker set and docs layout;
+  - release/package validation succeeds with the resulting worker set and docs layout using non-publishing verification;
+  - `codex_workflow/operate/VERSION` and synchronized release-version markers remain unchanged during automatic implementation/integration unless explicit user authorization for release publication has already been obtained;
   - no unrelated user-owned/runtime behavior is removed.
 - Requirement coverage: REQ-017, REQ-018, REQ-020, REQ-021 plus integrated acceptance for REQ-001 through REQ-019.
 - Dependencies: M03 checkpoint.
@@ -145,12 +146,12 @@ Execution must adapt selected upstream semantics to this baseline instead of imp
 - Planned work packages:
   - rename/reconcile architecture document references;
   - adapt upstream benchmark/deep-dive material to fork architecture;
-  - clean public/operator/runtime documentation;
+  - clean public/operator/runtime documentation without changing release-triggering version metadata;
   - run integrated package/schema/runtime/Muse/update/profile regression coverage and fix only defects inside accepted Definition.
 - JIT decomposition / deferred-detail trigger: after M03, use actual final diff/reference search to define documentation and residual-cleanup Cards.
 - Planning re-evaluation trigger: integrated testing reveals a sequencing problem across M01–M03 while Definition remains valid.
 - Definition re-open trigger: integrated evidence contradicts an accepted target-state requirement/decision.
-- Boundary gate / explicit user authorization: GitHub Release/tag/publication is outside this plan's automatic authority and requires explicit user authorization.
+- Boundary gate / explicit user authorization: GitHub Release/tag/publication is outside this plan's automatic authority and requires explicit user authorization. Because `.github/workflows/release.yml` automatically publishes on a `main` push that changes `codex_workflow/operate/VERSION`, any VERSION bump or equivalent release-triggering change is itself behind this gate and must not be included in automatic final integration.
 
 ## 5. Requirement coverage matrix
 
@@ -194,7 +195,7 @@ Execution Prep may split independent work inside a milestone when ownership is n
 - Preserve coherent commits per bounded Card/logical slice.
 - Runtime/update changes require regression evidence against both current project and older-project catch-up scenarios before later milestones rely on them.
 - Role/profile removal must be ownership-aware: remove only workflow-owned definitions/settings/docs and preserve unrelated user-owned workers/settings/files.
-- The normal release artifact is not published automatically. A final implementation result may be release-ready, but tag/GitHub Release publication requires explicit user authorization.
+- The repository Release workflow automatically creates a tag and prerelease when a `main` push changes `codex_workflow/operate/VERSION`. Therefore automatic implementation/final integration in this scope must keep VERSION and its synchronized release-version markers unchanged; release readiness is verified with non-publishing package/validation commands. Any version bump/publication is a separate explicitly user-authorized operation.
 - Rollback before integration is branch/commit based; update lifecycle changes must also retain transactional/backup guarantees defined by existing runtime behavior.
 
 ## 8. System verification strategy
@@ -224,8 +225,11 @@ Tester acceptance must remain independent from the implementing worker for the r
 No additional user authorization is required for repository planning, implementation, testing, review, or PR preparation inside this accepted scope.
 
 Explicit user authorization is required before:
-- publishing a GitHub Release or tag;
+- changing `codex_workflow/operate/VERSION` (or making an equivalent release-triggering change) for integration to `main`, because the current Release workflow automatically creates the tag and prerelease from that push;
+- publishing a GitHub Release or tag by any other path;
 - performing any other external/live deployment not already implied by repository-local verification.
+
+Until that authorization exists, release readiness may be tested only through non-publishing repository/package validation.
 
 ## 11. JIT / deferred decomposition map
 
@@ -238,24 +242,25 @@ Do not create speculative future Card IDs before their predecessor evidence exis
 
 ## 12. Fresh-context boundaries
 
-Independent plan review requires a fresh normal ChatGPT chat because this chat authored R1.
+Independent plan review requires a fresh normal ChatGPT chat because this chat authored R2.
 
 Later fresh-context boundaries follow the runtime Context Health Gate and independent implementation-review requirements. Do not create extra session boundaries solely by milestone count.
 
 ## 13. Pre-implementation planning audit
 
 - Definition Complete still GREEN: yes; requirements R1 are approved and all strategic choices needed by this plan are accepted.
-- False assumptions / P0/P1 risks: primary risks are stale role/profile references, project-only downgrade regression, and Muse role-map drift; each has milestone acceptance coverage.
+- False assumptions / P0/P1 risks: primary risks are stale role/profile references, project-only downgrade regression, Muse role-map drift, and accidental release publication through the VERSION-triggered GitHub Actions workflow; each now has milestone/gate coverage.
 - Milestone boundaries/order: coherent; update mechanics precede topology, topology precedes profile mapping, docs/integration follow final behavior.
 - Dependency completeness: GREEN; M03 depends on final M02 role set and M04 on M03.
 - Outcome-level acceptance: explicit for all four milestones.
 - Requirement coverage: all REQ-001 through REQ-021 mapped.
-- Migration/rollback: branch isolation + ownership-aware removal + existing transactional update semantics; publication remains gated.
+- Migration/rollback: branch isolation + ownership-aware removal + existing transactional update semantics; automatic integration excludes VERSION/release-trigger changes, so publication remains gated.
 - System verification: focused + integrated regressions defined.
 - Data integrity/idempotency/security: project-update idempotency, historical source validation, downgrade guard and fail-closed local instruction handling explicitly covered.
-- Authorization gates: release/tag publication explicitly gated; no other unresolved gate.
+- Authorization gates: GREEN; the actual VERSION-on-main auto-release trigger is explicitly gated in addition to direct tag/release publication.
 - OpenSpec boundaries: only candidate contracts identified; exact need deferred to Execution Prep.
 - Overengineering/premature detail: no Task Cards or low-level implementation interface frozen before predecessor evidence.
+- R1 independent-review correction: resolved the false assumption that release publication is non-automatic by explicitly gating the VERSION-triggered release workflow and keeping verification non-publishing.
 - Remaining blockers: none.
 
 ## 14. Workflow references
