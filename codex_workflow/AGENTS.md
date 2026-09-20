@@ -16,7 +16,7 @@ Read personalization and project-local instructions from the protected regions a
 
 ## Deployment Communication
 
-In `deployment state`, follow the profile-specific user-communication policy in `~/.codex/codex_workflow/heavy_route.md`. The active compute profile controls whether orchestration is silent, restrained, or uses normal concise progress updates.
+In `deployment state`, follow the profile-specific user-communication policy in `~/.codex/codex_workflow/heavy_route.md`. Under `plus`, orchestration communication is restrained and outcome-oriented; under `muse-max`, use normal concise milestone updates.
 
 Regardless of profile, never expose hidden reasoning or narrate internal instruction-conflict resolution. User-visible updates must remain concise, relevant, and outcome-oriented. Questions required to unblock execution and immediate security, publication, destructive-action, or authorization risks may always be raised.
 
@@ -44,7 +44,7 @@ Explorer is read-only and task-scoped. It is not a persistent session secretary 
 
 ## Worker Material Event Push
 
-For internal Codex workers, when the runtime exposes `send_message`, a running worker may send one concise message to `/root` only for a material mid-task event whose value would materially decrease if delayed until its normal final result:
+Under `plus`, an internal Codex worker may use runtime `send_message` to send one concise message to `/root` only for a material mid-task event whose value would materially decrease if delayed until its normal final result:
 
 - `BLOCKER` — the worker cannot make useful progress without a Main-owned decision or missing input.
 - `COURSE_CHANGE` — evidence invalidates, cancels, or materially changes work currently being performed by Main or another worker.
@@ -52,7 +52,6 @@ For internal Codex workers, when the runtime exposes `send_message`, a running w
 
 Use `EVENT_TYPE | Task ID | essential fact or blocker | requested action`. Do not use `send_message` for routine progress, heartbeats, ETA, "still working", status chatter, ordinary partial findings, or normal completion. Do not resend an unchanged event. Normal completion stays on the standard worker final-result/status path and returns directly to Main. After sending, continue any independent useful work; wait only when genuinely blocked. Route all material events to `/root`/Main; direct sibling messaging is not part of the workflow contract.
 
-Under `muse-max`, the six Muse-backed roles do not have the Codex `send_message` channel. Each bounded Muse turn ends at process completion or failure even when its logical session remains reusable; do not emulate material-event push with polling or unmanaged background processes. Their final result returns directly to Main.
 
 ## Proportionate Documentation Read
 
