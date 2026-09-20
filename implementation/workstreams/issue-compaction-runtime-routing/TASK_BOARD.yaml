@@ -6,7 +6,7 @@ current_milestone: "micro-fix"
 execution_ref:
   branch: "fix/compaction-runtime-routing"
   pr: null
-  head: "c9bc33af8862ec1142cd014cc75833c6d731b378"
+  head: "47cb0eb7a081c4c276366e130417012e3adb1f7a"
 
 research_obligation: null
 
@@ -22,10 +22,10 @@ cards:
     depends_on: []
     openspec_change: null
     contract: "implementation/workstreams/issue-compaction-runtime-routing/cards/MF-T01.md"
-    review_state: null
-    review_subject: null
+    review_state: pending
+    review_subject: "408dec625109d923938dc3e77ee22ac251a65ad0"
     review_evidence: null
-    result_commit: null
+    result_commit: "408dec625109d923938dc3e77ee22ac251a65ad0"
     result_pr: null
-    evidence: null
-    tests_summary: null
+    evidence: "implementation/workstreams/issue-compaction-runtime-routing/evidence/MF-T01-implementation.md"
+    tests_summary: "GREEN on exact subject 408dec625109d923938dc3e77ee22ac251a65ad0: workflow runtime 98/98; muse profile 7/7; muse adapter 39/39; package validate/build/archive verify; Python compile probe; git diff --check. muse-max sets agents.enabled=false while preserving features.multi_agent=true; plus restores agents.enabled=true; external features.multi_agent_v2=true fails closed; compact global pre-dispatch settings.toml revalidation invariant covers compaction/stale tool exposure."
