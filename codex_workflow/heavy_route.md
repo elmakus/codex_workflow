@@ -12,6 +12,8 @@ Read `~/.codex/codex_workflow/settings.toml` to determine the active compute pro
 
 When the profile is `muse-max`, all six supported roles — Explorer, Investigator, Default Executor, Senior Executor, Tester, and Archivist — run as logical Muse workers using Muse Spark 1.3 Contributor with `max` reasoning. Read `~/.codex/codex_workflow/delegation.md` before the first worker package and route those roles through `runtime/muse_worker.py`. Each turn is one bounded native Muse Code process with a unique invocation identity, while the role instance owns a separate stable session identity. Ordinary follow-up, repair, and recheck resume that same bound logical worker when safe; a freshness requirement or unsafe/unavailable resume uses an explicitly new logical worker/session.
 
+Under `muse-max`, launch and await each bounded Muse turn inside **one outer Code Mode `exec` cell**. That cell owns the initial `tools.exec_command` call and any later `tools.write_stdin` waits for the same running terminal session; those waits stay inside the cell across the ordinary initial terminal-yield boundary. Do not return to Main solely because the Muse terminal is still healthy and running. Main is re-entered only for terminal completion/failure/timeout/cancellation, explicit user interaction, or another genuinely material event that requires an orchestration decision. Repeated top-level `exec`/`wait`/status calls, liveness timers or heartbeats, and unmanaged background-process polling are not valid `muse-max` wait mechanisms.
+
 For `plus`, all six supported roles use the internal Codex worker lifecycle described below.
 
 ## Orchestrator-First Execution

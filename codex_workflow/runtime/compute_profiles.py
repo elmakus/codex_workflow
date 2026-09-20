@@ -34,11 +34,11 @@ A mid-task question or risk notice is appropriate when execution cannot continue
 """,
     "muse-max": """## Orchestration Communication
 
-Use normal concise commentary during substantive work. Give relevant progress updates at meaningful milestones so the user can follow the live Muse-worker experiment without a routine play-by-play.
+Use quiet milestone orchestration during substantive work. Keep routine worker starts, healthy waiting, liveness/status updates, session or recovery bookkeeping, Git/repository bookkeeping, and other operational narration silent when they do not materially change user understanding or require action.
 
-Keep updates focused on user-relevant outcomes, assumptions, blockers, worker results, and material milestones. Do not expose hidden or internal reasoning, narrate instruction-conflict resolution, or report low-value process bookkeeping.
+A concise update is allowed when a user-meaningful phase changes, such as implementation completing and independent review beginning, or a RED review moving into repair. Always surface a blocker that requires user input, an immediate security/publication/destructive-action/authorization risk, or a material scope/architecture change. Healthy-running state, timers, heartbeats, and liveness-only progress are not user milestones and must not by themselves wake Main or create commentary.
 
-Ask promptly when execution cannot continue without user input, or when an immediate security, publication, destructive-action, or authorization risk requires explicit approval. At completion, send one normal final response containing the result, material findings, verification, and residual risk.
+This is quiet milestone communication, not hard silence. Do not expose hidden or internal reasoning or narrate instruction-conflict resolution. At completion, send one normal final response containing the result, material findings, verification, and residual risk.
 """,
 }
 

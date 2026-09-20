@@ -23,6 +23,7 @@ from runtime.compute_profiles import (  # noqa: E402
     plan_compute_profile,
     profile_summary,
     read_compute_profile,
+    render_heavy_route_for_profile,
     render_worker_for_profile,
 )
 from runtime.layout import (  # noqa: E402
@@ -99,13 +100,52 @@ class MuseMaxProfileTests(unittest.TestCase):
             self.assertFalse(muse_config["agents"]["enabled"])
             self.assertTrue(muse_config["features"]["multi_agent"])
             heavy = (runtime.runtime / "heavy_route.md").read_text(encoding="utf-8")
-            self.assertIn("normal concise commentary", heavy)
+            self.assertIn("quiet milestone orchestration", heavy)
+            self.assertIn("routine worker starts", heavy)
+            self.assertIn("must not by themselves wake Main", heavy)
+            self.assertNotIn("normal concise commentary", heavy)
             self.assertNotIn("## Silent Orchestration", heavy)
 
             plan_compute_profile(runtime, "plus").apply()
             restored = tomllib.loads(runtime.config_toml.read_text(encoding="utf-8"))
             self.assertTrue(restored["agents"]["enabled"])
             self.assertTrue(restored["features"]["multi_agent"])
+
+    def test_profile_communication_policies_are_distinct(self) -> None:
+        source = (PACKAGE / "heavy_route.md").read_text(encoding="utf-8")
+        plus = render_heavy_route_for_profile(source, "plus")
+        muse = render_heavy_route_for_profile(source, "muse-max")
+
+        self.assertIn("keep user-visible updates restrained", plus)
+        self.assertNotIn("quiet milestone orchestration", plus)
+        self.assertIn("quiet milestone orchestration", muse)
+        self.assertIn("routine worker starts", muse)
+        self.assertIn("session or recovery bookkeeping", muse)
+        self.assertIn("Git/repository bookkeeping", muse)
+        self.assertIn("user-meaningful phase changes", muse)
+        self.assertIn("blocker that requires user input", muse)
+        self.assertIn("material scope/architecture change", muse)
+        self.assertIn("not hard silence", muse)
+        self.assertIn("must not by themselves wake Main", muse)
+        self.assertNotIn("normal concise commentary", muse)
+        self.assertNotIn("## Silent Orchestration", muse)
+
+    def test_muse_docs_require_one_cell_event_driven_wait(self) -> None:
+        heavy = (PACKAGE / "heavy_route.md").read_text(encoding="utf-8")
+        delegation = (PACKAGE / "delegation.md").read_text(encoding="utf-8")
+
+        for source in (heavy, delegation):
+            self.assertIn("one outer Code Mode `exec` cell", source)
+            self.assertIn("unmanaged background", source)
+
+        self.assertIn("tools.exec_command", heavy)
+        self.assertIn("tools.write_stdin", heavy)
+        self.assertIn("Do not return to Main solely because", heavy)
+        self.assertIn("## Muse event-driven await", delegation)
+        self.assertIn("tools.exec_command", delegation)
+        self.assertIn("tools.write_stdin", delegation)
+        self.assertIn("inside the cell", delegation)
+        self.assertIn("Mere healthy-running state may not", delegation)
 
     def test_plus_routes_all_six_workers_through_codex(self) -> None:
         expected = {

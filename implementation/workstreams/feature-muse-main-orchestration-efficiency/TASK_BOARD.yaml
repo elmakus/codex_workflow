@@ -1,0 +1,98 @@
+project: "codex_workflow"
+workstream_id: "feature-muse-main-orchestration-efficiency"
+plan_revision: "R3"
+current_milestone: "M06"
+
+execution_ref:
+  branch: "feat/muse-main-orchestration-efficiency"
+  pr: 17
+  head: "5094c503e5388eba02818d17f46fe12d33e1bb7b"
+
+research_obligation: null
+
+milestones:
+  M05:
+    contract: "planning/MASTER_PLAN.md#M05 — event-driven Muse wait boundary"
+    execution_status: "done"
+    checkpoint: "commit:b689a310ba3ff54e7121427f8b63bdcac9f9ddbd"
+    implementation_head: "1c0c0bf073308b8e87c009652e1192422445862c"
+    acceptance_evidence: "implementation/workstreams/feature-muse-main-orchestration-efficiency/evidence/M05-acceptance.md"
+    handoff: "implementation/workstreams/feature-muse-main-orchestration-efficiency/handoffs/M05_HANDOFF.md"
+
+  M06:
+    contract: "planning/MASTER_PLAN.md#M06 — quiet milestone communication and integrated acceptance"
+    execution_status: "done"
+    checkpoint: "commit:d9393a82ed46e0901dfd7117ad2ca71823023200"
+    implementation_head: "3114bcc1c732adebf16efc9876301f98cae77d85"
+    acceptance_evidence: "implementation/workstreams/feature-muse-main-orchestration-efficiency/evidence/M06-acceptance.md"
+    handoff: "implementation/workstreams/feature-muse-main-orchestration-efficiency/handoffs/M06_HANDOFF.md"
+
+cards:
+  - id: "M05-T01"
+    contract: "implementation/workstreams/feature-muse-main-orchestration-efficiency/cards/M05-T01.md"
+    milestone: "M05"
+    dependencies: []
+    execution_status: "done"
+    executor: "chatgpt"
+    result_commit: "b2769668be5881deb75d286c905c4c3fc0097716"
+    result_pr: null
+    evidence: "implementation/workstreams/feature-muse-main-orchestration-efficiency/evidence/M05-T01.md"
+    tests_summary: "GREEN native host feasibility: one Code Mode exec owned a 125s wait; Codex-LB had exactly 2 Sol Medium requests with zero intervening healthy-wait sampling; rollout showed internal exec_command/write_stdin ownership; separate SIGINT probe removed controlled root+child; no production runtime/profile source changed. Full real-Muse M05 acceptance remains downstream."
+    openspec: null
+    blocker: null
+    review_requirement: "RECOMMENDED"
+    review_state: "green"
+    review_subject: "commit:b2769668be5881deb75d286c905c4c3fc0097716"
+    review_evidence: "implementation/workstreams/feature-muse-main-orchestration-efficiency/evidence/M05-T01-review.md"
+
+  - id: "M05-T02"
+    contract: "implementation/workstreams/feature-muse-main-orchestration-efficiency/cards/M05-T02.md"
+    milestone: "M05"
+    dependencies: ["M05-T01"]
+    execution_status: "done"
+    executor: "chatgpt"
+    result_commit: "1c0c0bf073308b8e87c009652e1192422445862c"
+    result_pr: null
+    evidence: "implementation/workstreams/feature-muse-main-orchestration-efficiency/evidence/M05-T02.md"
+    tests_summary: "GREEN execution evidence on exact head 1c0c0bf: test_muse_profile 8/8, test_muse_adapter 39/39; real Muse A2 completed foreground sleep 190 with marker M05_REAL_MUSE_WAIT_OK and no changed paths; rollout used one outer exec with internal exec_command/write_stdin wait; Codex-LB had no Main request between 18:34:29.660004 and 18:38:26.010823 UTC; post-run session ready and no surviving A2 process."
+    openspec: null
+    blocker: null
+    review_requirement: "RECOMMENDED"
+    review_state: "green"
+    review_subject: "commit:1c0c0bf073308b8e87c009652e1192422445862c"
+    review_evidence: "implementation/workstreams/feature-muse-main-orchestration-efficiency/evidence/M05-T02-review.md"
+
+  - id: "M06-T01"
+    contract: "implementation/workstreams/feature-muse-main-orchestration-efficiency/cards/M06-T01.md"
+    milestone: "M06"
+    dependencies: ["M05-T02"]
+    execution_status: "done"
+    executor: "chatgpt"
+    result_commit: "3114bcc1c732adebf16efc9876301f98cae77d85"
+    result_pr: null
+    evidence: "implementation/workstreams/feature-muse-main-orchestration-efficiency/evidence/M06-T01.md"
+    tests_summary: "GREEN exact subject 3114bcc1: test_muse_profile 9/9, test_muse_adapter 39/39; rendered muse-max quiet policy retains M05 one-cell wait; real M06-T01-A1 completed foreground sleep 190 with M06_REAL_MUSE_WAIT_OK; accepted outer cell 220.0s with no other top-level call; Codex-LB flat ~225.06s between 129367 and 129372; repo clean and no surviving worker."
+    openspec: null
+    blocker: null
+    review_requirement: "RECOMMENDED"
+    review_state: "green"
+    review_subject: "commit:3114bcc1c732adebf16efc9876301f98cae77d85"
+    review_evidence: "implementation/workstreams/feature-muse-main-orchestration-efficiency/evidence/M06-T01-review.md"
+
+
+  - id: "M06-T02"
+    contract: "implementation/workstreams/feature-muse-main-orchestration-efficiency/cards/M06-T02.md"
+    milestone: "M06"
+    dependencies: ["M06-T01"]
+    execution_status: "done"
+    executor: "chatgpt"
+    result_commit: "d9393a82ed46e0901dfd7117ad2ca71823023200"
+    result_pr: null
+    evidence: "implementation/workstreams/feature-muse-main-orchestration-efficiency/evidence/M06-T02.md"
+    tests_summary: "GREEN documentation/index-only correction: commit d9393a82 changes only PROJECT.md, replacing the stale pre-execution status with accurate repository-local completion/final-integration-pending status; no runtime/profile/test/authority/release surface changed."
+    openspec: null
+    blocker: null
+    review_requirement: "none"
+    review_state: null
+    review_subject: null
+    review_evidence: null

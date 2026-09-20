@@ -359,7 +359,7 @@ class ComputeProfileTests(unittest.TestCase):
         muse_plan.apply()
         self.assertEqual(read_compute_profile(self.runtime), "muse-max")
         heavy = (self.runtime.runtime / "heavy_route.md").read_text(encoding="utf-8")
-        self.assertIn("live Muse-worker experiment", heavy)
+        self.assertIn("quiet milestone orchestration", heavy)
         config = tomllib.loads(self.runtime.config_toml.read_text(encoding="utf-8"))
         self.assertFalse(config["agents"]["enabled"])
         self.assertTrue(config["features"]["multi_agent"])
@@ -420,8 +420,8 @@ class ComputeProfileTests(unittest.TestCase):
     def test_profile_switch_renders_distinct_communication_policies(self) -> None:
         heavy_path = self.runtime.runtime / "heavy_route.md"
         expected = {
-            "plus": ("restrained and outcome-oriented", "live Muse-worker experiment"),
-            "muse-max": ("live Muse-worker experiment", "restrained and outcome-oriented"),
+            "plus": ("restrained and outcome-oriented", "quiet milestone orchestration"),
+            "muse-max": ("quiet milestone orchestration", "restrained and outcome-oriented"),
         }
         for profile, (present, absent) in expected.items():
             plan_compute_profile(self.runtime, profile).apply()
@@ -487,7 +487,7 @@ class ComputeProfileTests(unittest.TestCase):
         plan_update(incoming, self.runtime, self.project).apply()
         self.assertEqual(read_compute_profile(self.runtime), "muse-max")
         heavy = (self.runtime.runtime / "heavy_route.md").read_text(encoding="utf-8")
-        self.assertIn("live Muse-worker experiment", heavy)
+        self.assertIn("quiet milestone orchestration", heavy)
         config = tomllib.loads(self.runtime.config_toml.read_text(encoding="utf-8"))
         self.assertFalse(config["agents"]["enabled"])
         self.assertTrue(config["features"]["multi_agent"])

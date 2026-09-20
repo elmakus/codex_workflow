@@ -56,7 +56,11 @@ The profiles are:
   using `muse-spark-1.3-contributor` with `max` reasoning. Main remains the
   user-selected Codex model. Muse-backed roles use stable bound logical
   sessions with bounded per-turn invocations; the caller owns lane and
-  higher-level workflow policy.
+  higher-level workflow policy. User-visible orchestration uses quiet milestone
+  communication: routine worker/wait/status/session/recovery/Git/liveness
+  narration is suppressed, while meaningful phase changes, blockers, immediate
+  risks/authorization needs, material scope/architecture changes and the final
+  result remain visible.
 
 `muse-max` also disables the workflow-owned internal Codex multi-agent
 surface as a fail-closed routing guard; `plus` enables it. A long-lived session
