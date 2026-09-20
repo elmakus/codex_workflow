@@ -17,7 +17,7 @@ cards:
     title: "Fail closed on post-compaction worker misrouting"
     milestone: "micro-fix"
     decision_state: accepted
-    execution_status: in_progress
+    execution_status: done
     executor: chatgpt
     depends_on: []
     openspec_change: null
