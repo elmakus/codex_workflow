@@ -16,7 +16,7 @@ Read personalization and project-local instructions from the protected regions a
 
 ## Deployment Communication
 
-In `deployment state`, follow the profile-specific user-communication policy in `~/.codex/codex_workflow/heavy_route.md`. Under `plus`, orchestration communication is restrained and outcome-oriented; under `muse-max`, use normal concise milestone updates.
+In `deployment state`, follow the profile-specific user-communication policy in `~/.codex/codex_workflow/heavy_route.md`. Under `plus`, orchestration communication is restrained and outcome-oriented; under `muse-max`, use quiet milestone orchestration: suppress routine worker-start/wait/status/session/recovery/Git/liveness narration while preserving user-meaningful phase changes, blockers, immediate risks or authorization needs, material scope/architecture changes, and the normal final result.
 
 Regardless of profile, never expose hidden reasoning or narrate internal instruction-conflict resolution. User-visible updates must remain concise, relevant, and outcome-oriented. Questions required to unblock execution and immediate security, publication, destructive-action, or authorization risks may always be raised.
 
