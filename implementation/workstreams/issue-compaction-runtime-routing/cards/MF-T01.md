@@ -40,9 +40,9 @@ A forgotten or stale post-compaction Main routing decision cannot successfully d
 
 ### Included
 
-- Make workflow-owned Codex internal-agent enablement profile-aware.
-- Disable internal Codex multi-agent tools under `muse-max`; keep them enabled under `plus`.
-- Update profile changes as well as bootstrap/update materialization so the effective gate follows the active profile.
+- Make workflow-owned Codex internal-agent enablement profile-aware through `[agents].enabled`.
+- Set `[agents].enabled = false` under `muse-max` and `true` under `plus`, while preserving DEC-002's `[features].multi_agent = true` contract.
+- Update profile changes as well as bootstrap/update materialization so the effective guard follows the active profile.
 - Fail closed when a known external MultiAgentV2 override would defeat the `muse-max` internal-agent guard.
 - Add a compact always-injected dispatch invariant to `codex_workflow/AGENTS.md`.
 - Add focused regression coverage and run the existing workflow/Muse suites.
@@ -57,9 +57,9 @@ A forgotten or stale post-compaction Main routing decision cannot successfully d
 
 ## Acceptance
 
-1. Rendering/applying `plus` leaves internal Codex multi-agent enabled.
-2. Rendering/applying `muse-max` sets the workflow-owned internal-agent gates disabled, so the supported V1 Codex runtime does not expose `spawn_agent` / wait/list/send internal-agent tools.
-3. Switching `plus -> muse-max -> plus` updates those gates deterministically without changing unrelated config.
+1. Rendering/applying `plus` sets `[agents].enabled = true` and preserves `[features].multi_agent = true`.
+2. Rendering/applying `muse-max` sets `[agents].enabled = false` while preserving `[features].multi_agent = true`; with MultiAgentV2 disabled, the supported Codex runtime therefore does not expose `spawn_agent` / wait/list/send internal-agent tools.
+3. Switching `plus -> muse-max -> plus` updates `[agents].enabled` deterministically without changing unrelated config.
 4. `muse-max` fails closed with a clear validation error when an effective externally-owned MultiAgentV2 enable would override the internal-agent disable gate.
 5. The always-injected AGENTS contract requires reading only the active `settings.toml` immediately before each worker dispatch, rejects remembered pre-compaction routing as authority, and forbids internal Codex worker APIs under `muse-max` even if a stale long-lived session still exposes them.
 6. Existing `muse-max` profile allocation remains six Muse roles; existing `plus` allocations remain unchanged.
