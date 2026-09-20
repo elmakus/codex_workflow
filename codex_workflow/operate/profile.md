@@ -80,5 +80,3 @@ python3 ~/.codex/codex_workflow/runtime/muse_worker.py \
 Profile state is global to this Codex home and is preserved by workflow updates.
 A pre-profile installation with no settings file is interpreted as `plus`, and
 the next bootstrap/update/profile operation materializes that default explicitly.
-
-[executed on device: Tower (b030638f-5714-4775-aa64-5babf6677db4)]

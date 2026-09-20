@@ -162,5 +162,3 @@ def remove_workflow_owned_settings(text: str) -> str:
     except tomllib.TOMLDecodeError as error:
         raise ValidationError(f"generated Codex config is invalid TOML: {error}") from error
     return rendered
-
-[executed on device: Tower (b030638f-5714-4775-aa64-5babf6677db4)]

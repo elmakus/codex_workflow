@@ -45,5 +45,3 @@ stale long-lived session still exposes them.
 - codex_workflow --enable
   Guide: ~/.codex/codex_workflow/operate/enable.md.
 <!-- codex-workflow-user-managed-end -->
-
-[executed on device: Tower (b030638f-5714-4775-aa64-5babf6677db4)]

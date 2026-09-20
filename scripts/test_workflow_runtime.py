@@ -495,5 +495,3 @@ PersonalizationTests = base.PersonalizationTests
 
 if __name__ == "__main__":
     unittest.main()
-
-[executed on device: Tower (b030638f-5714-4775-aa64-5babf6677db4)]

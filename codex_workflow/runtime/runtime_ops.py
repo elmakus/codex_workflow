@@ -387,5 +387,3 @@ def plan_runtime_remove(
         )
 
     return mutations, cleanup_dirs, warnings
-
-[executed on device: Tower (b030638f-5714-4775-aa64-5babf6677db4)]
