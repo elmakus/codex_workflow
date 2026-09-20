@@ -6,7 +6,7 @@ current_milestone: "M02"
 execution_ref:
   branch: "feat/upstream-1.1.18-alignment"
   pr: 7
-  head: "1c4c91edb0e72b1a906ee422481f3498095dfc7d"
+  head: "b3aeccdbf45c1af3581626f198e2753a853d649f"
 
 research_obligation: null
 
@@ -87,7 +87,7 @@ cards:
     title: "Six-role orchestration and Investigator contract"
     milestone: "M02"
     decision_state: "accepted"
-    execution_status: "ready"
+    execution_status: "in_progress"
     executor: "chatgpt"
     depends_on:
       - "M02-T01"
