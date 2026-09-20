@@ -95,41 +95,22 @@ class MuseMaxProfileTests(unittest.TestCase):
             self.assertIn("normal concise commentary", heavy)
             self.assertNotIn("## Silent Orchestration", heavy)
 
-    def test_other_profile_allocations_keep_six_codex_workers(self) -> None:
+    def test_plus_routes_all_six_workers_through_codex(self) -> None:
         expected = {
-            "plus": {
-                "explorer": ("gpt-5.6-luna", "max"),
-                "investigator": ("gpt-5.6-luna", "max"),
-                "default_executor": ("gpt-5.6-luna", "max"),
-                "senior_executor": ("gpt-5.6-sol", "medium"),
-                "tester": ("gpt-5.6-luna", "max"),
-                "archivist": ("gpt-5.6-luna", "max"),
-            },
-            "luna-xhigh": {
-                "explorer": ("gpt-5.6-luna", "xhigh"),
-                "investigator": ("gpt-5.6-luna", "xhigh"),
-                "default_executor": ("gpt-5.6-luna", "xhigh"),
-                "senior_executor": ("gpt-5.6-sol", "medium"),
-                "tester": ("gpt-5.6-luna", "xhigh"),
-                "archivist": ("gpt-5.6-luna", "xhigh"),
-            },
-            "pro-x5": {
-                "explorer": ("gpt-5.6-sol", "low"),
-                "investigator": ("gpt-5.6-sol", "low"),
-                "default_executor": ("gpt-5.6-sol", "low"),
-                "senior_executor": ("gpt-5.6-sol", "medium"),
-                "tester": ("gpt-5.6-sol", "low"),
-                "archivist": ("gpt-5.6-sol", "low"),
-            },
+            "explorer": ("gpt-5.6-luna", "max"),
+            "investigator": ("gpt-5.6-luna", "max"),
+            "default_executor": ("gpt-5.6-luna", "max"),
+            "senior_executor": ("gpt-5.6-sol", "medium"),
+            "tester": ("gpt-5.6-luna", "max"),
+            "archivist": ("gpt-5.6-luna", "max"),
         }
-        for profile_name, workers in expected.items():
-            with self.subTest(profile=profile_name):
-                actual = COMPUTE_PROFILES[profile_name]
-                self.assertEqual(set(actual), set(workers))
-                for worker, pair in workers.items():
-                    spec = actual[worker]
-                    self.assertEqual((spec.model, spec.reasoning_effort), pair)
-                    self.assertEqual(spec.harness, "codex")
+        self.assertEqual(set(COMPUTE_PROFILES), {"plus", "muse-max"})
+        actual = COMPUTE_PROFILES["plus"]
+        self.assertEqual(set(actual), set(expected))
+        for worker, pair in expected.items():
+            spec = actual[worker]
+            self.assertEqual((spec.model, spec.reasoning_effort), pair)
+            self.assertEqual(spec.harness, "codex")
 
     def test_build_command_uses_profile_supplied_model_and_effort(self) -> None:
         command = build_command(
