@@ -87,7 +87,7 @@ The exact managed wait implementation remains to be proven in Planning/Execution
 - Research still needed: none before Definition.
 - Open questions: no user decision required before Definition.
 - Next phase/action: `ready for definition`
-- Definition promotion authorization: `pending`
-- Definition promotion subject: `none`
+- Definition promotion authorization: `user_authorized`
+- Definition promotion subject: `muse-main-orchestration-efficiency@R1`
 
 > Nothing in this file becomes accepted requirement/decision authority by itself. Project Definition owns promotion into canonical `requirements/` and `decisions/`. Explicit user promotion is still required.
