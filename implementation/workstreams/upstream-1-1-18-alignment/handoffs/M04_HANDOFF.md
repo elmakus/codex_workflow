@@ -30,16 +30,19 @@ Implementation checkpoint: `9a0761f8b0159e63d8c12a95660d5874007b790a`
 - Final behavioral subject `9a0761f8b0159e63d8c12a95660d5874007b790a` has independent integrated GREEN review at `implementation/workstreams/upstream-1-1-18-alignment/evidence/M04-T02-review.md`.
 - GitHub Actions Tests run #187 verifies the exact reviewed tree: runtime 97/97, Muse adapter 33/33, Muse Max 7/7, compile, package validation/build/archive verification GREEN.
 
+## Final integration result
+
+- PR #7 was merged to `main` after explicit current user authorization.
+- Final source head: `a289077693f5787ea7e5f2ed610ca0e546736afa`.
+- Merge result: `4f34a9bc9484f908caa70c506c44d9dc447c5944`.
+- The final-integration GREEN coverage remained current at merge time; GitHub Actions Tests run #201 was GREEN on the final source head.
+- GitHub automatically deleted the merged source branch. No source-ref recreation or fallback cleanup marker is required.
+- The prior final-integration blocker is resolved at `implementation/workstreams/upstream-1-1-18-alignment/blockers/final-integration-merge.md`.
+
 ## Material exceptions / deferred work
 
-- Workstream-level final integration remains to be refreshed against current `main`, its distinct manifest review gate must be reconciled, and PR #7 must be integrated only after that gate is satisfied.
-- Release-triggering VERSION changes, tags and GitHub Release publication remain explicitly user-authorized operations and are not part of this integration.
-
-## Active final-integration blocker
-
-- `implementation/workstreams/upstream-1-1-18-alignment/blockers/final-integration-merge.md`
-- The final PR merge is repository-ready but the GitHub connector rejected the immediate merge through its safety/authorization guard. No integration occurred.
+- Release-triggering VERSION changes, tags, GitHub Release publication and live deployment remain separate explicitly user-authorized operations and were not performed by this workstream closure.
 
 ## Next durable starting point
 
-Run the branch-isolated final-integration refresh gate against current `main`. If the refreshed integrated content/behavior and whole acceptance surface remain exactly covered by the independent M04-T02 review, reconcile the manifest final-integration review from that stronger coverage; otherwise freeze a new pending manifest review subject.
+The approved upstream-1.1.18 alignment workstream scope is terminal and integrated. No implementation/review/integration obligation remains for this workstream.
