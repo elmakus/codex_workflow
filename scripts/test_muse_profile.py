@@ -95,6 +95,23 @@ class MuseMaxProfileTests(unittest.TestCase):
             self.assertIn("normal concise commentary", heavy)
             self.assertNotIn("## Silent Orchestration", heavy)
 
+    def test_muse_docs_require_one_cell_event_driven_wait(self) -> None:
+        heavy = (PACKAGE / "heavy_route.md").read_text(encoding="utf-8")
+        delegation = (PACKAGE / "delegation.md").read_text(encoding="utf-8")
+
+        for source in (heavy, delegation):
+            self.assertIn("one outer Code Mode `exec` cell", source)
+            self.assertIn("unmanaged background", source)
+
+        self.assertIn("tools.exec_command", heavy)
+        self.assertIn("tools.write_stdin", heavy)
+        self.assertIn("Do not return to Main solely because", heavy)
+        self.assertIn("## Muse event-driven await", delegation)
+        self.assertIn("tools.exec_command", delegation)
+        self.assertIn("tools.write_stdin", delegation)
+        self.assertIn("inside the cell", delegation)
+        self.assertIn("Mere healthy-running state may not", delegation)
+
     def test_plus_routes_all_six_workers_through_codex(self) -> None:
         expected = {
             "explorer": ("gpt-5.6-luna", "max"),
