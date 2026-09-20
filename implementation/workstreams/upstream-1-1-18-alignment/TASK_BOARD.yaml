@@ -76,9 +76,9 @@ cards:
     depends_on: []
     openspec_change: null
     contract: "implementation/workstreams/upstream-1-1-18-alignment/cards/M02-T01.md"
-    review_state: "in_progress"
+    review_state: "green"
     review_subject: "1c4c91edb0e72b1a906ee422481f3498095dfc7d"
-    review_evidence: null
+    review_evidence: "implementation/workstreams/upstream-1-1-18-alignment/evidence/M02-T01-review.md"
     result_commit: "1c4c91edb0e72b1a906ee422481f3498095dfc7d"
     result_pr: 7
     evidence: "implementation/workstreams/upstream-1-1-18-alignment/evidence/M02-T01.md"
