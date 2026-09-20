@@ -26,6 +26,30 @@ When an external caller/Main has already declared multiple lanes independent and
 
 For `plus`, all six supported roles use the normal internal Codex lifecycle described below. Senior uses Sol Medium; Explorer, Investigator, Default Executor, Tester, and Archivist use Luna Max. Under `muse-max`, all six roles use Muse Spark 1.3 Contributor Max.
 
+## Muse event-driven await
+
+Every `muse-max` turn uses the native one-cell wait boundary proven by the M05 feasibility gate. Main starts **one outer Code Mode `exec` cell** for the complete `runtime/muse_worker.py` invocation. Inside that same cell:
+
+1. call `tools.exec_command` once to launch the foreground adapter command with the ordinary bounded initial terminal yield;
+2. if that call returns a still-running terminal session, retain its exact session identity locally in the cell;
+3. while that same terminal session remains active, call `tools.write_stdin` with empty input and a long native wait **inside the cell**;
+4. return from the outer cell only when the adapter has a terminal result/failure/timeout/cancellation, or when the host surfaces another genuinely material event that requires Main.
+
+Conceptually:
+
+```text
+Main turn
+  -> one Code Mode exec cell
+       -> tools.exec_command(muse_worker.py ...)
+       -> while terminal session is still running:
+            tools.write_stdin(same session, empty input, long wait)
+       -> terminal normalized adapter result
+  -> Main continuation
+```
+
+The outer Code Mode cell, not Main, owns healthy liveness waiting. A larger `exec_command` yield by itself is not the contract. Do not split the loop into repeated top-level Code Mode calls, use Main-driven status/session reads, wake Main for timers/heartbeats/"still running" notices, or launch an unmanaged shell/background job and poll it. Cancellation or interruption must terminate the active cell/terminal path so the adapter retains its existing process-tree cleanup responsibility. Keep raw Muse run artifacts private; only the adapter's compact normalized result crosses back to Main.
+
+Explicit user input or a genuinely material runtime event may legitimately re-enter Main. Mere healthy-running state may not.
 
 ## Muse capability hints
 
