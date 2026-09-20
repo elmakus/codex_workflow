@@ -39,10 +39,19 @@ Implementation checkpoint: `9a0761f8b0159e63d8c12a95660d5874007b790a`
 - GitHub automatically deleted the merged source branch. No source-ref recreation or fallback cleanup marker is required.
 - The prior final-integration blocker is resolved at `implementation/workstreams/upstream-1-1-18-alignment/blockers/final-integration-merge.md`.
 
+## Release and live deployment
+
+- Explicit user authorization was subsequently provided for release publication and live deployment.
+- Version `1.1.17-private.13` was published as prerelease `v1.1.17-private.13` from the reviewed/integrated result plus release-only metadata/test maintenance.
+- The Release workflow completed GREEN and published exactly the versioned ZIP plus `SHA256SUMS`.
+- The `chatgpt-ce-workstation` shared runtime and the selected `ogolny` project wrapper were updated from `1.1.17-private.12` to `1.1.17-private.13`.
+- `muse-max` remained selected and installed-package validation is GREEN.
+- Exact publication/deployment provenance: `implementation/workstreams/upstream-1-1-18-alignment/evidence/release-1.1.17-private.13.md`.
+
 ## Material exceptions / deferred work
 
-- Release-triggering VERSION changes, tags, GitHub Release publication and live deployment remain separate explicitly user-authorized operations and were not performed by this workstream closure.
+- None for the approved upstream-alignment/release/deployment scope.
 
 ## Next durable starting point
 
-The approved upstream-1.1.18 alignment workstream scope is terminal and integrated. No implementation/review/integration obligation remains for this workstream.
+The approved upstream-1.1.18 alignment workstream, its release publication and the authorized live deployment are terminal. No implementation/review/integration/release/deployment obligation remains for this scope.
