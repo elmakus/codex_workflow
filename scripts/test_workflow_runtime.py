@@ -222,7 +222,7 @@ def _test_current_private_contract(self: unittest.TestCase) -> None:
         self.assertIn("settings.toml", public_doc)
 
     self.assertIn("## Deep dive: orchestration design", workflow_map)
-    self.assertIn("exactly three independent Investigator lanes", workflow_map)
+    self.assertIn("exactly three independent Investigator lanes", " ".join(workflow_map.split()))
     self.assertIn("initial case study", benchmark_guide)
     self.assertIn("`plus`", benchmark_guide)
     self.assertIn("`muse-max`", benchmark_guide)
