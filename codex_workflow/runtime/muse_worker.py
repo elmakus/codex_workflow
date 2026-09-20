@@ -523,7 +523,8 @@ def enforce_retention(
             try:
                 too_old = now - run_dir.stat().st_mtime > max_age_seconds
             except FileNotFoundError:
-                runs.remove(run_dir)                continue
+                runs.remove(run_dir)
+                continue
             if too_old and run_dir.resolve() not in preserve:
                 shutil.rmtree(run_dir, ignore_errors=True)
                 runs.remove(run_dir)
@@ -922,7 +923,8 @@ def _validate_report(
 
 def _redact_text(text: str) -> str:
     value = text
-    for pattern in _SECRET_PATTERNS:        if pattern.pattern.startswith("(?i)(authorization"):
+    for pattern in _SECRET_PATTERNS:
+        if pattern.pattern.startswith("(?i)(authorization"):
             value = pattern.sub(r"\1[REDACTED]", value)
         elif pattern.pattern.startswith("(?i)\b(api"):
             value = pattern.sub(r"\1=[REDACTED]", value)

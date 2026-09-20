@@ -572,7 +572,8 @@ class MuseAdapterTests(unittest.TestCase):
             self.assertTrue(_wait_dead(child_pid), f"child {child_pid} survived cancellation")
 
     def _batch_invocation(
-        self,        fixture: AdapterFixture,
+        self,
+        fixture: AdapterFixture,
         workspace: Path,
         task_id: str,
         *,
@@ -976,7 +977,8 @@ class MuseAdapterTests(unittest.TestCase):
             parent.mkdir()
             child.mkdir()
 
-            def acquire(worker: str, workspace: Path, scope: str):                return muse_sessions.acquire_worker_session(
+            def acquire(worker: str, workspace: Path, scope: str):
+                return muse_sessions.acquire_worker_session(
                     fixture.runtime,
                     logical_worker_id=worker,
                     role="default_executor",
