@@ -1,13 +1,15 @@
 # M02 close evidence — structured Muse capability hints
 
-Status: **GREEN** for integrated milestone acceptance and final-integration refresh.
+Status: **GREEN** for integrated milestone acceptance, final-integration refresh and post-merge readback.
 
 ## Accepted subject
 
 - Milestone: `MCA-P1 M02 — Structured Muse capability hints in codex_workflow`.
 - Reviewed implementation/content subject: `c8fc2d2c60a395bc20562d3f81efc844ee9a7405`.
+- Final source package head merged by PR #10: `2e8fada20a30ca4ebd98d5443e3155c0e50f66b0`.
 - Integration target: `main`.
 - Target baseline used by implementation and exact-subject CI: `738ac89eeaa0522348f175eb5e936bda02a3de8c`.
+- Final integration result: `1b297620f19ff495034ad160465ac90fa29b8ed8`.
 
 ## Integrated milestone acceptance
 
@@ -29,16 +31,12 @@ No deployment, release, VERSION change, workstation mutation, credential-store a
 
 ## Integration refresh
 
-At close refresh, `main` still resolves to
+Immediately before final integration, `main` still resolved to
 `738ac89eeaa0522348f175eb5e936bda02a3de8c`, identical to the target baseline against which the reviewed implementation subject was validated.
 
-Therefore:
-- the integration target has not moved;
-- no rebase/merge reconciliation is required;
-- no affected compatibility verification needs to be repeated solely for target freshness;
-- PR #10 remains open, targets `main`, and is mergeable.
+Therefore no rebase/merge reconciliation or target-drift verification rerun was required. PR #10 was open, targeted `main`, was mergeable, and its exact head was `2e8fada20a30ca4ebd98d5443e3155c0e50f66b0`.
 
-Changes after the reviewed implementation subject are workflow-state/evidence-only: Task Board/manifest reconciliation plus implementation/review evidence. They do not alter runtime source, OpenSpec behavior, delegation semantics, tests, or the accepted M02 surface.
+Changes after the reviewed implementation subject were workflow-state/evidence-only. They did not alter runtime source, OpenSpec behavior, delegation semantics, tests, or the accepted M02 surface.
 
 ## Final-integration review coverage
 
@@ -48,14 +46,32 @@ reviews the exact immutable behavioral subject
 `c8fc2d2c60a395bc20562d3f81efc844ee9a7405`
 against the complete M02 authority and acceptance surface.
 
-Because the refreshed target is unchanged and no post-review behavioral or acceptance-surface change exists, that already-independent review covers the identical refreshed workstream behavior and the whole final-integration acceptance surface.
+Because the refreshed target was unchanged and no post-review behavioral or acceptance-surface change existed, that already-independent review covered the identical refreshed workstream behavior and the whole final-integration acceptance surface.
 
-The manifest-owned RECOMMENDED final-integration gate may therefore be reconciled GREEN by exact `covered_by` reuse rather than creating a second review attempt.
+The manifest-owned RECOMMENDED final-integration gate was therefore reconciled GREEN by exact `covered_by` reuse rather than creating a second review attempt.
+
+## Merge and target-side readback
+
+PR #10 merged successfully into `main` with merge commit
+`1b297620f19ff495034ad160465ac90fa29b8ed8`.
+
+Immutable PR evidence records:
+- base `main@738ac89eeaa0522348f175eb5e936bda02a3de8c`;
+- source head `2e8fada20a30ca4ebd98d5443e3155c0e50f66b0`;
+- merge result `1b297620f19ff495034ad160465ac90fa29b8ed8`;
+- PR state merged/closed.
+
+Target-side readback at the merge result confirmed that `main` contains the namespaced workstream manifest, selected Task Board, Card contract, implementation/review/close evidence and `M02_HANDOFF.md` carried by the exact merged source package.
+
+GitHub removed the source branch immediately after merge. This is the normal merged-path cleanup outcome, so the fallback `branch_cleanup` lifecycle remains inactive and the original branch identity remains preserved as provenance in the manifest and Task Board.
 
 ## Result
 
 Integrated milestone acceptance: **GREEN**.
 
-Integration refresh: **GREEN**.
+Final-integration review gate: **GREEN** by exact independent coverage reuse.
 
-Next gate: persist the closure-ready namespaced package, then re-read `main` immediately before merging PR #10.
+Final integration/readback: **GREEN**.
+
+M02 is eligible for terminal target-side reconciliation with result
+`1b297620f19ff495034ad160465ac90fa29b8ed8`.
