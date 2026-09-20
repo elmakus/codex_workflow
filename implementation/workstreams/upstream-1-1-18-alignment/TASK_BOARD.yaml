@@ -49,9 +49,9 @@ cards:
     depends_on: []
     openspec_change: "openspec/changes/m01-legacy-local-instructions/"
     contract: "implementation/workstreams/upstream-1-1-18-alignment/cards/M01-T02.md"
-    review_state: "in_progress"
+    review_state: "green"
     review_subject: "3f7aa3c67a564216a6095b5ad92a3db2589ef8a1"
-    review_evidence: null
+    review_evidence: "implementation/workstreams/upstream-1-1-18-alignment/evidence/M01-T02-review.md"
     result_commit: "3f7aa3c67a564216a6095b5ad92a3db2589ef8a1"
     result_pr: 7
     evidence: "implementation/workstreams/upstream-1-1-18-alignment/evidence/M01-T02.md"
