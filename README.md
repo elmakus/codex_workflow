@@ -171,4 +171,5 @@ through a compensating transaction.
 | `codex_workflow --remove` | Preview removal, then remove owned files after explicit confirmation; preserve project documents. |
 
 For release preparation and provenance see [RELEASING.md](RELEASING.md).
-For the ownership map see [workflow_break_down.md](workflow_break_down.md).
+For the ownership map and adapted orchestration analysis see [workflow_breakdown.md](workflow_breakdown.md).
+The existing light benchmark is an initial case study; broader evaluation guidance lives in [benchmarks/README.md](benchmarks/README.md).
