@@ -36,3 +36,20 @@ cards:
     review_state: "green"
     review_subject: "commit:b2769668be5881deb75d286c905c4c3fc0097716"
     review_evidence: "implementation/workstreams/feature-muse-main-orchestration-efficiency/evidence/M05-T01-review.md"
+
+  - id: "M05-T02"
+    contract: "implementation/workstreams/feature-muse-main-orchestration-efficiency/cards/M05-T02.md"
+    milestone: "M05"
+    dependencies: ["M05-T01"]
+    execution_status: "ready"
+    executor: "chatgpt"
+    result_commit: null
+    result_pr: null
+    evidence: null
+    tests_summary: null
+    openspec: null
+    blocker: null
+    review_requirement: "RECOMMENDED"
+    review_state: null
+    review_subject: null
+    review_evidence: null
