@@ -44,7 +44,7 @@ cards:
     title: "Fail-closed legacy local-instruction migration"
     milestone: "M01"
     decision_state: "accepted"
-    execution_status: "in_progress"
+    execution_status: "done"
     executor: "chatgpt"
     depends_on: []
     openspec_change: "openspec/changes/m01-legacy-local-instructions/"
