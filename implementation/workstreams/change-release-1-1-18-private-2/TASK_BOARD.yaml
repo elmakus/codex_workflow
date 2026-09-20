@@ -6,19 +6,19 @@ current_milestone: "M04"
 execution_ref:
   branch: "work/release-1-1-18-private-2"
   pr: 11
-  head: "8336e6efe68dd12de8836e5e36ef667594d48754"
+  head: "67e82a4d26258dfd779f61a209344268143ef0d8"
 
 research_obligation: null
 
 milestones:
   M04:
     decision_state: accepted
-    execution_status: in_progress
+    execution_status: done
     contract: "planning/MASTER_PLAN.md#4-milestones"
-    checkpoint: "8336e6efe68dd12de8836e5e36ef667594d48754"
+    checkpoint: "72f821dbc3afb7a6d580bf3fe6661bc88985149c"
     implementation_head: "8336e6efe68dd12de8836e5e36ef667594d48754"
     handoff: "implementation/workstreams/change-release-1-1-18-private-2/handoffs/M04_HANDOFF.md"
-    acceptance_evidence: "implementation/workstreams/change-release-1-1-18-private-2/evidence/M04-acceptance.md"
+    acceptance_evidence: "implementation/workstreams/change-release-1-1-18-private-2/evidence/M04-close.md"
     review_state: null
     review_subject: null
     review_evidence: null
@@ -39,4 +39,4 @@ cards:
     result_commit: "8336e6efe68dd12de8836e5e36ef667594d48754"
     result_pr: 11
     evidence: "implementation/workstreams/change-release-1-1-18-private-2/evidence/M04-T01-implementation.md"
-    tests_summary: "GREEN on exact implementation subject 8336e6efe68dd12de8836e5e36ef667594d48754: PR Tests run #240 / 35514056242; runtime, Muse adapter, compile, Muse Max profile, package validate/build/archive verify GREEN. Independent disposable exact-subject verification also passed git diff --check, package validate/build/archive verify, and sha256sum -c SHA256SUMS. Initial PR run exposed stale version-specific regression expectations; test-only current/next expectations were reconciled to .2/.3 with no runtime behavior change."
+    tests_summary: "GREEN on exact implementation subject 8336e6efe68dd12de8836e5e36ef667594d48754: PR Tests run #240 / 35514056242; runtime, Muse adapter, compile, Muse Max profile, package validate/build/archive verify GREEN. Independent disposable exact-subject verification also passed git diff --check, package validate/build/archive verify, and sha256sum -c SHA256SUMS. Final integration PR #11 merged as 72f821dbc3afb7a6d580bf3fe6661bc88985149c; Release run #12 / 35514755577 and push Tests run #254 / 35514755611 GREEN; release v1.1.18-private.2 published with exactly ZIP + SHA256SUMS."
