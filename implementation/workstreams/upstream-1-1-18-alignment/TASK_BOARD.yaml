@@ -93,9 +93,9 @@ cards:
       - "M02-T01"
     openspec_change: null
     contract: "implementation/workstreams/upstream-1-1-18-alignment/cards/M02-T02.md"
-    review_state: "in_progress"
+    review_state: "red"
     review_subject: "4b5a932c7222856d3f2e795ffaeb1a15805cd22a"
-    review_evidence: null
+    review_evidence: "implementation/workstreams/upstream-1-1-18-alignment/evidence/M02-T02-review.md"
     result_commit: "4b5a932c7222856d3f2e795ffaeb1a15805cd22a"
     result_pr: 7
     evidence: "implementation/workstreams/upstream-1-1-18-alignment/evidence/M02-T02.md"
