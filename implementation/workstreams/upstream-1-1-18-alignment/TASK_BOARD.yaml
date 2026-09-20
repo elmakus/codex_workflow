@@ -132,8 +132,8 @@ cards:
     title: "Plus-only Material Event Push and two-profile communication contract"
     milestone: "M03"
     decision_state: "accepted"
-    execution_status: "ready"
-    executor: null
+    execution_status: "in_progress"
+    executor: "chatgpt"
     depends_on:
       - "M03-T01"
     openspec_change: null
