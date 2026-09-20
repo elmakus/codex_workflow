@@ -1,6 +1,6 @@
 # elmakus codex_workflow fork
 
-Version **1.1.18-private.2**, selectively aligned to upstream `v1.1.18` while
+Version **1.1.18-private.3**, selectively aligned to upstream `v1.1.18` while
 preserving intentional fork-specific divergence. The meaningful common source
 baseline remains upstream `v1.1.17` commit
 `414a5d301ff17ca6e655330474c8346863d0d5d0`.
