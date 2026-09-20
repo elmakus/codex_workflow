@@ -11,12 +11,12 @@ parent_branch: null
 parent_dependency: null
 
 intake:
-  state: "active"
+  state: "complete"
   record: "implementation/workstreams/feature-muse-main-orchestration-efficiency/INTAKE.md"
 
 routing:
-  exploratory_scope: null
-  research_obligation: null
+  exploratory_scope: "brainstorming/muse-main-orchestration-efficiency.md"
+  research_obligation: "research/muse-main-orchestration-efficiency.md"
   plan_review: null
 
 task_board: null

@@ -2,7 +2,7 @@
 
 - Workstream ID: `feature-muse-main-orchestration-efficiency`
 - Kind: `feature`
-- Status: `active`
+- Status: `complete`
 - Branch: `feat/muse-main-orchestration-efficiency`
 - Integration target: `main`
 
@@ -25,6 +25,20 @@ Classification: **independent**.
 
 Selected base: `main@8130efb340ea2c6308e33c96dbff2a53bc98fc49`.
 
-## Intake continuation
+## Discovery materialization
 
-Feature discovery must materialize the canonical Brainstorming record before Intake can complete. Definition promotion remains pending unless separately and explicitly authorized for the exact Brainstorming revision.
+Canonical Brainstorming scope:
+- `brainstorming/muse-main-orchestration-efficiency.md`
+- subject `muse-main-orchestration-efficiency@R1`
+- Definition promotion authorization: `pending`
+
+Brainstorming identified material evidence questions, so the exact pre-execution Research obligation is:
+- `research/muse-main-orchestration-efficiency.md`
+- Research ID `R-MUSE-MAIN-ORCH-01`
+- Return target `brainstorming:muse-main-orchestration-efficiency@R1`
+
+## Downstream classification
+
+Path: `research:R-MUSE-MAIN-ORCH-01`.
+
+The workstream is recoverable without chat history. Router continuation: complete the pointed Research obligation, then reconcile it back into the exact Brainstorming subject. `#feature` itself does not authorize Project Definition promotion.
