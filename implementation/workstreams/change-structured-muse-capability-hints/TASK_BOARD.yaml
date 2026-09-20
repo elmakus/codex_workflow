@@ -15,10 +15,10 @@ milestones:
     decision_state: "accepted"
     execution_status: "in_progress"
     contract: "elmakus/muse-capability-admin@8aecaa42d0ffd40efa2342b5bbace85fcc976d7e:planning/MASTER_PLAN.md#M02"
-    checkpoint: null
+    checkpoint: "c8fc2d2c60a395bc20562d3f81efc844ee9a7405"
     implementation_head: "c8fc2d2c60a395bc20562d3f81efc844ee9a7405"
-    handoff: null
-    acceptance_evidence: null
+    handoff: "implementation/workstreams/change-structured-muse-capability-hints/handoffs/M02_HANDOFF.md"
+    acceptance_evidence: "implementation/workstreams/change-structured-muse-capability-hints/evidence/M02-close.md"
     review_state: null
     review_subject: null
     review_evidence: null
