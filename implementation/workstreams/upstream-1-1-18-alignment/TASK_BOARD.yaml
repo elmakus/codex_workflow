@@ -6,7 +6,7 @@ current_milestone: "M04"
 execution_ref:
   branch: "feat/upstream-1.1.18-alignment"
   pr: 7
-  head: "9a0761f8b0159e63d8c12a95660d5874007b790a"
+  head: "a289077693f5787ea7e5f2ed610ca0e546736afa"
 
 research_obligation: null
 
