@@ -15,8 +15,11 @@ owner-specific orchestration, model, update-channel, and safety choices.
   `heavy_route.md`; bounded but nontrivial work still enters Heavy.
 - Deployment communication follows one of exactly two supported profiles:
   `plus` uses restrained, outcome-oriented milestone updates and `muse-max`
-  uses normal concise milestone updates. Neither profile permits hidden reasoning
-  or narration of internal instruction-conflict resolution.
+  uses quiet milestone orchestration: routine worker/wait/status/session/recovery/
+  Git/liveness narration stays silent while meaningful phase changes, blockers,
+  immediate risks or authorization needs, material scope/architecture changes,
+  and final results remain visible. Neither profile permits hidden reasoning or
+  narration of internal instruction-conflict resolution.
 - Heavy uses progressive disclosure: standing orchestration stays in
   `heavy_route.md`; detailed worker-package, follow-up, and recovery guidance
   lives in `delegation.md` and is loaded only when needed.
