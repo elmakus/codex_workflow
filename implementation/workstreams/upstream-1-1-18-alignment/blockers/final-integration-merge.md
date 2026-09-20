@@ -1,32 +1,21 @@
 # Blocker — final workstream integration
 
-Status: active
+Status: resolved
 Workstream: `upstream-1-1-18-alignment`
 PR: #7
 Integration target: `main`
 Source branch: `feat/upstream-1.1.18-alignment`
-Source head at attempted merge: `0d28bca094f814ea23afb576f171004097160ac6`
-Target head at attempted merge: `a4754147e436784972538bad664dde6e866e52a2`
+Final source head: `a289077693f5787ea7e5f2ed610ca0e546736afa`
+Merge result: `4f34a9bc9484f908caa70c506c44d9dc447c5944`
 
-## Proven ready state
+## Resolution
 
-- M01-M04 are terminal GREEN.
-- Workstream final-integration review gate is GREEN by exact stronger independent coverage.
-- Target refresh is GREEN and `main` has not moved from the workstream base.
-- PR #7 is open, non-draft and mergeable.
-- GitHub Actions Tests run #198 (run id `35500661987`) completed GREEN on the closure-ready source head; runtime, Muse adapter, compile, Muse Max, package validation/build/archive verification all succeeded.
-- VERSION remains `1.1.17-private.12`; this merge does not include a release-triggering VERSION change.
+The user explicitly authorized the final PR #7 merge in the current session.
 
-## Blocking operation
+Before merge, Close re-read PR #7 and the current target. `main` was still exactly at the workstream base, PR #7 was open/non-draft/mergeable, and the three commits after the prior blocked attempt changed only durable closure state/evidence. GitHub Actions Tests run #201 completed GREEN on the final source head.
 
-An immediate merge of PR #7 using the authorized GitHub connector was attempted with expected source head `0d28bca094f814ea23afb576f171004097160ac6`.
+PR #7 was then merged with an expected-head guard pinned to `a289077693f5787ea7e5f2ed610ca0e546736afa`. GitHub returned successful merge commit `4f34a9bc9484f908caa70c506c44d9dc447c5944`.
 
-The connector refused the merge through its safety/authorization guard. No merge occurred and `main` was not changed.
+GitHub automatically deleted the merged source branch. This is normal terminal success under the workstream cleanup contract; the source ref was not recreated and no fallback `branch_cleanup` marker is required.
 
-No alternate write path was used to bypass that guard.
-
-## Required resolution
-
-Obtain explicit current user authorization for the final PR #7 merge, then return to Close, re-read the exact source head and current `main`, revalidate that the final-integration GREEN coverage remains current, and retry the merge using an expected-head guard.
-
-If the connector still rejects the explicitly authorized merge, user-side merge becomes the remaining access boundary; recover afterward from immutable PR/merge evidence and complete target-side closure.
+No VERSION bump, tag, GitHub Release, or live deployment was performed.
