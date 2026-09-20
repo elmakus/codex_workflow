@@ -6,7 +6,7 @@ current_milestone: "M06"
 execution_ref:
   branch: "feat/muse-main-orchestration-efficiency"
   pr: null
-  head: "c5c6b268bb07fbba78bbc398e72c0ff85c71cbce"
+  head: "7be5a26c1a92e08af173ed179bfce35f1d3b2fc0"
 
 research_obligation: null
 
@@ -21,7 +21,7 @@ milestones:
 
   M06:
     contract: "planning/MASTER_PLAN.md#M06 — quiet milestone communication and integrated acceptance"
-    execution_status: "done"
+    execution_status: "ready"
     checkpoint: "commit:24acbc480d84c72b212d34b14a81d868ee7e2077"
     implementation_head: "3114bcc1c732adebf16efc9876301f98cae77d85"
     acceptance_evidence: "implementation/workstreams/feature-muse-main-orchestration-efficiency/evidence/M06-acceptance.md"
@@ -78,3 +78,21 @@ cards:
     review_state: "green"
     review_subject: "commit:3114bcc1c732adebf16efc9876301f98cae77d85"
     review_evidence: "implementation/workstreams/feature-muse-main-orchestration-efficiency/evidence/M06-T01-review.md"
+
+
+  - id: "M06-T02"
+    contract: "implementation/workstreams/feature-muse-main-orchestration-efficiency/cards/M06-T02.md"
+    milestone: "M06"
+    dependencies: ["M06-T01"]
+    execution_status: "ready"
+    executor: null
+    result_commit: null
+    result_pr: null
+    evidence: null
+    tests_summary: null
+    openspec: null
+    blocker: null
+    review_requirement: "none"
+    review_state: null
+    review_subject: null
+    review_evidence: null
