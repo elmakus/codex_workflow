@@ -24,7 +24,7 @@ Under `muse-max`, do not use internal Codex worker APIs for the six supported ro
 
 When an external caller/Main has already declared multiple lanes independent and assigned isolated non-overlapping workspaces, it may use `MuseWorkerInvocation` plus `execute_workers_concurrently(...)` from `runtime/muse_worker.py` to await those explicit Muse calls together. The helper is deliberately not a scheduler: it does not inspect caller dependencies or policy state, decide parallel-safety, create branches/worktrees, or reorder work inside a lane. It rejects equal/nested workspaces, bounds one managed batch to eight explicit invocations, protects active invocation artifacts from concurrent retention cleanup, and keeps cancellation/process ownership per invocation. Executor -> Tester -> optional owning-Executor repair -> same Tester full recheck stays ordered inside each lane while each role/lane keeps a distinct session binding. Do not replace this surface with shell `&`, detached jobs, or sibling-to-sibling worker coordination.
 
-For `plus`, `luna-xhigh`, and `pro-x5`, all six supported roles use the normal internal Codex lifecycle described below. Senior remains Sol Medium in those three profiles. Under `muse-max`, Senior is one of the six Muse Contributor Max roles.
+For `plus`, all six supported roles use the normal internal Codex lifecycle described below. Senior uses Sol Medium; Explorer, Investigator, Default Executor, Tester, and Archivist use Luna Max. Under `muse-max`, all six roles use Muse Spark 1.3 Contributor Max.
 
 ## Work Packages
 
@@ -56,7 +56,7 @@ Ask every worker for the smallest complete, evidence-linked, decision-ready retu
 
 ## Fresh and Independent Contexts
 
-When a controlling project/workflow requirement says `FRESH CODEX REQUIRED`, `FRESH CODEX RECOMMENDED`, fresh independent review, fresh execution context, context reset, or equivalent, satisfy freshness with a fresh worker context in the active role harness. For the six Muse-backed `muse-max` roles, create a new logical worker/session identity and give it only the minimal durable handoff and bounded task context; starting another `muse exec` process against an old session is not fresh. For internal Codex roles in `plus`, `luna-xhigh`, and `pro-x5`, create a new internal worker/subagent by default, use the normal worker mechanism (for example `spawn_agent` when exposed), set `fork_turns="none"`, and transfer only the minimal durable handoff and bounded task context needed for the assignment.
+When a controlling project/workflow requirement says `FRESH CODEX REQUIRED`, `FRESH CODEX RECOMMENDED`, fresh independent review, fresh execution context, context reset, or equivalent, satisfy freshness with a fresh worker context in the active role harness. For the six Muse-backed `muse-max` roles, create a new logical worker/session identity and give it only the minimal durable handoff and bounded task context; starting another `muse exec` process against an old session is not fresh. For internal Codex roles in `plus`, create a new internal worker/subagent by default, use the normal worker mechanism (for example `spawn_agent` when exposed), set `fork_turns="none"`, and transfer only the minimal durable handoff and bounded task context needed for the assignment.
 
 Freshness means conversational/context isolation, not a new top-level Codex App thread. Do not use app-level `create_thread` solely to obtain review independence, milestone isolation, or a context reset.
 
@@ -64,15 +64,12 @@ For an independent review, create a new Tester worker in the active worker runti
 
 App-level `create_thread` is allowed only when the user explicitly asks for a separate top-level application thread/session, or when the required task genuinely needs a capability or isolation property unavailable to the active worker runtime. If that exception is used, do not assume the child thread inherited the parent's approval, sandbox, network, or permission profile; treat effective child permissions as an independent runtime fact.
 
-## Material Event Push
+## Plus Material Event Push
 
-For internal Codex workers, the standing worker-side material-event policy is defined once in project `AGENTS.md`; do not repeat it in every task capsule. They may use runtime `send_message` to `/root` only for `BLOCKER`, `COURSE_CHANGE`, or `CRITICAL_PARTIAL` events under that policy. Ordinary progress, ETA, heartbeats, status chatter, routine partial findings, and normal completion are not follow-up traffic.
+Under `plus`, the standing internal-Codex-worker material-event policy is defined once in project `AGENTS.md`; do not repeat it in every task capsule. Those workers may use runtime `send_message` to `/root` only for `BLOCKER`, `COURSE_CHANGE`, or `CRITICAL_PARTIAL` events under that policy. Ordinary progress, ETA, heartbeats, status chatter, routine partial findings, and normal completion are not follow-up traffic.
 
-The six Muse-backed `muse-max` roles have no `send_message` path. Their normal completion/blocker boundary is the adapter's single compact normalized result; raw Muse trajectories remain in private run artifacts. Do not build a polling or background-message shim.
 
 Do not use Main follow-ups to poll worker status. Send a follow-up only when Main has new evidence, a changed decision, or changed capsule information that the existing worker needs. For internal Codex workers, a `wait_agent` timeout without new evidence is not a reason to request an update. Route material events and final results to Main. Do not instruct or permit direct sibling messaging.
-
-## Worker Follow-up and Repair
 
 ## Worker Follow-up and Repair
 
