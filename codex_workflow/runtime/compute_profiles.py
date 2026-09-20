@@ -67,43 +67,38 @@ _COMMUNICATION_SECTION = re.compile(
 
 COMPUTE_PROFILES: dict[str, dict[str, WorkerModel]] = {
     "plus": {
-        "micro_executor": WorkerModel("gpt-5.6-luna", "high"),
+        "explorer": WorkerModel("gpt-5.6-luna", "max"),
+        "investigator": WorkerModel("gpt-5.6-luna", "max"),
         "default_executor": WorkerModel("gpt-5.6-luna", "max"),
         "senior_executor": WorkerModel("gpt-5.6-sol", "medium"),
         "tester": WorkerModel("gpt-5.6-luna", "max"),
         "archivist": WorkerModel("gpt-5.6-luna", "max"),
-        "companion": WorkerModel("gpt-5.6-luna", "max"),
-        "investigator": WorkerModel("gpt-5.6-luna", "max"),
     },
     "luna-xhigh": {
-        "micro_executor": WorkerModel("gpt-5.6-luna", "xhigh"),
+        "explorer": WorkerModel("gpt-5.6-luna", "xhigh"),
+        "investigator": WorkerModel("gpt-5.6-luna", "xhigh"),
         "default_executor": WorkerModel("gpt-5.6-luna", "xhigh"),
         "senior_executor": WorkerModel("gpt-5.6-sol", "medium"),
         "tester": WorkerModel("gpt-5.6-luna", "xhigh"),
         "archivist": WorkerModel("gpt-5.6-luna", "xhigh"),
-        "companion": WorkerModel("gpt-5.6-luna", "xhigh"),
-        "investigator": WorkerModel("gpt-5.6-luna", "xhigh"),
     },
     "pro-x5": {
-        "micro_executor": WorkerModel("gpt-5.6-sol", "low"),
+        "explorer": WorkerModel("gpt-5.6-sol", "low"),
+        "investigator": WorkerModel("gpt-5.6-sol", "low"),
         "default_executor": WorkerModel("gpt-5.6-sol", "low"),
         "senior_executor": WorkerModel("gpt-5.6-sol", "medium"),
         "tester": WorkerModel("gpt-5.6-sol", "low"),
         "archivist": WorkerModel("gpt-5.6-sol", "low"),
-        "companion": WorkerModel("gpt-5.6-sol", "low"),
-        "investigator": WorkerModel("gpt-5.6-sol", "low"),
     },
     "muse-max": {
-        "micro_executor": WorkerModel("muse-spark-1.3-contributor", "max", "muse-code"),
+        "explorer": WorkerModel("muse-spark-1.3-contributor", "max", "muse-code"),
+        "investigator": WorkerModel("muse-spark-1.3-contributor", "max", "muse-code"),
         "default_executor": WorkerModel("muse-spark-1.3-contributor", "max", "muse-code"),
         "senior_executor": WorkerModel("muse-spark-1.3-contributor", "max", "muse-code"),
         "tester": WorkerModel("muse-spark-1.3-contributor", "max", "muse-code"),
         "archivist": WorkerModel("muse-spark-1.3-contributor", "max", "muse-code"),
-        "companion": WorkerModel("gpt-5.6-luna", "xhigh"),
-        "investigator": WorkerModel("muse-spark-1.3-contributor", "max", "muse-code"),
     },
 }
-
 
 _MODEL_LINE = re.compile(r'^model\s*=\s*"[^"]+"\s*$', re.MULTILINE)
 _REASONING_LINE = re.compile(
