@@ -6,7 +6,7 @@ current_milestone: "M06"
 execution_ref:
   branch: "feat/muse-main-orchestration-efficiency"
   pr: 17
-  head: "5094c503e5388eba02818d17f46fe12d33e1bb7b"
+  head: "6c774a2acb592bedebc9f19ec387857b4781d674"
 
 research_obligation: null
 
@@ -22,7 +22,7 @@ milestones:
   M06:
     contract: "planning/MASTER_PLAN.md#M06 — quiet milestone communication and integrated acceptance"
     execution_status: "done"
-    checkpoint: "commit:d9393a82ed46e0901dfd7117ad2ca71823023200"
+    checkpoint: "commit:916900f3e3536c896596b0618594e0b91aebefcc"
     implementation_head: "3114bcc1c732adebf16efc9876301f98cae77d85"
     acceptance_evidence: "implementation/workstreams/feature-muse-main-orchestration-efficiency/evidence/M06-acceptance.md"
     handoff: "implementation/workstreams/feature-muse-main-orchestration-efficiency/handoffs/M06_HANDOFF.md"
