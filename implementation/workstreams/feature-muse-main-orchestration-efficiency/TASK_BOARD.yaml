@@ -6,14 +6,14 @@ current_milestone: "M05"
 execution_ref:
   branch: "feat/muse-main-orchestration-efficiency"
   pr: null
-  head: "cd2139d144cd4230f8a1c53700f2b53e9e7bef03"
+  head: "8f0f2d466c4e706d607e026a8957da113b278f6d"
 
 research_obligation: null
 
 milestones:
   M05:
     contract: "planning/MASTER_PLAN.md#M05 — event-driven Muse wait boundary"
-    execution_status: "ready"
+    execution_status: "in_progress"
     checkpoint: null
     implementation_head: null
     acceptance_evidence: null
@@ -24,8 +24,8 @@ cards:
     contract: "implementation/workstreams/feature-muse-main-orchestration-efficiency/cards/M05-T01.md"
     milestone: "M05"
     dependencies: []
-    execution_status: "ready"
-    executor: null
+    execution_status: "in_progress"
+    executor: "chatgpt"
     result_commit: null
     result_pr: null
     evidence: null
