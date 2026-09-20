@@ -15,7 +15,7 @@ Implementation checkpoint: `9a0761f8b0159e63d8c12a95660d5874007b790a`
 - Documentation intake remains proportionate, with Explorer for bounded broader-context discovery.
 - Project-only equal-version update, historical-source catch-up, downgrade protection and fail-closed legacy-local-instruction migration remain GREEN.
 - Medium route, Deployment Token Report and workflow-owned `multi_agent_v2` timeout ownership remain absent.
-- VERSION remains `1.1.17-private.12`; no release/tag/publication action occurred.
+- The implementation/integration checkpoint kept VERSION at `1.1.17-private.12`; release publication was authorized and completed afterward as `1.1.17-private.13` (see Release and live deployment below).
 
 ## Authority now satisfied
 
