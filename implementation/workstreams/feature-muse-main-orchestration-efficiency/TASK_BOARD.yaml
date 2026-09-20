@@ -6,7 +6,7 @@ current_milestone: "M05"
 execution_ref:
   branch: "feat/muse-main-orchestration-efficiency"
   pr: null
-  head: "b2769668be5881deb75d286c905c4c3fc0097716"
+  head: "f69b8306da878d0921bf894b43523d6b420bf2c7"
 
 research_obligation: null
 
@@ -41,7 +41,7 @@ cards:
     contract: "implementation/workstreams/feature-muse-main-orchestration-efficiency/cards/M05-T02.md"
     milestone: "M05"
     dependencies: ["M05-T01"]
-    execution_status: "ready"
+    execution_status: "in_progress"
     executor: "chatgpt"
     result_commit: null
     result_pr: null
