@@ -2,7 +2,7 @@
 
 - Workstream ID: `feature-muse-native-profile`
 - Kind: `feature`
-- Status: `active`
+- Status: `complete`
 - Branch: `feat/muse-native-profile`
 - Integration target: `main`
 
@@ -32,6 +32,15 @@ Classification: **independent**.
 
 Selected base: `main@016a42ba0cf0d274bf12d718db6d7580abe54658`.
 
+## Discovery materialization
+
+Canonical Brainstorming scope:
+- `brainstorming/muse-native-profile.md`
+- subject `muse-native-profile@R1`
+- Definition promotion authorization: `pending`
+
+The Brainstorming record contains the exact material evidence questions that require formal Research before promotion readiness can be assessed.
+
 ## Current evidence to reconcile during discovery
 
 External verification performed immediately before intake found:
@@ -45,4 +54,8 @@ These findings are evidence only until reconciled through the normal Brainstormi
 
 ## Downstream classification
 
-Pending Feature Intake materialization of the canonical Brainstorming scope. The `#feature` directive does not itself authorize Project Definition promotion.
+Path: `brainstorming:muse-native-profile@R1`.
+
+The workstream is recoverable without chat history. Router continuation: read the pointed Brainstorming scope, materialize/complete any required Research obligation, reconcile findings into that exact scope, and stop at the explicit Definition-promotion boundary if/when the scope becomes ready.
+
+The `#feature` directive itself does not authorize Project Definition promotion.
