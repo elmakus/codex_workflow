@@ -16,7 +16,7 @@ Read personalization and project-local instructions from the protected regions a
 
 ## Deployment Communication
 
-In `deployment state`, follow the profile-specific user-communication policy in `~/.codex/codex_workflow/heavy_route.md`. Under `plus`, orchestration communication is restrained and outcome-oriented; under `muse-max`, use quiet milestone orchestration: suppress routine worker-start/wait/status/session/recovery/Git/liveness narration while preserving user-meaningful phase changes, blockers, immediate risks or authorization needs, material scope/architecture changes, and the normal final result.
+In `deployment state`, follow the profile-specific user-communication policy in `~/.codex/codex_workflow/heavy_route.md`. Under `plus`, orchestration communication is restrained and outcome-oriented; under `muse-native` and `muse-max`, use quiet milestone orchestration: suppress routine worker-start/wait/status/session/recovery/Git/liveness narration while preserving user-meaningful phase changes, blockers, immediate risks or authorization needs, material scope/architecture changes, and the normal final result.
 
 Regardless of profile, never expose hidden reasoning or narrate internal instruction-conflict resolution. User-visible updates must remain concise, relevant, and outcome-oriented. Questions required to unblock execution and immediate security, publication, destructive-action, or authorization risks may always be raised.
 
@@ -44,7 +44,7 @@ Explorer is read-only and task-scoped. It is not a persistent session secretary 
 
 ## Worker Material Event Push
 
-Under `plus`, an internal Codex worker may use runtime `send_message` to send one concise message to `/root` only for a material mid-task event whose value would materially decrease if delayed until its normal final result:
+Under `plus`, an internal Codex worker may use runtime `send_message` to send one concise message to `/root` only for a material mid-task event whose value would materially decrease if delayed until its normal final result. The same native material-event contract applies under `muse-native`; external `muse-max` remains outside this internal `send_message` channel:
 
 - `BLOCKER` — the worker cannot make useful progress without a Main-owned decision or missing input.
 - `COURSE_CHANGE` — evidence invalidates, cancels, or materially changes work currently being performed by Main or another worker.
