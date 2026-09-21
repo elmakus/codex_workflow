@@ -6,10 +6,12 @@ import re
 from pathlib import Path
 
 from .compute_profiles import (
+    COMPUTE_PROFILES,
     read_compute_profile,
     render_compute_settings,
     render_heavy_route_for_profile,
     render_worker_for_profile,
+    validate_model_provider_config,
 )
 from .platform_settings import (
     patch_codex_settings,
@@ -163,6 +165,25 @@ def plan_platform_and_workers(
     current_state = read_json(runtime.runtime / USER_STATE, default={})
     previous_owned = set(read_string_list(current_state, "owned_workers"))
     profile = read_compute_profile(runtime)
+    if runtime.config_toml.is_symlink() or (
+        runtime.config_toml.exists() and not runtime.config_toml.is_file()
+    ):
+        raise ValidationError(f"Codex config path is not a regular file: {runtime.config_toml}")
+    config_text = (
+        runtime.config_toml.read_text(encoding="utf-8")
+        if runtime.config_toml.is_file()
+        else ""
+    )
+    providers = sorted(
+        {
+            spec.model_provider
+            for spec in COMPUTE_PROFILES[profile].values()
+            if spec.model_provider is not None
+        }
+    )
+    for provider in providers:
+        validate_model_provider_config(config_text, provider)
+
     workers = {
         path.stem for path in templates.glob("*.toml") if path.is_file()
     }
@@ -185,17 +206,12 @@ def plan_platform_and_workers(
     mutations.append(
         text_mutation(runtime.compute_settings, render_compute_settings(profile))
     )
-    config_text = (
-        runtime.config_toml.read_text(encoding="utf-8")
-        if runtime.config_toml.is_file()
-        else ""
-    )
     mutations.append(
         text_mutation(
             runtime.config_toml,
             patch_codex_settings(
                 config_text,
-                internal_agents_enabled=profile == "plus",
+                internal_agents_enabled=profile in {"plus", "muse-native"},
             ),
         )
     )
