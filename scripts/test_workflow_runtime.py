@@ -343,8 +343,8 @@ class ComputeProfileTests(unittest.TestCase):
         self.assertTrue(self.runtime.compute_settings.is_file())
         self.assertEqual(read_compute_profile(self.runtime), "plus")
 
-    def test_only_plus_and_muse_max_are_supported(self) -> None:
-        self.assertEqual(set(COMPUTE_PROFILES), {"plus", "muse-max"})
+    def test_supported_compute_profiles_match_three_profile_contract(self) -> None:
+        self.assertEqual(set(COMPUTE_PROFILES), {"plus", "muse-max", "muse-native"})
         for removed in ("luna-xhigh", "pro-x5"):
             with self.subTest(profile=removed):
                 with self.assertRaisesRegex(ValidationError, "unsupported compute profile"):
