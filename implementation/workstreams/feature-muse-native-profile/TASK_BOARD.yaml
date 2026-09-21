@@ -1,0 +1,40 @@
+project: "codex_workflow"
+workstream_id: "feature-muse-native-profile"
+plan_revision: "R4"
+current_milestone: "M07"
+
+execution_ref:
+  branch: "feat/muse-native-profile"
+  pr: null
+  head: null
+
+research_obligation: null
+
+milestones:
+  M07:
+    execution_status: "ready"
+    checkpoint: null
+    implementation_head: null
+    acceptance_evidence: null
+    review_requirement: "none"
+    review_state: null
+    review_subject: null
+    review_evidence: null
+    jit_trigger: "After M07-T01 establishes the exact provider/config shape, materialize the successor Card for switch/update regression plus exact live provider smoke from that evidence."
+
+cards:
+  - id: "M07-T01"
+    contract: "implementation/workstreams/feature-muse-native-profile/cards/M07-T01.md"
+    dependencies: []
+    execution_status: "ready"
+    executor: null
+    result_commit: null
+    result_pr: null
+    evidence: null
+    tests_summary: null
+    openspec: "openspec/changes/muse-native-profile/specs/muse-native-profile/spec.md"
+    independent_review: "RECOMMENDED"
+    review_state: null
+    review_subject: null
+    review_evidence: null
+    blockers: []
