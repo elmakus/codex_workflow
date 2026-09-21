@@ -41,7 +41,7 @@ cards:
   - id: "M07-T02"
     contract: "implementation/workstreams/feature-muse-native-profile/cards/M07-T02.md"
     dependencies: ["M07-T01"]
-    execution_status: "in_progress"
+    execution_status: "done"
     executor: "chatgpt"
     result_commit: "b2291cc64210a15fb63cc1f05fccf08395e3193d"
     result_pr: 20
