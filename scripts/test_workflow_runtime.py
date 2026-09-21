@@ -28,7 +28,7 @@ PACKAGE = owner.PACKAGE
 
 def _test_private_version_and_user_marker_are_synchronized(self: unittest.TestCase) -> None:
     version = (PACKAGE / "operate" / "VERSION").read_text(encoding="utf-8").strip()
-    self.assertEqual(version, "1.1.18-private.3")
+    self.assertEqual(version, "1.1.18-private.4")
     user_agents = (PACKAGE / "operate" / "user_AGENTS.md").read_text(encoding="utf-8")
     self.assertEqual(user_agents.count(f"<!-- codex-workflow-version: {version} -->"), 1)
     self.assertIn("codex_workflow --profile plus", user_agents)
@@ -41,8 +41,8 @@ def _test_private_version_and_user_marker_are_synchronized(self: unittest.TestCa
     self.assertIn("all six workflow roles", user_agents)
     self.assertIn("runtime/muse_worker.py", user_agents)
     self.assertIn("stale long-lived session still exposes them", user_agents)
-    self.assertGreater(base.parse_semver("1.1.18-private.3"), base.parse_semver("1.1.17-private.13"))
-    self.assertEqual(base.NEXT_PACKAGE_VERSION, "1.1.18-private.4")
+    self.assertGreater(base.parse_semver("1.1.18-private.4"), base.parse_semver("1.1.17-private.13"))
+    self.assertEqual(base.NEXT_PACKAGE_VERSION, "1.1.18-private.5")
 
 
 def _test_worker_models_and_reasoning(self: unittest.TestCase) -> None:
@@ -479,7 +479,7 @@ class ComputeProfileTests(unittest.TestCase):
         user_agents = incoming_root / "operate" / "user_AGENTS.md"
         user_agents.write_text(
             user_agents.read_text(encoding="utf-8").replace(
-                "1.1.18-private.3", next_version
+                "1.1.18-private.4", next_version
             ),
             encoding="utf-8",
         )
