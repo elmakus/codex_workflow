@@ -12,7 +12,9 @@ When an enabled project is in `deployment state`, reread only
 dispatch; never reuse a profile or harness remembered across turns or context
 compaction. If it says `muse-max`, all six workflow roles must use
 `runtime/muse_worker.py`; never use internal Codex multi-agent APIs even if a
-stale long-lived session still exposes them.
+stale long-lived session still exposes them. If it says `muse-native`, all six
+workflow roles must use the internal Codex worker lifecycle and must not invoke
+`runtime/muse_worker.py`; use the installed native worker/provider allocation.
 
 - codex_workflow --install
   Guide:  ~/.codex/codex_workflow/operate/install.md.
@@ -34,6 +36,9 @@ stale long-lived session still exposes them.
 
 
 - codex_workflow --profile muse-max
+  Guide: ~/.codex/codex_workflow/operate/profile.md.
+
+- codex_workflow --profile muse-native
   Guide: ~/.codex/codex_workflow/operate/profile.md.
 
 - codex_workflow --personal
