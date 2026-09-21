@@ -24,7 +24,7 @@ Under `muse-max`, do not use internal Codex worker APIs for the six supported ro
 
 When an external caller/Main has already declared multiple lanes independent and assigned isolated non-overlapping workspaces, it may use `MuseWorkerInvocation` plus `execute_workers_concurrently(...)` from `runtime/muse_worker.py` to await those explicit Muse calls together. The helper is deliberately not a scheduler: it does not inspect caller dependencies or policy state, decide parallel-safety, create branches/worktrees, or reorder work inside a lane. It rejects equal/nested workspaces, bounds one managed batch to eight explicit invocations, protects active invocation artifacts from concurrent retention cleanup, and keeps cancellation/process ownership per invocation. Executor -> Tester -> optional owning-Executor repair -> same Tester full recheck stays ordered inside each lane while each role/lane keeps a distinct session binding. Do not replace this surface with shell `&`, detached jobs, or sibling-to-sibling worker coordination.
 
-For `plus`, all six supported roles use the normal internal Codex lifecycle described below. Senior uses Sol Medium; Explorer, Investigator, Default Executor, Tester, and Archivist use Luna Max. Under `muse-max`, all six roles use Muse Spark 1.3 Contributor Max.
+For `plus`, all six supported roles use the normal internal Codex lifecycle described below. Senior uses Sol Medium; Explorer, Investigator, Default Executor, Tester, and Archivist use Luna Max. Under `muse-native`, all six roles use the same native Codex lifecycle with the M07 allocation: Muse Spark 1.3 Contributor Max through the configured `cliproxyapi` provider. Under `muse-max`, all six roles use Muse Spark 1.3 Contributor Max through the external Muse lifecycle.
 
 ## Muse event-driven await
 
@@ -68,6 +68,10 @@ Each invocation supplies the complete current hint set. A resumed logical Muse s
 
 Capability hints are identifiers only. They never authorize installation, configuration, authentication, update, removal, provider selection, or secret access. A worker reporting a required capability missing is an execution signal for Main, not capability-mutation authority. Capability administration remains a separate Main-owned flow under its own accepted authority. Muse still owns native skill loading and MCP/tool execution.
 
+## Native Codex capability plane
+
+For `muse-native`, required MCP/tool/skill capabilities come from the native Codex worker context. Do not translate them into `MuseCapabilityHints`, invoke `runtime/muse_worker.py`, or copy capability bodies/configuration into a capsule merely to imitate external `muse-max`. A required capability that is absent must be reported visibly to Main and must not trigger silent provider/model/harness substitution. Exact installed capability behavior remains subject to live acceptance.
+
 ## Work Packages
 
 Start each initial package with **Task ID**, a logical identifier unique within the deployment. Then use only the capsule for that role:
@@ -80,7 +84,7 @@ Start each initial package with **Task ID**, a logical identifier unique within 
 | Tester | **Verification Context**; **Verification Goal**; **Main-Agent Verification Guidance** |
 | Archivist | **Documentation Context + Audience**; **Documentation Task + Goal**; **Main-Agent Documentation Guidance** |
 
-Keep packages short and sufficient. Include only the references, boundaries, decisions, constraints, intended outcome, approach, and cautions that materially help that worker. Initial internal Codex workers normally use `fork_turns="none"`; the six Muse-backed `muse-max` roles create separate logical worker/session identities and then use bounded external invocations for their turns.
+Keep packages short and sufficient. Include only the references, boundaries, decisions, constraints, intended outcome, approach, and cautions that materially help that worker. Initial internal Codex workers under `plus` and `muse-native` normally use `fork_turns="none"`; the six Muse-backed `muse-max` roles create separate logical worker/session identities and then use bounded external invocations for their turns.
 
 Require Task ID in every report. A follow-up repeats Task ID and sends only the capsule parts whose information changed. When resuming a safe Muse logical worker, rely on its retained conversation only for its own prior trajectory; still provide new subject identity and changed evidence needed for the current turn. A fresh/replacement Muse worker receives the minimum durable context needed to recover without predecessor trajectory.
 
@@ -98,7 +102,7 @@ Ask every worker for the smallest complete, evidence-linked, decision-ready retu
 
 ## Fresh and Independent Contexts
 
-When a controlling project/workflow requirement says `FRESH CODEX REQUIRED`, `FRESH CODEX RECOMMENDED`, fresh independent review, fresh execution context, context reset, or equivalent, satisfy freshness with a fresh worker context in the active role harness. For the six Muse-backed `muse-max` roles, create a new logical worker/session identity and give it only the minimal durable handoff and bounded task context; starting another `muse exec` process against an old session is not fresh. For internal Codex roles in `plus`, create a new internal worker/subagent by default, use the normal worker mechanism (for example `spawn_agent` when exposed), set `fork_turns="none"`, and transfer only the minimal durable handoff and bounded task context needed for the assignment.
+When a controlling project/workflow requirement says `FRESH CODEX REQUIRED`, `FRESH CODEX RECOMMENDED`, fresh independent review, fresh execution context, context reset, or equivalent, satisfy freshness with a fresh worker context in the active role harness. For the six Muse-backed `muse-max` roles, create a new logical worker/session identity and give it only the minimal durable handoff and bounded task context; starting another `muse exec` process against an old session is not fresh. For internal Codex roles in `plus` or `muse-native`, create a new internal worker/subagent by default, use the normal worker mechanism (for example `spawn_agent` when exposed), set `fork_turns="none"`, and transfer only the minimal durable handoff and bounded task context needed for the assignment.
 
 Freshness means conversational/context isolation, not a new top-level Codex App thread. Do not use app-level `create_thread` solely to obtain review independence, milestone isolation, or a context reset.
 
@@ -106,16 +110,16 @@ For an independent review, create a new Tester worker in the active worker runti
 
 App-level `create_thread` is allowed only when the user explicitly asks for a separate top-level application thread/session, or when the required task genuinely needs a capability or isolation property unavailable to the active worker runtime. If that exception is used, do not assume the child thread inherited the parent's approval, sandbox, network, or permission profile; treat effective child permissions as an independent runtime fact.
 
-## Plus Material Event Push
+## Native Material Event Push
 
-Under `plus`, the standing internal-Codex-worker material-event policy is defined once in project `AGENTS.md`; do not repeat it in every task capsule. Those workers may use runtime `send_message` to `/root` only for `BLOCKER`, `COURSE_CHANGE`, or `CRITICAL_PARTIAL` events under that policy. Ordinary progress, ETA, heartbeats, status chatter, routine partial findings, and normal completion are not follow-up traffic.
+Under `plus` or `muse-native`, the standing internal-Codex-worker material-event policy is defined once in project `AGENTS.md`; do not repeat it in every task capsule. Those workers may use runtime `send_message` to `/root` only for `BLOCKER`, `COURSE_CHANGE`, or `CRITICAL_PARTIAL` events under that policy. External `muse-max` remains outside this internal channel. Ordinary progress, ETA, heartbeats, status chatter, routine partial findings, and normal completion are not follow-up traffic.
 
 
 Do not use Main follow-ups to poll worker status. Send a follow-up only when Main has new evidence, a changed decision, or changed capsule information that the existing worker needs. For internal Codex workers, a `wait_agent` timeout without new evidence is not a reason to request an update. Route material events and final results to Main. Do not instruct or permit direct sibling messaging.
 
 ## Worker Follow-up and Repair
 
-For internal Codex roles, resume the existing worker/thread when possible. Send only new evidence or changed capsule parts. Do not create a replacement merely because a worker is slow or a wait timed out.
+For internal Codex roles under `plus` or `muse-native`, resume the existing worker/thread when possible. Send only new evidence or changed capsule parts. Do not create a replacement merely because a worker is slow or a wait timed out. Ordinary Executor repair stays on the owning native worker/thread; the independent Tester remains a different worker and performs the full recheck.
 
 For the six Muse-backed `muse-max` roles, each bounded invocation ends at its report, but the logical worker/session may continue. For ordinary follow-up or repair, resume the same bound session with the same logical worker ID and send the changed capsule parts and exact current subject/evidence. Resume is fail-closed: missing retention, binding mismatch, concurrent use, rejected probe, or another unsafe condition must return a recovery classification; Main then decides whether to retry, reconcile workspace state, or create an explicitly new A2/B2-style worker.
 
@@ -125,7 +129,7 @@ Escalate to a Main-owned decision only when evidence changes scope, contract, ow
 
 ## Recovery
 
-For internal Codex roles, a `wait_agent` timeout without new evidence is not a recovery event. Wait again when the worker is still presumed healthy.
+For internal Codex roles under `plus` or `muse-native`, a `wait_agent` timeout without new evidence is not a recovery event. Wait again when the worker is still presumed healthy; do not use status/list/progress polling as a liveness substitute.
 
 If a worker is irrecoverably unavailable and has no complete handoff:
 
