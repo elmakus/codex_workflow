@@ -486,6 +486,9 @@ class ComputeProfileTests(unittest.TestCase):
         root = Path(self.temporary.name)
         incoming_root = root / "incoming-native"
         shutil.copytree(PACKAGE, incoming_root)
+        current_version = (incoming_root / "operate" / "VERSION").read_text(
+            encoding="utf-8"
+        ).strip()
         next_version = base.NEXT_PACKAGE_VERSION
         (incoming_root / "operate" / "VERSION").write_text(
             next_version + "\n", encoding="utf-8"
@@ -493,7 +496,8 @@ class ComputeProfileTests(unittest.TestCase):
         user_agents = incoming_root / "operate" / "user_AGENTS.md"
         user_agents.write_text(
             user_agents.read_text(encoding="utf-8").replace(
-                "1.1.18-private.3", next_version
+                f"<!-- codex-workflow-version: {current_version} -->",
+                f"<!-- codex-workflow-version: {next_version} -->",
             ),
             encoding="utf-8",
         )
@@ -523,6 +527,9 @@ class ComputeProfileTests(unittest.TestCase):
         root = Path(self.temporary.name)
         incoming_root = root / "incoming-native-fail"
         shutil.copytree(PACKAGE, incoming_root)
+        current_version = (incoming_root / "operate" / "VERSION").read_text(
+            encoding="utf-8"
+        ).strip()
         next_version = base.NEXT_PACKAGE_VERSION
         (incoming_root / "operate" / "VERSION").write_text(
             next_version + "\n", encoding="utf-8"
@@ -530,7 +537,8 @@ class ComputeProfileTests(unittest.TestCase):
         user_agents = incoming_root / "operate" / "user_AGENTS.md"
         user_agents.write_text(
             user_agents.read_text(encoding="utf-8").replace(
-                "1.1.18-private.3", next_version
+                f"<!-- codex-workflow-version: {current_version} -->",
+                f"<!-- codex-workflow-version: {next_version} -->",
             ),
             encoding="utf-8",
         )
@@ -579,6 +587,9 @@ class ComputeProfileTests(unittest.TestCase):
         root = Path(self.temporary.name)
         incoming_root = root / "incoming"
         shutil.copytree(PACKAGE, incoming_root)
+        current_version = (incoming_root / "operate" / "VERSION").read_text(
+            encoding="utf-8"
+        ).strip()
         next_version = base.NEXT_PACKAGE_VERSION
         (incoming_root / "operate" / "VERSION").write_text(
             next_version + "\n", encoding="utf-8"
@@ -586,7 +597,8 @@ class ComputeProfileTests(unittest.TestCase):
         user_agents = incoming_root / "operate" / "user_AGENTS.md"
         user_agents.write_text(
             user_agents.read_text(encoding="utf-8").replace(
-                "1.1.18-private.3", next_version
+                f"<!-- codex-workflow-version: {current_version} -->",
+                f"<!-- codex-workflow-version: {next_version} -->",
             ),
             encoding="utf-8",
         )
