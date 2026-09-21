@@ -165,11 +165,11 @@ This matrix is intended to prevent a transport simplification from becoming an a
 
 ## Definition promotion
 
-- Definition promotion authorization: `pending`
-- Definition promotion subject: `none`
+- Definition promotion authorization: `user_authorized`
+- Definition promotion subject: `muse-native-profile@R1`
 
 The `#feature` directive created this workstream but does not authorize Project Definition promotion.
 
 ## Next action
 
-This scope is `ready_for_definition`. Stop at the policy-owned promotion boundary until the user explicitly authorizes Project Definition for `muse-native-profile@R1`.
+This scope is `ready_for_definition` and explicitly user-authorized for promotion to Project Definition as `muse-native-profile@R1`.
