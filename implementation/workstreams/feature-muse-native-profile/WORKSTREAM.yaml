@@ -1,6 +1,6 @@
 id: "feature-muse-native-profile"
 kind: "feature"
-status: "discovery"
+status: "planning"
 
 branch: "feat/muse-native-profile"
 base_ref: "016a42ba0cf0d274bf12d718db6d7580abe54658"
@@ -15,15 +15,16 @@ intake:
   record: "implementation/workstreams/feature-muse-native-profile/INTAKE.md"
 
 routing:
-  exploratory_scope: "brainstorming/muse-native-profile.md"
+  exploratory_scope: null
   research_obligation: null
   plan_review: null
 
 task_board: null
 
 authority:
-  requirements: null
-  decisions: []
+  requirements: "requirements/REQUIREMENTS.md"
+  decisions:
+    - "decisions/DEC-007-muse-native-profile.md"
   plan: null
 
 review:
