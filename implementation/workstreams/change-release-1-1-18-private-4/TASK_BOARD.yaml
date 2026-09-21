@@ -28,7 +28,7 @@ cards:
     title: "Prepare owner release 1.1.18-private.4"
     milestone: "M06"
     decision_state: accepted
-    execution_status: in_progress
+    execution_status: done
     executor: chatgpt
     depends_on: []
     openspec_change: null
@@ -40,4 +40,4 @@ cards:
     result_commit: "232072b87524b2d1398af5b12b70c6a96e8a5ded"
     result_pr: 19
     evidence: "implementation/workstreams/change-release-1-1-18-private-4/evidence/M06-R01-implementation.md"
-    tests_summary: "GREEN on exact implementation subject 232072b87524b2d1398af5b12b70c6a96e8a5ded: PR Tests run #285 / 35563326579; runtime regression, Muse adapter regression, Python compile, Muse Max profile, package validation, package build and archive verification all GREEN. Version/tag/release pre-publication readback is consistent with 1.1.18-private.4 and no existing v1.1.18-private.4 tag/release."
+    tests_summary: "GREEN on exact implementation subject 232072b87524b2d1398af5b12b70c6a96e8a5ded: PR Tests run #285 / 35563326579; runtime regression, Muse adapter regression, Python compile, Muse Max profile, package validation, package build and archive verification all GREEN. Independent exact-subject verification and review are GREEN; release publication/readback remains owned by M06 Close."
