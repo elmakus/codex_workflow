@@ -6,16 +6,16 @@ current_milestone: "M06"
 execution_ref:
   branch: "work/release-1-1-18-private-4"
   pr: 19
-  head: "a0d7050fbeb176686ab69fb357c41fa944debde7"
+  head: "07374585bbbca9ff2a6b4ea2754c324daa942d85"
 
 research_obligation: null
 
 milestones:
   M06:
     decision_state: accepted
-    execution_status: in_progress
+    execution_status: done
     contract: "planning/MASTER_PLAN.md#M06 boundary gate + #9 explicit authorization boundaries"
-    checkpoint: "016a42ba0cf0d274bf12d718db6d7580abe54658"
+    checkpoint: "9d589786a05d7b00e48ae781efa0ec1ef54bd204"
     implementation_head: "232072b87524b2d1398af5b12b70c6a96e8a5ded"
     handoff: "implementation/workstreams/change-release-1-1-18-private-4/handoffs/M06_RELEASE_HANDOFF.md"
     acceptance_evidence: "implementation/workstreams/change-release-1-1-18-private-4/evidence/M06-release-acceptance.md"
@@ -40,4 +40,4 @@ cards:
     result_commit: "232072b87524b2d1398af5b12b70c6a96e8a5ded"
     result_pr: 19
     evidence: "implementation/workstreams/change-release-1-1-18-private-4/evidence/M06-R01-implementation.md"
-    tests_summary: "GREEN on exact implementation subject 232072b87524b2d1398af5b12b70c6a96e8a5ded: PR Tests run #285 / 35563326579; runtime regression, Muse adapter regression, Python compile, Muse Max profile, package validation, package build and archive verification all GREEN. Independent exact-subject verification and review are GREEN; release publication/readback remains owned by M06 Close."
+    tests_summary: "GREEN: exact implementation PR Tests #285 / 35563326579 plus independent exact-subject verification/review; post-merge Release #14 / 35564325145 and Tests #298 / 35564325237 succeeded on integration result 9d589786a05d7b00e48ae781efa0ec1ef54bd204. Release v1.1.18-private.4 is verified non-draft prerelease targeting that result with exactly codex_workflow-1.1.18-private.4.zip and SHA256SUMS; ZIP SHA-256 4318036082f56bd933c8ec6139f7a45ea553fe86b8d2f2f96635e7768be7bcdf."
