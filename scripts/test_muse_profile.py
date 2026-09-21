@@ -387,7 +387,7 @@ class MuseMaxProfileTests(unittest.TestCase):
             profile_guide,
         )
         self.assertIn("does not invoke `runtime/muse_worker.py`", profile_guide)
-        self.assertIn("fail visibly when absent", profile_guide)
+        self.assertIn("fail visibly when absent", " ".join(profile_guide.split()))
 
         # External Muse transport remains explicitly scoped to muse-max.
         self.assertIn("For `muse-max`, the six supported roles", delegation)
