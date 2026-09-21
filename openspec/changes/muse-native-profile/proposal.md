@@ -10,6 +10,7 @@ The fork adds a native-Codex Muse path so the same Contributor/Max worker alloca
 - `decisions/DEC-007-muse-native-profile.md`
 - `planning/MASTER_PLAN.md` Revision R4
 - `implementation/workstreams/feature-muse-native-profile/cards/M07-T01.md`
+- `implementation/workstreams/feature-muse-native-profile/cards/M07-T02.md`
 
 ## Change
 
