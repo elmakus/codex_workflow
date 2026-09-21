@@ -6,7 +6,7 @@ current_milestone: "M07"
 execution_ref:
   branch: "feat/muse-native-profile"
   pr: 20
-  head: "027c66658de0fb9d287f5de89153755ff8dd5ecd"
+  head: "00bf0ad343e63cec475ed80883c1e05854b9260e"
 
 research_obligation: null
 
@@ -41,8 +41,8 @@ cards:
   - id: "M07-T02"
     contract: "implementation/workstreams/feature-muse-native-profile/cards/M07-T02.md"
     dependencies: ["M07-T01"]
-    execution_status: "ready"
-    executor: null
+    execution_status: "in_progress"
+    executor: "chatgpt"
     result_commit: null
     result_pr: 20
     evidence: null
