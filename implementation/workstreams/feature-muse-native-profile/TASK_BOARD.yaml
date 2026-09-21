@@ -1,12 +1,12 @@
 project: "codex_workflow"
 workstream_id: "feature-muse-native-profile"
 plan_revision: "R4"
-current_milestone: "M07"
+current_milestone: "M08"
 
 execution_ref:
   branch: "feat/muse-native-profile"
   pr: 20
-  head: "da9fd996870853658c73bb2ca91891f7f1fae070"
+  head: "dd11d5ce715088297788157245b7f4ac4be5ff8f"
 
 research_obligation: null
 
@@ -23,6 +23,18 @@ milestones:
     review_subject: null
     review_evidence: null
     jit_trigger: null
+  M08:
+    contract: "planning/MASTER_PLAN.md#M08 — native orchestration parity and capability behavior"
+    execution_status: "ready"
+    checkpoint: null
+    implementation_head: null
+    acceptance_evidence: null
+    handoff: null
+    review_requirement: "none"
+    review_state: null
+    review_subject: null
+    review_evidence: null
+    jit_trigger: "After M08-T01 is independently GREEN, materialize the smallest live native lifecycle/capability successor from exact installed Codex/provider evidence; OAuth-backed live acceptance remains gated on user-owned provider/account setup."
 
 cards:
   - id: "M07-T01"
@@ -54,4 +66,19 @@ cards:
     review_state: "green"
     review_subject: "2e3090795f965c1beafff56b4ca71056851c4c49"
     review_evidence: "implementation/workstreams/feature-muse-native-profile/evidence/M07-T02-review.md"
+    blockers: []
+  - id: "M08-T01"
+    contract: "implementation/workstreams/feature-muse-native-profile/cards/M08-T01.md"
+    dependencies: ["M07-T02"]
+    execution_status: "ready"
+    executor: null
+    result_commit: null
+    result_pr: 20
+    evidence: null
+    tests_summary: null
+    openspec: "openspec/changes/muse-native-profile/specs/muse-native-profile/spec.md"
+    independent_review: "RECOMMENDED"
+    review_state: null
+    review_subject: null
+    review_evidence: null
     blockers: []
