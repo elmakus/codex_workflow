@@ -8,8 +8,8 @@ Origin role: `brainstorming`
 Origin subject: `muse-native-profile@R1`
 Return target: `brainstorming:muse-native-profile@R1`
 Research question: `Can current Codex native custom agents use muse-spark-1.3-contributor at max reasoning through CLIProxyAPI backed by Muse/Meta OAuth while preserving the MCP/skills and lifecycle properties required by codex_workflow, and which existing muse-max mechanisms remain necessary?`
-Return reconciliation: `pending`
-Return reconciliation result: `none`
+Return reconciliation: `applied`
+Return reconciliation result: `brainstorming/muse-native-profile.md — muse-native-profile@R1 ready_for_definition`
 
 ## Scope
 

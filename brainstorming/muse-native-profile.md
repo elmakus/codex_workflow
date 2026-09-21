@@ -3,7 +3,7 @@
 Date: `2026-09-21`
 Scope ID: `muse-native-profile`
 Revision: `R1`
-Status: `active`
+Status: `ready_for_definition`
 
 ## Problem / goal
 
@@ -81,6 +81,30 @@ Current exploratory direction. It permits live A/B evidence before any later dec
 
 Not selected for this feature. It would remove the comparison/fallback path before native behavior is proven.
 
+## Research outcome
+
+Completed Research: `research/muse-native-profile.md` / `R-MUSE-NATIVE-01`.
+
+Verified conclusions:
+- current CLIProxyAPI has merged Muse/Meta OAuth Device Flow and subscription-backed credential minting;
+- current CLIProxyAPI advertises `muse-spark-1.3-contributor` with `max` reasoning and contains an explicit Codex/Responses-oriented Meta execution path;
+- current Codex custom agents can override model/reasoning and inherit `mcp_servers` and `skills.config` from the parent when omitted;
+- live compatibility must still be proven for the exact workstation because current Codex issue evidence shows real MCP/skills inheritance edge cases;
+- native Codex lifecycle can replace external Muse transport mechanisms for the new profile, but must preserve the existing workflow guarantees: role identity, Executor/Tester independence, freshness, bounded packages, safe cancellation/failure reporting, fail-closed provider selection, workspace ownership and durable Project Workflow state;
+- external `muse-max` should remain available during this feature as fallback and A/B comparison.
+
+No material user/product/strategic question remains before Project Definition. Remaining uncertainty is implementation/live-validation evidence and belongs in Planning/Execution acceptance.
+
+## Definition candidates
+
+- add a third compute profile, provisionally `muse-native`;
+- keep `plus` and external `muse-max` unchanged during this feature;
+- route all six workflow roles through native Codex custom-agent lifecycle under `muse-native`;
+- target `muse-spark-1.3-contributor / max` through CLIProxyAPI using Muse/Meta OAuth from the Muse subscription;
+- require live native-provider, MCP, skill, wait/resume/cancel and quality-comparison acceptance;
+- no silent provider/model/effort fallback;
+- do not retire external `muse-max` without a separate later evidence-backed decision.
+
 ## Definition promotion
 
 - Definition promotion authorization: `pending`
@@ -90,4 +114,4 @@ The `#feature` directive created this workstream but does not authorize Project 
 
 ## Next action
 
-Create and complete a formal Research obligation for the material evidence questions above, then reconcile findings into this exact `muse-native-profile@R1` scope.
+This scope is `ready_for_definition`. Stop at the policy-owned promotion boundary until the user explicitly authorizes Project Definition for `muse-native-profile@R1`.
