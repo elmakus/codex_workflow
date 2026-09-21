@@ -34,7 +34,7 @@ cards:
     openspec_change: null
     contract: "implementation/workstreams/change-release-1-1-18-private-4/cards/M06-R01.md"
     review_requirement: "RECOMMENDED"
-    review_state: pending
+    review_state: in_progress
     review_subject: "232072b87524b2d1398af5b12b70c6a96e8a5ded"
     review_evidence: null
     result_commit: "232072b87524b2d1398af5b12b70c6a96e8a5ded"
