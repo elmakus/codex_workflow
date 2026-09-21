@@ -49,7 +49,7 @@ cards:
     tests_summary: "Exact-branch full verification GREEN: runtime 101/101, Muse adapter 39/39, profile 14/14, compile, validate, build, archive verify; installed provider smoke classified fail-closed external-environment/config blocker without credential mutation."
     openspec: "openspec/changes/muse-native-profile/specs/muse-native-profile/spec.md"
     independent_review: "RECOMMENDED"
-    review_state: "in_progress"
+    review_state: "green"
     review_subject: "2e3090795f965c1beafff56b4ca71056851c4c49"
-    review_evidence: null
+    review_evidence: "implementation/workstreams/feature-muse-native-profile/evidence/M07-T02-review.md"
     blockers: []
