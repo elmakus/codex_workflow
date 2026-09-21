@@ -6,7 +6,7 @@
 - Repository: `elmakus/codex_workflow`
 - Lifecycle: `active`
 - High-level goal: Maintain and evolve the forked Codex workflow/runtime with fork-specific Muse orchestration and selectively adopted upstream improvements.
-- High-level status: Definition R3 for `feature-muse-native-profile` is approved on branch `feat/muse-native-profile`; strategic planning is next. Prior `feature-muse-main-orchestration-efficiency` remains integrated on `main`.
+- High-level status: Definition R3 for `feature-muse-native-profile` is approved on branch `feat/muse-native-profile`; Master Plan R4 is drafted and pending independent review. Prior `feature-muse-main-orchestration-efficiency` remains integrated on `main`.
 
 ## Execution policy
 
@@ -19,7 +19,7 @@ Changing execution policy requires an explicit user decision.
 - Active exploratory scope: `none`
 - Active research obligation: `none`
 - Requirements: `requirements/REQUIREMENTS.md`
-- Current plan: `planning/MASTER_PLAN.md` (R3 approved)
+- Current plan: `planning/MASTER_PLAN.md` (R4 draft; independent review pending)
 - Task Board: `none`
 - Workstream root: `implementation/workstreams/ | none`
 - Latest cumulative handoff: `none`
