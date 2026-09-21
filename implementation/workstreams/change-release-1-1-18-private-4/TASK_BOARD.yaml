@@ -1,0 +1,43 @@
+project: "codex_workflow"
+workstream_id: "change-release-1-1-18-private-4"
+plan_revision: "R3"
+current_milestone: "M06"
+
+execution_ref:
+  branch: "work/release-1-1-18-private-4"
+  pr: null
+  head: null
+
+research_obligation: null
+
+milestones:
+  M06:
+    decision_state: accepted
+    execution_status: in_progress
+    contract: "planning/MASTER_PLAN.md#M06 boundary gate + #9 explicit authorization boundaries"
+    checkpoint: "016a42ba0cf0d274bf12d718db6d7580abe54658"
+    implementation_head: null
+    handoff: "implementation/workstreams/change-release-1-1-18-private-4/handoffs/M06_RELEASE_HANDOFF.md"
+    acceptance_evidence: "implementation/workstreams/change-release-1-1-18-private-4/evidence/M06-release-acceptance.md"
+    review_state: null
+    review_subject: null
+    review_evidence: null
+
+cards:
+  - id: "M06-R01"
+    title: "Prepare owner release 1.1.18-private.4"
+    milestone: "M06"
+    decision_state: accepted
+    execution_status: ready
+    executor: null
+    depends_on: []
+    openspec_change: null
+    contract: "implementation/workstreams/change-release-1-1-18-private-4/cards/M06-R01.md"
+    review_requirement: "RECOMMENDED"
+    review_state: null
+    review_subject: null
+    review_evidence: null
+    result_commit: null
+    result_pr: null
+    evidence: null
+    tests_summary: null
