@@ -1,6 +1,6 @@
 id: "change-release-1-1-18-private-4"
 kind: "change"
-status: "ready"
+status: "done"
 
 branch: "work/release-1-1-18-private-4"
 base_ref: "016a42ba0cf0d274bf12d718db6d7580abe54658"
@@ -42,4 +42,4 @@ branch_cleanup:
   evidence: null
 
 pr: 19
-result: null
+result: "9d589786a05d7b00e48ae781efa0ec1ef54bd204"
