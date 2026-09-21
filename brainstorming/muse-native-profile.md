@@ -105,6 +105,64 @@ No material user/product/strategic question remains before Project Definition. R
 - no silent provider/model/effort fallback;
 - do not retire external `muse-max` without a separate later evidence-backed decision.
 
+
+## Muse Max → Muse Native preservation matrix
+
+The feature must migrate **behavioral guarantees**, not mechanically copy external Muse transport machinery. The following matrix is the parity contract to carry into Project Definition and Planning.
+
+| Current `muse-max` behavior/mechanism | `muse-native` target | Classification |
+| --- | --- | --- |
+| Quiet milestone orchestration: routine worker start/wait/status/session/Git/liveness narration stays silent | Preserve the same communication policy verbatim in behavior; healthy native-worker waiting must not create user-visible commentary | **MUST preserve** |
+| Healthy worker state must not wake Main merely for liveness | Use native Codex worker wait semantics; timeout/no-new-state is followed by another long wait, never status/list/progress polling | **MUST preserve, native replacement** |
+| No timer/heartbeat/"still working" Main turns | Same invariant under native lifecycle | **MUST preserve** |
+| Main is orchestrator, not production executor | Unchanged | **MUST preserve** |
+| Six roles: Explorer, Investigator, Default Executor, Senior Executor, Tester, Archivist | Same six roles through native Codex workers | **MUST preserve** |
+| Muse Spark 1.3 Contributor / max for all six Muse roles | Same model/effort through CLIProxyAPI + Muse OAuth; fail closed if exact route is unavailable | **MUST preserve** |
+| Explorer is disposable, bounded, read-only project-context discovery | Same native role semantics | **MUST preserve** |
+| Qualifying Investigator problem uses exactly three independent lanes | Same exact-three-lane contract; native Codex concurrency replaces Muse batch transport | **MUST preserve** |
+| Worker packages use Task ID + role-specific bounded capsule | Same package/report contract | **MUST preserve** |
+| Freshness means a genuinely fresh worker context, not relabeling/resuming an old one | Spawn a fresh native worker, normally with `fork_turns="none"`, and transfer minimal durable context | **MUST preserve, native replacement** |
+| Ordinary follow-up/repair resumes the owning logical worker when safe | Resume the same native Codex worker/thread when safe | **MUST preserve, native replacement** |
+| Tester must be independent from Executor | Tester is always a separate native worker/thread from the implementing Executor | **MUST preserve** |
+| RED repair lifecycle: Executor → independent Tester RED → same owning Executor repair → same independent Tester full recheck | Same lifecycle using native worker resume | **MUST preserve** |
+| Slow worker / wait timeout does not transfer work to Main | Wait/resume the worker; only irrecoverable unavailability enters recovery | **MUST preserve** |
+| Main follow-up is never used to poll progress | Same; follow-up only carries new evidence/changed decisions/capsule data | **MUST preserve** |
+| No sibling-to-sibling coordination | Same; material events/results route through Main | **MUST preserve** |
+| Blockers, course changes, critical partials may require Main attention despite quiet mode | Use the native Codex material-event path where available; routine progress remains silent | **MUST preserve, native equivalent** |
+| Controlled concurrency only for already-authorized independent lanes with isolated/non-overlapping ownership | Preserve dependency/workspace-safety rules; use native Codex concurrency instead of Muse batch helper | **MUST preserve behavior** |
+| `MuseCapabilityHints` communicates required/relevant skills/capabilities to a separate Muse capability plane | Prefer actual inherited native `mcp_servers` / `skills.config`; missing required capability must fail visibly | **REPLACE, do not mechanically port** |
+| One outer Code Mode cell owns `muse_worker.py` + nested terminal waits | Native Codex worker lifecycle/wait owns waiting directly | **REMOVE transport workaround** |
+| `runtime/muse_worker.py` subprocess, JSONL normalization and generated Muse prompt/schema files | Not used by `muse-native` | **REMOVE for native profile** |
+| Stable Muse `session_id` + per-turn `invocation_id`, private registry and process-safe lease | Native Codex worker/thread identity and lifecycle; retain only the semantic distinction between same-worker continuation and fresh-worker replacement | **REPLACE transport mechanism** |
+| Fail-closed Muse resume probe/session binding | Native resume must still fail visibly; never silently substitute a fresh worker/model/provider under the old logical identity | **MUST preserve semantic** |
+| Muse process-tree timeout/cancellation cleanup | Native Codex cancellation/stop semantics; live acceptance must prove no orphaned worker/process behavior relevant to this deployment | **REPLACE + revalidate** |
+| Private `muse_runs/` raw JSONL/stderr retention and retention quotas | Do not recreate solely for parity; retain only evidence/reporting actually required by native workflow acceptance | **DO NOT port unless evidence requires** |
+| Muse sandbox disabled inside workstation Docker | Native Codex sandbox/permissions become authoritative; do not inherit the Muse-specific `--disable-sandbox` workaround | **DO NOT port** |
+| Managed Muse batch helper capped at 8 calls | Do not carry this transport-specific cap into native profile; native platform/account concurrency applies, while workflow-level dependency and exact-three Investigator rules remain | **DO NOT port** |
+| External Muse CLI authentication/subscription ownership | CLIProxyAPI owns Muse OAuth credential path; Codex sees the configured provider route, without silent direct-Meta/API-key fallback | **REPLACE** |
+| Compact evidence-linked worker result returned to Main | Preserve concise decision-ready worker reports and keep bulky logs/context out of Main unless needed | **MUST preserve** |
+
+### Parity gates
+
+Before `muse-native` can be considered accepted, live evidence must demonstrate at least:
+
+1. exact `muse-spark-1.3-contributor / max` provider identity with no fallback;
+2. all six native roles render and launch correctly;
+3. quiet milestone communication remains active;
+4. a multi-minute healthy native worker causes no Main-driven status/progress polling;
+5. ordinary follow-up resumes the same native worker;
+6. a freshness requirement creates a genuinely fresh context;
+7. Executor and Tester are independent;
+8. RED → same Executor repair → same Tester recheck works;
+9. the exact-three Investigator lane contract works with native workers;
+10. required MCP capability is available to a native worker or fails visibly;
+11. required skill availability/invocation is verified in the installed Codex environment;
+12. timeout/cancel/recovery behavior is safe and does not silently replace identity/provider;
+13. `plus` and external `muse-max` remain behaviorally unchanged;
+14. an A/B task can compare external `muse-max` and `muse-native` without changing the higher-level acceptance contract.
+
+This matrix is intended to prevent a transport simplification from becoming an accidental orchestration-semantics regression.
+
 ## Definition promotion
 
 - Definition promotion authorization: `pending`
