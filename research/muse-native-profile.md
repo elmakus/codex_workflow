@@ -3,7 +3,7 @@
 Date: `2026-09-21`
 
 Research ID: `R-MUSE-NATIVE-01`
-Status: `complete`
+Status: `consumed`
 Origin role: `brainstorming`
 Origin subject: `muse-native-profile@R1`
 Return target: `brainstorming:muse-native-profile@R1`
