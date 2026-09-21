@@ -26,6 +26,7 @@ from runtime.compute_profiles import (  # noqa: E402
     render_heavy_route_for_profile,
     render_worker_for_profile,
 )
+from runtime.errors import ValidationError  # noqa: E402
 from runtime.layout import (  # noqa: E402
     BUILTIN_WORKERS,
     PackageLayout,
