@@ -30,10 +30,10 @@ authority:
 
 review:
   requirement: "RECOMMENDED"
-  state: null
-  subject: null
-  evidence: null
-  covered_by: null
+  state: green
+  subject: "232072b87524b2d1398af5b12b70c6a96e8a5ded"
+  evidence: "implementation/workstreams/change-release-1-1-18-private-4/evidence/final-integration-refresh.md"
+  covered_by: "implementation/workstreams/change-release-1-1-18-private-4/evidence/M06-R01-review.md"
 
 branch_cleanup:
   state: null
