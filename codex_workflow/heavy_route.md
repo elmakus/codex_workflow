@@ -16,13 +16,15 @@ Under `muse-max`, launch and await each bounded Muse turn inside **one outer Cod
 
 For `plus`, all six supported roles use the internal Codex worker lifecycle described below.
 
+For `muse-native`, all six supported roles use that same native Codex worker lifecycle, but their M07 allocation is Muse Spark 1.3 Contributor with `max` reasoning through the configured `cliproxyapi` provider. Do not invoke `runtime/muse_worker.py`, create Muse logical sessions, or import the external `muse-max` JSONL/session/wait stack for this profile. Ordinary native follow-up and repair resume the owning worker/thread when safe; a controlling freshness or independence boundary creates a new internal worker with `fork_turns="none"`.
+
 ## Orchestrator-First Execution
 
 Main is an orchestrator, not an executor. In Heavy/deployment state, do not perform production execution directly. Delegate implementation, security review, repository migration, material Git/GitHub operations, testing, delegable research, refactoring, repair, broad repository analysis, and documentation assigned to a worker role. Always prefer `delegate -> resume -> wait -> integrate` over direct execution.
 
 If assigned work needs intervention, use the existing worker or thread first. Resume it when possible. A slow, stalled, or temporarily allowance-blocked worker is not a reason for Main to take over; prefer resuming the same worker or thread.
 
-A `wait_agent` timeout that returns no new worker state is not by itself a reason to poll status, list threads, message, interrupt, replace, or inspect worker progress. With no new signal, issue another appropriately long `wait_agent`.
+A `wait_agent` timeout that returns no new worker state is not by itself a reason to poll status, list threads, message, interrupt, replace, or inspect worker progress. With no new signal, issue another appropriately long `wait_agent`. This native no-poll wait rule applies to both `plus` and `muse-native`; timeout/no-new-state alone does not transfer execution to Main or justify worker replacement.
 
 For an irrecoverably unavailable worker, identify only the available recovery sources: predecessor thread, worktree, branch, handoff path, or existing commits. Then delegate recovery + continuation. The replacement worker owns detailed state recovery and must determine completed versus remaining work. Main should not reconstruct the predecessor's detailed work. Read `~/.codex/codex_workflow/delegation.md` only when recovery is actually needed.
 
@@ -75,11 +77,15 @@ Initial packages use **Task ID** and the role-specific capsule defined there. In
 
 ## Fresh and Independent Context Routing
 
-Treat project/workflow phrases such as `FRESH CODEX REQUIRED`, `FRESH CODEX RECOMMENDED`, fresh independent review, fresh execution context, or context reset as requirements for an isolated execution context, not for a new top-level Codex App conversation. Create a fresh worker in the active role harness with only the minimal durable handoff and bounded task context required: a new internal worker with `fork_turns="none"` for internal Codex roles, or a new logical Muse worker/session for a Muse-backed `muse-max` role. A merely new Muse OS process does not satisfy a freshness requirement when it resumes an old logical session.
+Treat project/workflow phrases such as `FRESH CODEX REQUIRED`, `FRESH CODEX RECOMMENDED`, fresh independent review, fresh execution context, or context reset as requirements for an isolated execution context, not for a new top-level Codex App conversation. Create a fresh worker in the active role harness with only the minimal durable handoff and bounded task context required: a new internal worker with `fork_turns="none"` for internal Codex roles under `plus` or `muse-native`, or a new logical Muse worker/session for a Muse-backed `muse-max` role. A merely new Muse OS process does not satisfy a freshness requirement when it resumes an old logical session.
 
 Do not call app-level `create_thread` solely to satisfy freshness, independent review, milestone isolation, or context reset. Use a new Tester for independent review; that Tester must not be the worker that implemented the target. If review exposes a bounded problem that qualifies for Investigator, apply the exact three-lane Investigator contract rather than spawning a single research lane.
 
 Use app-level `create_thread` only when the user explicitly asks for a separate top-level application thread/session, or when the assignment requires a capability or isolation property unavailable to the active worker runtime. If that exception is used, do not assume approval, sandbox, network, or permission settings are inherited from the parent; effective child permissions must be treated as separate runtime state.
+
+## Native Capability Plane
+
+Under `muse-native`, use the MCP/tool/skill capabilities exposed through the native Codex worker runtime. Do not route native workers through `MuseCapabilityHints`, the external Muse adapter, or copied skill/capability payloads for parity. If a capability required by the bounded task is unavailable in the native worker context, fail visibly to Main; do not silently substitute another provider, model, worker harness, or external transport. Live capability acceptance is evidence-owned downstream and must not be inferred from this contract alone.
 
 ## Orchestration Guidance
 
@@ -91,9 +97,9 @@ Use app-level `create_thread` only when the user explicitly asks for a separate 
 
 Preserve sequential ordering where dependencies, ownership, uncertainty, or risk require it. Do not maximize concurrency without a concrete benefit.
 
-## Plus Material Event Handling
+## Native Material Event Handling
 
-When the active profile is `plus`, the standing internal-worker `send_message` policy lives in `AGENTS.md`. Keep the long event-driven `wait_agent` lifecycle unchanged; material-event push complements it and does not replace normal completion notifications or waiting.
+When the active profile is `plus` or `muse-native`, the standing internal-worker `send_message` policy lives in `AGENTS.md`. Keep the long event-driven `wait_agent` lifecycle unchanged; material-event push complements it and does not replace normal completion notifications or waiting. External `muse-max` remains outside this internal worker channel.
 
 When Main receives a material worker message, including when it wakes Main from `wait_agent`, process only the necessary orchestration consequence. Receipt of a material worker message must not cause status polling, repeated worker listings, progress requests, broad check-ins, interruption, or replacement. If the event changes another active package, steer only the affected worker or decision. Then continue independent useful work or return to another long `wait_agent` when idle.
 
@@ -103,7 +109,7 @@ Do not ask workers to send routine progress and do not use `send_message` as a s
 
 - Heavy does not impose an aggregate active-subagent limit; Main chooses worker count and concurrency. The Codex platform determines the actually available slots.
 - Use at most one Senior Executor and one Archivist closure owner for the same bounded ownership surface.
-- Initial internal Codex workers normally use `fork_turns="none"`; initial Muse-backed `muse-max` role instances create new logical sessions. Later ordinary turns resume the same bound session when safe; replacement/freshness creates a new logical identity explicitly. Create and coordinate every worker directly.
+- Initial internal Codex workers under `plus` and `muse-native` normally use `fork_turns="none"`; initial Muse-backed `muse-max` role instances create new logical sessions. Later ordinary turns resume the same bound session when safe; replacement/freshness creates a new logical identity explicitly. Create and coordinate every worker directly.
 - Concurrent mutable work requires non-overlapping ownership; preserve unrelated user work and explicit Git authority.
 - Executors own production repair, Testers own independent verification, and Archivists receive verified behavior. Base every passing claim on completed validation evidence.
 - When workers run and no independent work remains, make one event-driven `wait_agent` call instead of short repeated polling. Normally use `1500000` ms (25 minutes), within `300000`-`3600000` ms; continue immediately when a child finishes early. If timeout yields no evidence and the worker is presumed healthy, wait again rather than polling.
