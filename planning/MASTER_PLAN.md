@@ -1,9 +1,9 @@
 # Master Plan — Muse native worker profile
 
 Revision: `R4`
-Status: `draft`
+Status: `approved`
 Updated: `2026-09-21`
-Independent plan review: `RECOMMENDED`
+Independent plan review: `GREEN` — `planning/reviews/R4.md`
 
 > Planning organizes the approved Project Definition in `requirements/REQUIREMENTS.md` Revision R3. Accepted requirements and decisions remain authoritative.
 
