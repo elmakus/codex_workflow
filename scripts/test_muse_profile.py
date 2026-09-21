@@ -348,7 +348,7 @@ class MuseMaxProfileTests(unittest.TestCase):
         self.assertIn("Do not route native workers through `MuseCapabilityHints`", heavy)
         self.assertIn("fail visibly to Main", heavy)
         self.assertIn(
-            "new internal worker with `fork_turns="none"` for internal Codex roles under `plus` or `muse-native`",
+            'new internal worker with `fork_turns="none"` for internal Codex roles under `plus` or `muse-native`',
             heavy,
         )
 
