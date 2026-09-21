@@ -34,7 +34,7 @@ cards:
     tests_summary: "GitHub Actions Tests run 35564033356 (run 295) GREEN on implementation commit 709bcafe3de315bdbc2877d21650ddca2d819fb7; runtime, Muse adapter, compile, profile regressions, validate, build, archive verify all GREEN."
     openspec: "openspec/changes/muse-native-profile/specs/muse-native-profile/spec.md"
     independent_review: "RECOMMENDED"
-    review_state: "pending"
+    review_state: "in_progress"
     review_subject: "027c66658de0fb9d287f5de89153755ff8dd5ecd"
     review_evidence: null
     blockers: []
