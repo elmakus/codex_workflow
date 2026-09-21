@@ -11,7 +11,7 @@ parent_branch: null
 parent_dependency: null
 
 intake:
-  state: active
+  state: complete
   record: "implementation/workstreams/change-release-1-1-18-private-4/INTAKE.md"
 
 routing:
@@ -19,7 +19,7 @@ routing:
   research_obligation: null
   plan_review: null
 
-task_board: null
+task_board: "implementation/workstreams/change-release-1-1-18-private-4/TASK_BOARD.yaml"
 
 authority:
   requirements: "requirements/REQUIREMENTS.md"
