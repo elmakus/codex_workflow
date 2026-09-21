@@ -78,7 +78,7 @@ cards:
     tests_summary: "Exact-branch verification GREEN on 92975fedd29e198c292f6da072eebab546e2bc89: profile 15/15, runtime 101/101, Muse adapter 39/39, compile, validate, package build and archive verify."
     openspec: "openspec/changes/muse-native-profile/specs/muse-native-profile/spec.md"
     independent_review: "RECOMMENDED"
-    review_state: "pending"
+    review_state: "in_progress"
     review_subject: "40283481eba7555a288f89b927c8aac51ba578ec"
     review_evidence: null
     blockers: []
