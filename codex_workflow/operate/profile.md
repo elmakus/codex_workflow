@@ -5,6 +5,7 @@ Use this procedure only when the user's trimmed message is exactly one of:
     codex_workflow --profile
     codex_workflow --profile plus
     codex_workflow --profile muse-max
+    codex_workflow --profile muse-native
 
 Compute profile is user-runtime state, not project personalization. It applies to
 workflow-owned worker routing under `~/.codex/` and does not change the Main
@@ -32,7 +33,7 @@ mutate anything.
 
 ## Switch profile
 
-For `plus` or `muse-max`, run exactly one complete profile transaction:
+For `plus`, `muse-max`, or `muse-native`, run exactly one complete profile transaction:
 
 ```text
 python3 ~/.codex/codex_workflow/runtime/workflow.py profile <profile> --json
@@ -61,12 +62,24 @@ The profiles are:
   narration is suppressed, while meaningful phase changes, blockers, immediate
   risks/authorization needs, material scope/architecture changes and the final
   result remain visible.
+- `muse-native`: all six supported roles use the internal Codex worker lifecycle
+  with `muse-spark-1.3-contributor`, `max` reasoning, and the configured
+  `cliproxyapi` provider route. Main remains the user-selected Codex model.
+  Native wait/resume/freshness/Tester/Investigator contracts apply; this profile
+  does not invoke `runtime/muse_worker.py` or create external Muse sessions.
+  User-visible orchestration uses the same quiet milestone policy as `muse-max`.
 
 `muse-max` also disables the workflow-owned internal Codex multi-agent
-surface as a fail-closed routing guard; `plus` enables it. A long-lived session
+surface as a fail-closed routing guard; `plus` and `muse-native` enable it. A long-lived session
 may still display a stale internal-agent surface after a profile/workflow change,
 but the always-injected dispatch invariant forbids using that stale surface under
 `muse-max`.
+
+`muse-native` requires an existing user-owned `[model_providers.cliproxyapi]`
+route using the Responses wire API. The profile operation validates that route
+but does not configure account/provider access. Required native worker MCP/tool/
+skill capabilities must be available through the Codex worker runtime and fail
+visibly when absent; they are not translated to external Muse capability hints.
 
 `muse-max` requires the `muse` CLI on `PATH`, a completed `muse login`, and
 access to Muse Spark 1.3 Contributor Max. The profile switch itself does not
