@@ -11,11 +11,11 @@ parent_branch: null
 parent_dependency: null
 
 intake:
-  state: "active"
+  state: "complete"
   record: "implementation/workstreams/feature-muse-native-profile/INTAKE.md"
 
 routing:
-  exploratory_scope: null
+  exploratory_scope: "brainstorming/muse-native-profile.md"
   research_obligation: null
   plan_review: null
 
