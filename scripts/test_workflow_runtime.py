@@ -26,6 +26,18 @@ base = owner.base
 PACKAGE = owner.PACKAGE
 
 
+def _configure_cliproxyapi(runtime: RuntimePaths, *, wire_api: str = "responses") -> None:
+    with runtime.config_toml.open("a", encoding="utf-8") as handle:
+        handle.write(
+            "\n[model_providers.cliproxyapi]\n"
+            'name = "CLIProxyAPI"\n'
+            'base_url = "http://127.0.0.1:8317/v1"\n'
+            f'wire_api = "{wire_api}"\n'
+            "\n[unrelated_provider_state]\n"
+            'keep = "yes"\n'
+        )
+
+
 def _test_private_version_and_user_marker_are_synchronized(self: unittest.TestCase) -> None:
     version = (PACKAGE / "operate" / "VERSION").read_text(encoding="utf-8").strip()
     self.assertEqual(version, "1.1.18-private.4")
@@ -343,8 +355,8 @@ class ComputeProfileTests(unittest.TestCase):
         self.assertTrue(self.runtime.compute_settings.is_file())
         self.assertEqual(read_compute_profile(self.runtime), "plus")
 
-    def test_only_plus_and_muse_max_are_supported(self) -> None:
-        self.assertEqual(set(COMPUTE_PROFILES), {"plus", "muse-max"})
+    def test_supported_compute_profiles_match_three_profile_contract(self) -> None:
+        self.assertEqual(set(COMPUTE_PROFILES), {"plus", "muse-max", "muse-native"})
         for removed in ("luna-xhigh", "pro-x5"):
             with self.subTest(profile=removed):
                 with self.assertRaisesRegex(ValidationError, "unsupported compute profile"):
@@ -466,6 +478,101 @@ class ComputeProfileTests(unittest.TestCase):
             if name == "investigator.toml":
                 continue
             self.assertEqual((self.runtime.agents / name).read_bytes(), content)
+
+    def test_update_preserves_selected_muse_native_profile(self) -> None:
+        _configure_cliproxyapi(self.runtime)
+        plan_compute_profile(self.runtime, "muse-native").apply()
+
+        root = Path(self.temporary.name)
+        incoming_root = root / "incoming-native"
+        shutil.copytree(PACKAGE, incoming_root)
+        next_version = base.NEXT_PACKAGE_VERSION
+        (incoming_root / "operate" / "VERSION").write_text(
+            next_version + "\n", encoding="utf-8"
+        )
+        user_agents = incoming_root / "operate" / "user_AGENTS.md"
+        user_agents.write_text(
+            user_agents.read_text(encoding="utf-8").replace(
+                "1.1.18-private.3", next_version
+            ),
+            encoding="utf-8",
+        )
+        incoming = PackageLayout.resolve(incoming_root)
+
+        plan_update(incoming, self.runtime, self.project).apply()
+
+        self.assertEqual(read_compute_profile(self.runtime), "muse-native")
+        config = tomllib.loads(self.runtime.config_toml.read_text(encoding="utf-8"))
+        self.assertTrue(config["agents"]["enabled"])
+        self.assertTrue(config["features"]["multi_agent"])
+        self.assertEqual(
+            config["model_providers"]["cliproxyapi"]["base_url"],
+            "http://127.0.0.1:8317/v1",
+        )
+        self.assertEqual(
+            config["model_providers"]["cliproxyapi"]["wire_api"], "responses"
+        )
+        self.assertEqual(config["unrelated_provider_state"]["keep"], "yes")
+        for path in sorted(self.runtime.agents.glob("*.toml")):
+            worker = tomllib.loads(path.read_text(encoding="utf-8"))
+            self.assertEqual(worker["model"], "muse-spark-1.3-contributor")
+            self.assertEqual(worker["model_reasoning_effort"], "max")
+            self.assertEqual(worker["model_provider"], "cliproxyapi")
+
+    def test_update_muse_native_fails_closed_without_compatible_provider(self) -> None:
+        root = Path(self.temporary.name)
+        incoming_root = root / "incoming-native-fail"
+        shutil.copytree(PACKAGE, incoming_root)
+        next_version = base.NEXT_PACKAGE_VERSION
+        (incoming_root / "operate" / "VERSION").write_text(
+            next_version + "\n", encoding="utf-8"
+        )
+        user_agents = incoming_root / "operate" / "user_AGENTS.md"
+        user_agents.write_text(
+            user_agents.read_text(encoding="utf-8").replace(
+                "1.1.18-private.3", next_version
+            ),
+            encoding="utf-8",
+        )
+        incoming = PackageLayout.resolve(incoming_root)
+
+        scenarios = (
+            ("missing", None, r"requires configured \[model_providers\.cliproxyapi\]"),
+            ("wrong-wire", "chat", 'wire_api = "responses"'),
+        )
+        for name, wire_api, message in scenarios:
+            with self.subTest(name=name):
+                with tempfile.TemporaryDirectory() as isolated:
+                    isolated_root = Path(isolated)
+                    runtime = RuntimePaths(isolated_root / "codex-home")
+                    project = ProjectPaths(isolated_root / "project")
+                    plan_bootstrap(self.package, runtime, project).apply()
+                    if wire_api is not None:
+                        _configure_cliproxyapi(runtime, wire_api=wire_api)
+                    runtime.compute_settings.write_text(
+                        'compute_profile = "muse-native"\n', encoding="utf-8"
+                    )
+                    before_config = runtime.config_toml.read_bytes()
+                    before_settings = runtime.compute_settings.read_bytes()
+                    before_workers = {
+                        path.name: path.read_bytes()
+                        for path in runtime.agents.glob("*.toml")
+                    }
+
+                    with self.assertRaisesRegex(ValidationError, message):
+                        plan_update(incoming, runtime, project)
+
+                    self.assertEqual(runtime.config_toml.read_bytes(), before_config)
+                    self.assertEqual(
+                        runtime.compute_settings.read_bytes(), before_settings
+                    )
+                    self.assertEqual(
+                        {
+                            path.name: path.read_bytes()
+                            for path in runtime.agents.glob("*.toml")
+                        },
+                        before_workers,
+                    )
 
     def test_update_preserves_selected_muse_max_profile(self) -> None:
         plan_compute_profile(self.runtime, "muse-max").apply()

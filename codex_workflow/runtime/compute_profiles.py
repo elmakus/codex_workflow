@@ -21,6 +21,7 @@ class WorkerModel:
     model: str
     reasoning_effort: str
     harness: str = "codex"
+    model_provider: str | None = None
 
 
 PROFILE_COMMUNICATION_POLICIES: dict[str, str] = {
@@ -41,6 +42,10 @@ A concise update is allowed when a user-meaningful phase changes, such as implem
 This is quiet milestone communication, not hard silence. Do not expose hidden or internal reasoning or narrate instruction-conflict resolution. At completion, send one normal final response containing the result, material findings, verification, and residual risk.
 """,
 }
+
+# muse-native shares the accepted quiet user-visible communication policy with
+# muse-max while using the native Codex worker lifecycle.
+PROFILE_COMMUNICATION_POLICIES["muse-native"] = PROFILE_COMMUNICATION_POLICIES["muse-max"]
 
 _COMMUNICATION_SECTION = re.compile(
     r"^## (?:Silent Orchestration|Orchestration Communication)\n.*?(?=^## Agents You Can Use\n)",
@@ -65,11 +70,26 @@ COMPUTE_PROFILES: dict[str, dict[str, WorkerModel]] = {
         "tester": WorkerModel("muse-spark-1.3-contributor", "max", "muse-code"),
         "archivist": WorkerModel("muse-spark-1.3-contributor", "max", "muse-code"),
     },
+    "muse-native": {
+        "explorer": WorkerModel("muse-spark-1.3-contributor", "max", "codex", "cliproxyapi"),
+        "investigator": WorkerModel("muse-spark-1.3-contributor", "max", "codex", "cliproxyapi"),
+        "default_executor": WorkerModel("muse-spark-1.3-contributor", "max", "codex", "cliproxyapi"),
+        "senior_executor": WorkerModel("muse-spark-1.3-contributor", "max", "codex", "cliproxyapi"),
+        "tester": WorkerModel("muse-spark-1.3-contributor", "max", "codex", "cliproxyapi"),
+        "archivist": WorkerModel("muse-spark-1.3-contributor", "max", "codex", "cliproxyapi"),
+    },
 }
 
 _MODEL_LINE = re.compile(r'^model\s*=\s*"[^"]+"\s*$', re.MULTILINE)
 _REASONING_LINE = re.compile(
     r'^model_reasoning_effort\s*=\s*"[^"]+"\s*$', re.MULTILINE
+)
+_MODEL_PROVIDER_LINE = re.compile(
+    r'^model_provider\s*=\s*"[^"]+"\s*$', re.MULTILINE
+)
+_WORKFLOW_PROVIDER_BLOCK = re.compile(
+    r'^# codex-workflow-model-provider\nmodel_provider\s*=\s*"[^"]+"\s*\n?',
+    re.MULTILINE,
 )
 
 
@@ -120,13 +140,48 @@ def worker_model(profile: str, worker: str) -> WorkerModel:
 
 def profile_summary(profile: str) -> dict[str, dict[str, str]]:
     validate_compute_profile(profile)
-    return {
-        worker: {
+    result: dict[str, dict[str, str]] = {}
+    for worker, spec in sorted(COMPUTE_PROFILES[profile].items()):
+        summary = {
             "model": spec.model,
             "reasoning_effort": spec.reasoning_effort,
             "harness": spec.harness,
         }
-        for worker, spec in sorted(COMPUTE_PROFILES[profile].items())
+        if spec.model_provider is not None:
+            summary["model_provider"] = spec.model_provider
+        result[worker] = summary
+    return result
+
+
+def validate_model_provider_config(text: str, provider: str) -> dict[str, str]:
+    """Validate a user-owned provider route without reading or emitting secrets."""
+
+    try:
+        config = tomllib.loads(text) if text.strip() else {}
+    except tomllib.TOMLDecodeError as error:
+        raise ValidationError(f"existing Codex config is invalid TOML: {error}") from error
+    providers = config.get("model_providers")
+    provider_config = providers.get(provider) if isinstance(providers, dict) else None
+    if not isinstance(provider_config, dict):
+        raise ValidationError(
+            f"muse-native requires configured [model_providers.{provider}] "
+            "in user Codex config"
+        )
+    base_url = provider_config.get("base_url")
+    if not isinstance(base_url, str) or not base_url.strip():
+        raise ValidationError(
+            f"muse-native provider {provider!r} must define a non-empty base_url"
+        )
+    wire_api = provider_config.get("wire_api", "responses")
+    if wire_api != "responses":
+        raise ValidationError(
+            f'muse-native provider {provider!r} must use wire_api = "responses"'
+        )
+    return {
+        "model_provider": provider,
+        "configured": "yes",
+        "wire_api": "responses",
+        "credential_owner": "external",
     }
 
 
@@ -168,10 +223,25 @@ def render_worker_for_profile(text: str, worker: str, profile: str) -> str:
     if spec.harness != "codex":
         return text
 
-    rendered = _MODEL_LINE.sub(f'model = "{spec.model}"', text, count=1)
+    rendered = _WORKFLOW_PROVIDER_BLOCK.sub("", text, count=1)
+    rendered = _MODEL_LINE.sub(f'model = "{spec.model}"', rendered, count=1)
     rendered = _REASONING_LINE.sub(
         f'model_reasoning_effort = "{spec.reasoning_effort}"', rendered, count=1
     )
+    if spec.model_provider is not None:
+        if _MODEL_PROVIDER_LINE.search(rendered):
+            raise ValidationError(
+                f"refusing to replace unowned model_provider in workflow worker: {worker}"
+            )
+        rendered = _REASONING_LINE.sub(
+            lambda match: (
+                match.group(0)
+                + "\n# codex-workflow-model-provider"
+                + f'\nmodel_provider = "{spec.model_provider}"'
+            ),
+            rendered,
+            count=1,
+        )
     try:
         parsed = tomllib.loads(rendered)
     except tomllib.TOMLDecodeError as error:
@@ -180,11 +250,34 @@ def render_worker_for_profile(text: str, worker: str, profile: str) -> str:
         ) from error
     if parsed.get("model") != spec.model or parsed.get("model_reasoning_effort") != spec.reasoning_effort:
         raise ValidationError(f"rendered worker profile verification failed: {worker}")
+    if spec.model_provider is not None and parsed.get("model_provider") != spec.model_provider:
+        raise ValidationError(f"rendered worker provider verification failed: {worker}")
     return rendered
 
 
 def plan_compute_profile(runtime: RuntimePaths, profile: str) -> OperationPlan:
     profile = validate_compute_profile(profile)
+    if runtime.config_toml.is_symlink() or (
+        runtime.config_toml.exists() and not runtime.config_toml.is_file()
+    ):
+        raise ValidationError(f"Codex config path is not a regular file: {runtime.config_toml}")
+    config_text = (
+        runtime.config_toml.read_text(encoding="utf-8")
+        if runtime.config_toml.is_file()
+        else ""
+    )
+    providers = sorted(
+        {
+            spec.model_provider
+            for spec in COMPUTE_PROFILES[profile].values()
+            if spec.model_provider is not None
+        }
+    )
+    provider_routes = [
+        validate_model_provider_config(config_text, provider)
+        for provider in providers
+    ]
+
     package = PackageLayout.resolve(runtime.runtime)
     templates = package.agent_templates
     mutations = []
@@ -207,21 +300,12 @@ def plan_compute_profile(runtime: RuntimePaths, profile: str) -> OperationPlan:
         rendered = render_worker_for_profile(target_text, worker, profile)
         mutations.append(text_mutation(target, rendered))
     mutations.append(text_mutation(runtime.compute_settings, render_compute_settings(profile)))
-    if runtime.config_toml.is_symlink() or (
-        runtime.config_toml.exists() and not runtime.config_toml.is_file()
-    ):
-        raise ValidationError(f"Codex config path is not a regular file: {runtime.config_toml}")
-    config_text = (
-        runtime.config_toml.read_text(encoding="utf-8")
-        if runtime.config_toml.is_file()
-        else ""
-    )
     mutations.append(
         text_mutation(
             runtime.config_toml,
             patch_codex_settings(
                 config_text,
-                internal_agents_enabled=profile == "plus",
+                internal_agents_enabled=profile in {"plus", "muse-native"},
             ),
         )
     )
@@ -237,17 +321,22 @@ def plan_compute_profile(runtime: RuntimePaths, profile: str) -> OperationPlan:
         )
     )
     harnesses = sorted({spec.harness for spec in COMPUTE_PROFILES[profile].values()})
+    details: dict[str, object] = {
+        "profile": profile,
+        "workers": profile_summary(profile),
+        "worker_harnesses": harnesses,
+        "communication_policy": profile,
+        "internal_codex_agents": (
+            "enabled" if profile in {"plus", "muse-native"} else "disabled"
+        ),
+        "main_agent": "unchanged",
+    }
+    if provider_routes:
+        details["provider_routes"] = provider_routes
     return OperationPlan(
         "profile",
         deduplicate(mutations),
         [],
         [],
-        {
-            "profile": profile,
-            "workers": profile_summary(profile),
-            "worker_harnesses": harnesses,
-            "communication_policy": profile,
-            "internal_codex_agents": "enabled" if profile == "plus" else "disabled",
-            "main_agent": "unchanged",
-        },
+        details,
     )
