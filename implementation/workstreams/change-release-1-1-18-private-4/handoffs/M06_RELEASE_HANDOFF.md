@@ -1,20 +1,23 @@
 # M06 release handoff — 1.1.18-private.4
 
-## Checkpoint
+Status: terminal.
 
-- Workstream: `change-release-1-1-18-private-4`
-- Milestone: `M06`
-- Source branch: `work/release-1-1-18-private-4`
-- Integration target: `main`
-- PR: #19
-- Reviewed implementation head: `232072b87524b2d1398af5b12b70c6a96e8a5ded`
-- Final integration result: pending publication merge/readback.
+## Final state
 
-## Achieved state
-
-Release-only implementation is complete and independently GREEN. Final integration refresh is GREEN against unchanged target `016a42ba0cf0d274bf12d718db6d7580abe54658`. The distinct RECOMMENDED workstream final-integration gate is satisfied by exact coverage reuse of the independent M06-R01 review because post-review changes are workflow bookkeeping/evidence only.
-
-The branch contains the closure-ready namespaced workstream package needed for recovery before final-target merge. Release publication/readback is the remaining M06 obligation.
+- Workstream: `change-release-1-1-18-private-4`.
+- Milestone: `M06`.
+- Final implementation head: `232072b87524b2d1398af5b12b70c6a96e8a5ded`.
+- Final source package head: `07374585bbbca9ff2a6b4ea2754c324daa942d85`.
+- Final integration result: `9d589786a05d7b00e48ae781efa0ec1ef54bd204`.
+- Source branch provenance: `work/release-1-1-18-private-4`.
+- Integration target: `main`.
+- Pull request: #19, merged.
+- M06-R01 is done and independently GREEN on its exact review subject.
+- Workstream final-integration review is GREEN by exact coverage reuse; post-review/pre-merge commits were workflow bookkeeping/evidence only.
+- Release workflow run #14 / `35564325145` and post-merge Tests run #298 / `35564325237` are GREEN.
+- Release `v1.1.18-private.4` is published as a non-draft prerelease targeting the exact merge result with exactly `codex_workflow-1.1.18-private.4.zip` and `SHA256SUMS`.
+- ZIP SHA-256: `4318036082f56bd933c8ec6139f7a45ea553fe86b8d2f2f96635e7768be7bcdf`.
+- GitHub removed the source branch automatically; no fallback cleanup lifecycle is required.
 
 ## Authority in force
 
@@ -27,13 +30,13 @@ The branch contains the closure-ready namespaced workstream package needed for r
 
 ## Evidence
 
-- implementation: `implementation/workstreams/change-release-1-1-18-private-4/evidence/M06-R01-implementation.md`
-- independent review: `implementation/workstreams/change-release-1-1-18-private-4/evidence/M06-R01-review.md`
-- final integration refresh: `implementation/workstreams/change-release-1-1-18-private-4/evidence/final-integration-refresh.md`
-- release acceptance/readback: `implementation/workstreams/change-release-1-1-18-private-4/evidence/M06-release-acceptance.md`
+- Implementation: `implementation/workstreams/change-release-1-1-18-private-4/evidence/M06-R01-implementation.md`
+- Independent review: `implementation/workstreams/change-release-1-1-18-private-4/evidence/M06-R01-review.md`
+- Final integration refresh: `implementation/workstreams/change-release-1-1-18-private-4/evidence/final-integration-refresh.md`
+- Final acceptance/publication/readback: `implementation/workstreams/change-release-1-1-18-private-4/evidence/M06-release-acceptance.md`
 
 ## Next durable starting point
 
-Merge PR #19 only after an immediate target/head/check readback. Then verify the automatically triggered owner Release and push-test workflows and reconcile only merge-result-dependent terminal fields on the target side.
+This release workstream is terminal and recoverable from the namespaced package on `main`. Do not recreate the deleted source branch.
 
-Production Workstation update remains a separate explicit live-write authorization gate.
+Production Workstation update to `1.1.18-private.4` was not performed and remains a separate explicit live-write authorization gate.
