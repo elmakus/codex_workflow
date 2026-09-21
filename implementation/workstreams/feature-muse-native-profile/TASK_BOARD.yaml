@@ -6,16 +6,18 @@ current_milestone: "M07"
 execution_ref:
   branch: "feat/muse-native-profile"
   pr: 20
-  head: "2e3090795f965c1beafff56b4ca71056851c4c49"
+  head: "da9fd996870853658c73bb2ca91891f7f1fae070"
 
 research_obligation: null
 
 milestones:
   M07:
-    execution_status: "in_progress"
-    checkpoint: null
-    implementation_head: null
-    acceptance_evidence: null
+    contract: "planning/MASTER_PLAN.md#M07 — native profile and provider foundation"
+    execution_status: "done"
+    checkpoint: "commit:da9fd996870853658c73bb2ca91891f7f1fae070"
+    implementation_head: "b2291cc64210a15fb63cc1f05fccf08395e3193d"
+    acceptance_evidence: "implementation/workstreams/feature-muse-native-profile/evidence/M07-acceptance.md"
+    handoff: "implementation/workstreams/feature-muse-native-profile/handoffs/M07_HANDOFF.md"
     review_requirement: "none"
     review_state: null
     review_subject: null
