@@ -80,9 +80,18 @@ COMPUTE_PROFILES: dict[str, dict[str, WorkerModel]] = {
     },
 }
 
-_MODEL_LINE = re.compile(r'^model\s*=\s*"[^"]+"\s*$', re.MULTILINE)
+_MODEL_LINE = re.compile(r'^model\\s*=\\s*"[^"]+"\\s*$', re.MULTILINE)
 _REASONING_LINE = re.compile(
-    r'^model_reasoning_effort\s*=\s*"[^"]+"\s*
+    r'^model_reasoning_effort\\s*=\\s*"[^"]+"\\s*$', re.MULTILINE
+)
+_MODEL_PROVIDER_LINE = re.compile(
+    r'^model_provider\\s*=\\s*"[^"]+"\\s*$', re.MULTILINE
+)
+_WORKFLOW_PROVIDER_BLOCK = re.compile(
+    r'^# codex-workflow-model-provider\\nmodel_provider\\s*=\\s*"[^"]+"\\s*\\n?',
+    re.MULTILINE,
+)
+
 
 def validate_compute_profile(profile: str) -> str:
     if profile not in COMPUTE_PROFILES:
