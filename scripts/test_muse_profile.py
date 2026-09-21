@@ -323,6 +323,77 @@ class MuseMaxProfileTests(unittest.TestCase):
         self.assertIn("must not by themselves wake Main", rendered)
         self.assertNotIn("restrained and outcome-oriented", rendered)
 
+    def test_muse_native_docs_bind_native_lifecycle_without_external_transport(self) -> None:
+        agents = (PACKAGE / "AGENTS.md").read_text(encoding="utf-8")
+        heavy = (PACKAGE / "heavy_route.md").read_text(encoding="utf-8")
+        delegation = (PACKAGE / "delegation.md").read_text(encoding="utf-8")
+        user_agents = (PACKAGE / "operate" / "user_AGENTS.md").read_text(
+            encoding="utf-8"
+        )
+        profile_guide = (PACKAGE / "operate" / "profile.md").read_text(
+            encoding="utf-8"
+        )
+
+        self.assertIn(
+            "For `muse-native`, all six supported roles use that same native Codex worker lifecycle",
+            heavy,
+        )
+        self.assertIn(
+            "This native no-poll wait rule applies to both `plus` and `muse-native`",
+            heavy,
+        )
+        self.assertIn("## Native Material Event Handling", heavy)
+        self.assertIn("active profile is `plus` or `muse-native`", heavy)
+        self.assertIn("## Native Capability Plane", heavy)
+        self.assertIn("Do not route native workers through `MuseCapabilityHints`", heavy)
+        self.assertIn("fail visibly to Main", heavy)
+        self.assertIn(
+            "new internal worker with `fork_turns="none"` for internal Codex roles under `plus` or `muse-native`",
+            heavy,
+        )
+
+        self.assertIn(
+            "Under `muse-native`, all six roles use the same native Codex lifecycle",
+            delegation,
+        )
+        self.assertIn("## Native Material Event Push", delegation)
+        self.assertIn("Under `plus` or `muse-native`", delegation)
+        self.assertIn("## Native Codex capability plane", delegation)
+        self.assertIn("Do not translate them into `MuseCapabilityHints`", delegation)
+        self.assertIn(
+            "Ordinary Executor repair stays on the owning native worker/thread",
+            delegation,
+        )
+        self.assertIn(
+            "a `wait_agent` timeout without new evidence is not a recovery event",
+            delegation,
+        )
+        self.assertIn("do not use status/list/progress polling", delegation)
+
+        self.assertIn(
+            "The same native material-event contract applies under `muse-native`",
+            agents,
+        )
+        self.assertIn("external `muse-max` remains outside", agents)
+
+        self.assertIn("If it says `muse-native`", user_agents)
+        self.assertIn("must use the internal Codex worker lifecycle", user_agents)
+        self.assertIn("must not invoke", user_agents)
+        self.assertIn("codex_workflow --profile muse-native", user_agents)
+
+        self.assertIn("codex_workflow --profile muse-native", profile_guide)
+        self.assertIn(
+            "`muse-native`: all six supported roles use the internal Codex worker lifecycle",
+            profile_guide,
+        )
+        self.assertIn("does not invoke `runtime/muse_worker.py`", profile_guide)
+        self.assertIn("fail visibly when absent", profile_guide)
+
+        # External Muse transport remains explicitly scoped to muse-max.
+        self.assertIn("For `muse-max`, the six supported roles", delegation)
+        self.assertIn("## Muse event-driven await", delegation)
+        self.assertIn("## Muse capability hints", delegation)
+
     def test_build_command_uses_profile_supplied_model_and_effort(self) -> None:
         command = build_command(
             "/usr/local/bin/muse",
